@@ -5,5 +5,5 @@ __pycache__/
 uv.lock
 *.egg-info/
 dist/
-development/ontology.trig
-development/ontology.ttl
+development/*.trig
+development/*.ttl
