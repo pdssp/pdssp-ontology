@@ -75,16 +75,28 @@ _RENDERING_LICENSE = "https://creativecommons.org/licenses/by/4.0/"
 #: ``(local name, comment)`` for every class defined here.
 _CLASSES: list[tuple[str, str]] = [
     ("StacCatalog", "The root Catalog resource (GET /) of a STAC API -- see pdssp-stac/vocabulary."),
-    ("StacCollection", "A STAC Collection (GET /collections/{id}) -- see pdssp-stac/vocabulary."),
+    (
+        "StacCollection",
+        "A STAC Collection (GET /collections/{id}) -- a Collection is itself a valid Catalog "
+        "(see subClassOf) -- see pdssp-stac/vocabulary.",
+    ),
     ("StacItem", "A STAC Item (GET /collections/{id}/items/{item_id}) -- see pdssp-stac/vocabulary."),
     ("StacAsset", "A file (or synthetic virtual-asset group) attached to an Item -- see pdssp-stac/vocabulary."),
-    (
-        "StacVocabularyTerm",
-        "Marker for a documented STAC/extension/custom term -- see pdssp-stac/vocabulary.",
-    ),
+    ("StacLink", "A STAC Link object (href/rel/type/title) -- see pdssp-stac/vocabulary."),
+    ("StacProvider", "An organization or person that captured, processed, or hosted the data -- see pdssp-stac/vocabulary."),
+    ("StacExtent", "A Collection's spatial and temporal coverage -- see pdssp-stac/vocabulary."),
+    ("StacSpatialExtent", "An Extent's bounding box(es) -- see pdssp-stac/vocabulary."),
+    ("StacTemporalExtent", "An Extent's time interval(s) -- see pdssp-stac/vocabulary."),
+    ("StacBand", "A named spectral/data band of an Asset -- see pdssp-stac/vocabulary."),
     ("EpnTapGranule", "One row (granule) of the EPN-TAP2 epn_core table -- see epn-tap/vocabulary."),
     ("StacProperty", "A STAC (or STAC Collection) path an EpnTapColumn mapping reads -- see mappings/pdssp-stac-epn-tap."),
     ("Converter", "A named value-conversion function a mapping applies in one direction -- see mappings/pdssp-stac-epn-tap."),
+]
+
+#: ``(local name, class this subclasses)`` -- kept apart from
+#: ``_CLASSES``'s flat shape, which has no room for a parent class.
+_SUBCLASS_OF: list[tuple[str, str]] = [
+    ("StacCollection", "StacCatalog"),
 ]
 
 #: ``(local name, comment)`` for every EPN-TAP optional-extension
@@ -122,27 +134,53 @@ _EPNTAP_CORE_CATEGORY_SUBCLASSES: list[tuple[str, str]] = [
     ("VerticalScalesOnPlanets", "An EpnTapGranule considered for its above/below-surface altitude parameters."),
 ]
 
-#: ``(local name, domain class, comment)`` for every STAC "category"
-#: property (what *kind* of property a STAC term is) -- see
-#: :data:`pdssp_ontology.stac_model.CATEGORIES` for the authoritative
-#: per-term assignment; this only republishes the category properties
-#: themselves.
-_CATEGORIES: list[tuple[str, str, str]] = [
-    ("hasIdentification", "StacItem", "Descriptive/identification metadata about the product."),
-    ("hasTemporalProperty", "StacItem", "A date or time associated with the product."),
-    ("hasPhysicalProperty", "StacItem", "A physical/observational measurement."),
-    ("hasSpatialProperty", "StacItem", "A spatial/geometric property."),
-    ("hasProvenanceProperty", "StacItem", "Describes how the product was produced."),
-    ("hasFileProperty", "StacAsset", "A property of an asset file rather than of the item itself."),
-    ("hasResidualProperty", "StacItem", "An unmapped source field surfaced verbatim."),
+#: ``(local name, domain class, comment)`` for every STAC vocabulary
+#: category subclass -- see pdssp-stac/vocabulary's own docstring for why
+#: a category is a subclass (facetKind "core"), not a
+#: ``rdfs:subPropertyOf``-linked property as an earlier version had (the
+#: same OWL-punning bug fixed for EPN-TAP's own core categories). Class
+#: names/comments mirror :mod:`pdssp_ontology.stac_vocabulary`'s own
+#: ``_CATEGORY_CLASS_NAMES``/:data:`pdssp_ontology.stac_model.CATEGORIES`.
+_STAC_CATEGORY_SUBCLASSES: list[tuple[str, str, str]] = [
+    ("StacIdentification", "StacItem", "Descriptive/identification metadata about the product."),
+    ("StacTemporalProperty", "StacItem", "A date or time associated with the product."),
+    ("StacPhysicalProperty", "StacItem", "A physical/observational measurement."),
+    ("StacSpatialProperty", "StacItem", "A spatial/geometric property."),
+    ("StacProvenanceProperty", "StacItem", "Describes how the product was produced."),
+    ("StacFileProperty", "StacAsset", "A property of an asset file rather than of the item itself."),
+    ("StacResidualProperty", "StacItem", "An unmapped source field surfaced verbatim."),
+]
+
+#: ``(local name, domain class, comment)`` for every STAC extension (or
+#: PDSSP custom namespace) subclass (facetKind "extension") -- mirrors
+#: :mod:`pdssp_ontology.stac_vocabulary`'s own ``_EXTENSION_CLASSES``.
+_STAC_EXTENSION_SUBCLASSES: list[tuple[str, str, str]] = [
+    ("StacSsysItem", "StacItem", "An item carrying the Solar System (SSYS) extension's parameters."),
+    ("StacProductItem", "StacItem", "An item carrying the Product extension's parameters."),
+    ("StacSatItem", "StacItem", "An item carrying the Satellite extension's parameters."),
+    ("StacViewItem", "StacItem", "An item carrying the View Geometry extension's parameters."),
+    ("StacProjItem", "StacItem", "An item carrying the Projection extension's parameters."),
+    ("StacProcessingItem", "StacItem", "An item carrying the Processing extension's parameters."),
+    ("StacVersionItem", "StacItem", "An item carrying the Versioning Indicators extension's parameters."),
+    ("StacTimestampsItem", "StacItem", "An item carrying the Timestamps extension's parameters."),
+    ("StacPdsspItem", "StacItem", "An item carrying PDSSP's own custom-namespace parameters."),
+    ("StacPdsodeItem", "StacItem", "An item carrying an unmapped PDS3 residual field, surfaced verbatim."),
+    ("StacFileAsset", "StacAsset", "An asset carrying the File Info extension's parameters."),
+    ("StacVrtAsset", "StacAsset", "An asset carrying the Virtual Assets extension's parameters."),
 ]
 
 #: ``(local name, domain class, range class, comment)`` for STAC's
-#: structural containment properties.
+#: structural containment/composition properties.
 _STRUCTURAL_PROPERTIES: list[tuple[str, str, str, str]] = [
     ("hasCollection", "StacCatalog", "StacCollection", "Catalog contains Collection."),
     ("hasItem", "StacCollection", "StacItem", "Collection contains Item."),
     ("hasAsset", "StacItem", "StacAsset", "Item carries Asset."),
+    ("hasProvider", "StacCollection", "StacProvider", "Collection lists Provider."),
+    ("hasExtent", "StacCollection", "StacExtent", "Collection declares its Extent."),
+    ("hasSpatialExtent", "StacExtent", "StacSpatialExtent", "Extent's spatial component."),
+    ("hasTemporalExtent", "StacExtent", "StacTemporalExtent", "Extent's temporal component."),
+    ("hasBand", "StacAsset", "StacBand", "Asset lists Band."),
+    ("hasLink", "StacCatalog", "StacLink", "Catalog/Collection points to a Link."),
 ]
 
 #: ``(local name, comment)`` for every other annotation property (from
@@ -166,9 +204,9 @@ _ANNOTATION_PROPERTIES: list[tuple[str, str]] = [
     ("note", "Free-text implementation note."),
     (
         "facetKind",
-        'Whether an EpnTapGranule subclass represents a mandatory core theme ("core") '
-        'or an optional extension ("extension") -- descriptive metadata only, no OWL '
-        "DL semantics.",
+        'Whether an EpnTapGranule/StacItem/StacAsset subclass represents a mandatory '
+        'core theme ("core") or an optional extension ("extension") -- descriptive '
+        "metadata only, no OWL DL semantics.",
     ),
 ]
 
@@ -193,10 +231,13 @@ def _build_ontology_node(scheme_id: str) -> dict[str, Any]:
 
 
 def _build_class_nodes() -> dict[str, dict[str, Any]]:
-    return {
+    nodes = {
         name: {"@id": f"pdssp:{name}", _TYPE: _OWL_CLASS, "name": name, "label": name, "comment": comment}
         for name, comment in _CLASSES
     }
+    for name, parent in _SUBCLASS_OF:
+        nodes[name]["subClassOf"] = nodes[parent]
+    return nodes
 
 
 def _build_epntap_extension_subclass_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
@@ -231,17 +272,33 @@ def _build_epntap_core_category_subclass_nodes(classes: dict[str, dict[str, Any]
     ]
 
 
-def _build_category_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+def _build_stac_category_subclass_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     return [
         {
             "@id": f"pdssp:{name}",
-            _TYPE: "rdf:Property",
+            _TYPE: _OWL_CLASS,
             "name": name,
             "label": name,
             "comment": comment,
-            "domain": classes[domain],
+            "subClassOf": classes[domain],
+            "facetKind": "core",
         }
-        for name, domain, comment in _CATEGORIES
+        for name, domain, comment in _STAC_CATEGORY_SUBCLASSES
+    ]
+
+
+def _build_stac_extension_subclass_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "@id": f"pdssp:{name}",
+            _TYPE: _OWL_CLASS,
+            "name": name,
+            "label": name,
+            "comment": comment,
+            "subClassOf": classes[domain],
+            "facetKind": "extension",
+        }
+        for name, domain, comment in _STAC_EXTENSION_SUBCLASSES
     ]
 
 
@@ -288,7 +345,8 @@ def build_shared_vocab_jsonld(base: str) -> dict[str, Any]:
         *classes.values(),
         *_build_epntap_extension_subclass_nodes(classes),
         *_build_epntap_core_category_subclass_nodes(classes),
-        *_build_category_nodes(classes),
+        *_build_stac_category_subclass_nodes(classes),
+        *_build_stac_extension_subclass_nodes(classes),
         *_build_structural_property_nodes(classes),
         *_build_annotation_property_nodes(),
     ]
