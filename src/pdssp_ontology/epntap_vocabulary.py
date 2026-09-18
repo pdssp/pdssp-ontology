@@ -55,6 +55,30 @@ _EPNTAP_VOCAB_TERM_COMMENT = (
     "a SPARQL query can select all of them without relying on a less direct signal."
 )
 
+#: A named EPN-TAP2 table this vocabulary's terms are grouped into (core,
+#: or one of its optional extensions) -- a real, dereferenceable
+#: individual each term's ``partOfExtension`` points at, not a bare
+#: string: ``rdfs:subPropertyOf`` (used for STAC's categories) would be
+#: semantically wrong here (grouping-by-table is membership, not
+#: specialisation), so this is a plain class + object property instead,
+#: the ontologically correct shape for "these terms belong to the same
+#: named group" (the same role SKOS concept schemes play, kept as a
+#: custom class here for consistency with this module's existing
+#: domain/range style).
+_EXTENSION_CLASS = "EpnTapExtension"
+
+#: ``(group key from epntap_spec, human label, description)``.
+_EXTENSIONS: list[tuple[str, str, str]] = [
+    ("core", "EPN-TAP core", "The epn_core table's own mandatory and optional parameters."),
+    ("particle_spectroscopy", "Particle Spectroscopy extension", "Particle energy/mass spectral parameters."),
+    ("solar_system_objects", "Solar System Objects extension", "Physical and orbital parameters of a Solar System object."),
+    ("maps", "Maps extension", "Map projection and pixel-scale parameters."),
+    ("contributive_works", "Contributive Works extension", "Observer/producer attribution parameters."),
+    ("experimental_spectroscopy", "Experimental Spectroscopy extension", "Laboratory sample and measurement-condition parameters."),
+    ("apis", "APIS extension", "Aeronomy/planetary-imaging instrument and geometry parameters."),
+    ("events", "Events extension", "Transient/predicted-event classification parameters."),
+]
+
 _XSD_RANGE_BY_DATATYPE: dict[str, str] = {
     "char": "xsd:string",
     "int": "xsd:integer",
@@ -80,7 +104,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "datatype": "pdssp:datatype",
     "arraysize": "pdssp:arraysize",
     "requirement": "pdssp:requirement",
-    "extensionGroup": "pdssp:extensionGroup",
+    "partOfExtension": {"@id": "pdssp:partOfExtension", _TYPE: "@id"},
 }
 
 _DATA_PROPERTIES: list[tuple[str, str, str]] = [
@@ -95,13 +119,6 @@ _DATA_PROPERTIES: list[tuple[str, str, str]] = [
         "EPN-TAP2's own three-tier requirement: value_required (column and "
         "value both mandatory), column_required (column mandatory, value may "
         "be null), or optional.",
-    ),
-    (
-        "extensionGroup",
-        "xsd:string",
-        "Which EPN-TAP2 table this term belongs to: core, or an optional "
-        "extension (solar_system_objects, maps, particle_spectroscopy, "
-        "contributive_works, experimental_spectroscopy, apis, events).",
     ),
 ]
 
@@ -136,7 +153,30 @@ def _build_term_class_node() -> dict[str, Any]:
     }
 
 
-def _build_property_nodes(term_class: dict[str, Any]) -> list[dict[str, Any]]:
+def _build_extension_class_node() -> dict[str, Any]:
+    return {
+        "@id": f"pdssp:{_EXTENSION_CLASS}",
+        _TYPE: _OWL_CLASS,
+        "name": _EXTENSION_CLASS,
+        "label": _EXTENSION_CLASS,
+        "comment": "A named EPN-TAP2 table (core, or one of its optional extensions) grouping related terms.",
+    }
+
+
+def _build_extension_individual_nodes(extension_class: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        key: {
+            "@id": f"pdssp:{_EXTENSION_CLASS}_{key}",
+            _TYPE: extension_class["@id"],
+            "name": label,
+            "label": label,
+            "comment": comment,
+        }
+        for key, label, comment in _EXTENSIONS
+    }
+
+
+def _build_property_nodes(term_class: dict[str, Any], extension_class: dict[str, Any]) -> list[dict[str, Any]]:
     nodes = []
     for name, xsd_range, comment in _DATA_PROPERTIES:
         nodes.append(
@@ -150,10 +190,26 @@ def _build_property_nodes(term_class: dict[str, Any]) -> list[dict[str, Any]]:
                 "range": xsd_range,
             }
         )
+    nodes.append(
+        {
+            "@id": "pdssp:partOfExtension",
+            _TYPE: "owl:ObjectProperty",
+            "name": "partOfExtension",
+            "label": "partOfExtension",
+            "comment": "Which named EPN-TAP2 table (core, or an optional extension) this term belongs to.",
+            "domain": term_class,
+            "range": extension_class,
+        }
+    )
     return nodes
 
 
-def _build_term_node(param: EpnTapParameter, scheme_id: str, granule_class: dict[str, Any]) -> dict[str, Any]:
+def _build_term_node(
+    param: EpnTapParameter,
+    scheme_id: str,
+    granule_class: dict[str, Any],
+    extensions: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
     node: dict[str, Any] = {
         "@id": f"{scheme_id}#{param.name}",
         _TYPE: ["rdf:Property", f"pdssp:{_EPNTAP_VOCAB_TERM_CLASS}"],
@@ -164,7 +220,7 @@ def _build_term_node(param: EpnTapParameter, scheme_id: str, granule_class: dict
         "adqlName": param.name,
         "datatype": param.datatype,
         "requirement": param.requirement,
-        "extensionGroup": param.group,
+        "partOfExtension": extensions[param.group],
     }
     if param.description:
         node["comment"] = param.description
@@ -181,7 +237,7 @@ def build_epntap_vocabulary_jsonld(base: str, parameters: list[EpnTapParameter])
     """Serialise *parameters* as a JSON-LD RDFS/OWL document describing
     only the EPN-TAP vocabulary itself -- one ``rdf:Property`` term node
     per entry, with just its intrinsic properties (adqlName/ucd/unit/
-    datatype/arraysize/requirement/extensionGroup/description). No STAC
+    datatype/arraysize/requirement/partOfExtension/description). No STAC
     mapping information: see
     :func:`pdssp_ontology.stac_epntap_mapping.build_stac_epntap_mapping_jsonld`
     for that, in its own named graph.
@@ -200,12 +256,16 @@ def build_epntap_vocabulary_jsonld(base: str, parameters: list[EpnTapParameter])
     scheme_id = f"{base}/vocabulary"
     term_class = _build_term_class_node()
     granule_class = _build_granule_class_node()
+    extension_class = _build_extension_class_node()
+    extensions = _build_extension_individual_nodes(extension_class)
 
     graph: list[dict[str, Any]] = [
         _build_ontology_node(scheme_id),
         term_class,
         granule_class,
-        *_build_property_nodes(term_class),
-        *(_build_term_node(param, scheme_id, granule_class) for param in parameters),
+        extension_class,
+        *(extensions[key] for key, _, _ in _EXTENSIONS),
+        *_build_property_nodes(term_class, extension_class),
+        *(_build_term_node(param, scheme_id, granule_class, extensions) for param in parameters),
     ]
     return {"@context": _JSONLD_CONTEXT, "@graph": graph}
