@@ -125,19 +125,20 @@ jobs:
           cp site/mappings/pdssp-stac-epn-tap/index-en.html site/mappings/pdssp-stac-epn-tap/index.html
           cp site/vocab/index-en.html site/vocab/index.html
 
-      # Widoco has no notion that pdssp:X (e.g. pdssp:EpnTapGranule,
-      # referenced from the pdssp-stac/epn-tap/mappings sites but *defined*
-      # on the separate vocab site) lives on another page it itself
-      # generated -- for any class/property outside the file it is
-      # currently documenting, it always emits a same-page anchor
-      # (href="#<full external IRI>"), which is only ever correct for a
-      # genuinely external, undocumented resource. Rewritten here into a
-      # real link to where that term is actually documented.
-      - name: Fix cross-site links to the shared vocabulary
-        run: |
-          grep -rl 'href="#https://pdssp.github.io/pdssp-ontology/vocab#' site/ | while read -r f; do
-            sed -i 's|href="#https://pdssp\.github\.io/pdssp-ontology/vocab#\([^"]*\)"|href="https://pdssp.github.io/pdssp-ontology/vocab/index-en.html#\1"|g' "$f"
-          done
+      # A previous version of this workflow rewrote pdssp:X links
+      # (href="#<full external IRI>", e.g. pdssp:EpnTapGranule) into
+      # absolute links to the separate vocab site. That looked more
+      # correct, but was wrong: each site fully embeds its own copy of
+      # every pdssp: class/property it uses (see e.g. epntap_vocabulary.py's
+      # own docstring), so its local anchor (verified: the href fragment
+      # matches that element's own id exactly, so it genuinely navigates
+      # there) shows a richer "is in domain of" listing -- every attribute
+      # attached to that class -- that the vocab site's own copy of the
+      # same class cannot show, since vocab.ttl alone never sees the
+      # domain triples that live in another graph's own file. Rewriting
+      # the link to the "canonical" vocab page traded that away for a
+      # cosmetic fix (the raw href text looks odd, even though it works),
+      # so it is not done: Widoco's own same-page anchors are kept as-is.
 
       # The named-graph IRIs merge_ontology.py mints for the two
       # vocabularies (.../pdssp-stac/vocabulary, .../epn-tap/vocabulary)
