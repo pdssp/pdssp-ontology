@@ -139,6 +139,30 @@ jobs:
       # the link to the "canonical" vocab page traded that away for a
       # cosmetic fix (the raw href text looks odd, even though it works),
       # so it is not done: Widoco's own same-page anchors are kept as-is.
+      #
+      # The mapping site is a genuine exception to the above, not a
+      # repeat of the same mistake: a link there to an actual EPN-TAP/STAC
+      # *term* (e.g. #.../epn-tap/vocabulary#access_url, as opposed to a
+      # shared pdssp:X class/property, which mappings-pdssp-stac-epn-tap.ttl
+      # DOES fully embed, same as above) resolves to a same-page anchor
+      # that IS present -- but confirmed empirically to show that term
+      # mis-rendered as an untyped "named individual" with an ugly
+      # humanized title ("access url") and no label/comment/domain at all,
+      # since stac_epntap_mapping.py only ever asserts a few *extra*
+      # mapping-specific facts (mappedFrom, toStacConverter, ...) about
+      # that same subject IRI, never a full copy of the term itself (see
+      # that module's own docstring). Unlike the case above, the local
+      # anchor here is strictly worse than the term's own real page, so
+      # it is rewritten -- to that page's root (not attempting to also
+      # match the target page's own, differently-slugged anchor id, which
+      # would need per-graph knowledge baked into this sed and was judged
+      # not worth the fragility for a cosmetic scroll position).
+      - name: Fix mapping-site links to EPN-TAP/STAC terms (not shared pdssp:X classes)
+        run: |
+          find site/mappings/pdssp-stac-epn-tap -name "*.html" -exec sed -i -E \
+            -e 's|href="#https://pdssp\.github\.io/pdssp-ontology/epn-tap/vocabulary#[^"]*"|href="https://pdssp.github.io/pdssp-ontology/epn-tap/"|g' \
+            -e 's|href="#https://pdssp\.github\.io/pdssp-ontology/pdssp-stac/vocabulary#[^"]*"|href="https://pdssp.github.io/pdssp-ontology/pdssp-stac/"|g' \
+            {} +
 
       # The named-graph IRIs merge_ontology.py mints for the two
       # vocabularies (.../pdssp-stac/vocabulary, .../epn-tap/vocabulary)
