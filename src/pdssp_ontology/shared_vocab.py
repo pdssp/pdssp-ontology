@@ -90,6 +90,26 @@ _EPNTAP_EXTENSION_SUBCLASSES: list[tuple[str, str]] = [
     ("OtherExtensionGranule", "An EpnTapGranule carrying a parameter from the specification's unnamed '2.3.8 Other extensions'."),
 ]
 
+#: ``(local name, comment)`` for every EPN-TAP *core* category subclass
+#: of ``EpnTapGranule`` -- the specification's own twelve named core
+#: subsections (see epn-tap/vocabulary's own docstring for why these are
+#: subclasses too, despite -- unlike extensions -- being unconditionally
+#: populated by ordinary granules).
+_EPNTAP_CORE_CATEGORY_SUBCLASSES: list[tuple[str, str]] = [
+    ("GranuleReferences", "An EpnTapGranule considered for its own identifying references."),
+    ("DataDescription", "An EpnTapGranule considered for its data-organization parameters."),
+    ("TargetDescription", "An EpnTapGranule considered for its target-identification parameters."),
+    ("Axes", "An EpnTapGranule considered for its temporal/spectral/spatial coverage parameters."),
+    ("DataOrigin", "An EpnTapGranule considered for its instrument/observatory parameters."),
+    ("GranuleCallbackInfo", "An EpnTapGranule considered for its service/lifecycle-date parameters."),
+    ("DataAccessReference", "An EpnTapGranule considered for its data-file access parameters."),
+    ("MiscellaneousFileMetadata", "An EpnTapGranule considered for its supplementary file-metadata parameters."),
+    ("SupplementaryDescription", "An EpnTapGranule considered for its bibliographic/free-text description parameters."),
+    ("CoordinateFrameDescription", "An EpnTapGranule considered for its coordinate-frame parameters."),
+    ("TargetConfigurationAndObservingGeometry", "An EpnTapGranule considered for its target/observer geometry parameters."),
+    ("VerticalScalesOnPlanets", "An EpnTapGranule considered for its above/below-surface altitude parameters."),
+]
+
 #: ``(local name, domain class, comment)`` for every STAC "category"
 #: property (what *kind* of property a STAC term is) -- see
 #: :data:`pdssp_ontology.stac_model.CATEGORIES` for the authoritative
@@ -173,6 +193,21 @@ def _build_epntap_extension_subclass_nodes(classes: dict[str, dict[str, Any]]) -
     ]
 
 
+def _build_epntap_core_category_subclass_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    granule = classes["EpnTapGranule"]
+    return [
+        {
+            "@id": f"pdssp:{name}",
+            _TYPE: _OWL_CLASS,
+            "name": name,
+            "label": name,
+            "comment": comment,
+            "subClassOf": granule,
+        }
+        for name, comment in _EPNTAP_CORE_CATEGORY_SUBCLASSES
+    ]
+
+
 def _build_category_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     return [
         {
@@ -229,6 +264,7 @@ def build_shared_vocab_jsonld(base: str) -> dict[str, Any]:
         _build_ontology_node(base),
         *classes.values(),
         *_build_epntap_extension_subclass_nodes(classes),
+        *_build_epntap_core_category_subclass_nodes(classes),
         *_build_category_nodes(classes),
         *_build_structural_property_nodes(classes),
         *_build_annotation_property_nodes(),

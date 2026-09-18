@@ -29,12 +29,34 @@ multiple membership, not a conflict. The ontology follows the
 conceptual model, not the storage layout: each extension's own
 parameters are domained on its own subclass, not on the generic
 ``EpnTapGranule``, exactly the standard OWL pattern for optional
-specialisation. Core parameters stay domained on ``EpnTapGranule``
-itself. (An earlier version instead minted a separate ``EpnTapExtension``
-class with one individual per extension, linked from each term via a
-``partOfExtension`` annotation -- subclassing replaces that: the
-subclass itself carries what "belongs to this extension" means, so a
-separate individual for it is redundant.)
+specialisation. (An earlier version instead minted a separate
+``EpnTapExtension`` class with one individual per extension, linked from
+each term via a ``partOfExtension`` annotation -- subclassing replaces
+that: the subclass itself carries what "belongs to this extension"
+means, so a separate individual for it is redundant.)
+
+*Core* parameters (sections 2.1/2.2, as opposed to 2.3's extensions) get
+the same subclassing treatment, for a different but equally sound
+reason: the specification itself groups every core parameter into one
+of twelve named subsections (``Axes``, ``Target description``, ...),
+verified against the spec's own heading structure and per-section
+parameter lists, not guessed. Domaining each parameter on its own
+category subclass (rather than the generic ``EpnTapGranule``, or a
+``category`` string annotation as an earlier version of this module
+did) makes that grouping a real, navigable part of the schema instead
+of an opaque literal -- and unlike extensions, every category subclass
+is populated unconditionally by ordinary granules (a granule that has
+any core parameter from "Axes" is correctly inferred as an
+``Axes``-category granule too; this never produces a false statement,
+since RDFS domain inference simply never fires for a category a
+granule's data never actually touches).
+
+An ``rdfs:subPropertyOf``-to-a-category-property link (the pattern
+:mod:`.stac_vocabulary` uses for its own, analogous STAC "categories")
+was considered and rejected here: it is exactly as OWL-punning-unsafe
+as the marker-class approach above, confirmed by the same empirical
+test, so it would silently break every core term's own description
+again.
 
 Nothing about *how* (or whether) a term is populated from STAC lives
 here -- that's :mod:`.stac_epntap_mapping`'s job, in its own, separately
@@ -116,6 +138,27 @@ _EXTENSIONS: list[tuple[str, str, str]] = [
     ),
 ]
 
+#: ``(category label from epntap_spec.CORE_CATEGORIES, class name,
+#: comment)`` for every one of the specification's own twelve core
+#: subsections -- each becomes an ``owl:Class`` declared ``rdfs:subClassOf
+#: pdssp:EpnTapGranule``, exactly like the extension subclasses above
+#: (see module docstring for why this is sound for categories too,
+#: despite them not being optional the way extensions are).
+_CORE_CATEGORIES_CLASSES: list[tuple[str, str, str]] = [
+    ("Granule references", "GranuleReferences", "An EpnTapGranule considered for its own identifying references."),
+    ("Data Description", "DataDescription", "An EpnTapGranule considered for its data-organization parameters."),
+    ("Target description", "TargetDescription", "An EpnTapGranule considered for its target-identification parameters."),
+    ("Axes", "Axes", "An EpnTapGranule considered for its temporal/spectral/spatial coverage parameters."),
+    ("Data origin", "DataOrigin", "An EpnTapGranule considered for its instrument/observatory parameters."),
+    ("Granule call-back info", "GranuleCallbackInfo", "An EpnTapGranule considered for its service/lifecycle-date parameters."),
+    ("Data Access Reference", "DataAccessReference", "An EpnTapGranule considered for its data-file access parameters."),
+    ("Miscellaneous file metadata", "MiscellaneousFileMetadata", "An EpnTapGranule considered for its supplementary file-metadata parameters."),
+    ("Supplementary description", "SupplementaryDescription", "An EpnTapGranule considered for its bibliographic/free-text description parameters."),
+    ("Description of coordinate frame", "CoordinateFrameDescription", "An EpnTapGranule considered for its coordinate-frame parameters."),
+    ("Target configuration and observing geometry", "TargetConfigurationAndObservingGeometry", "An EpnTapGranule considered for its target/observer geometry parameters."),
+    ("Vertical scales on planets", "VerticalScalesOnPlanets", "An EpnTapGranule considered for its above/below-surface altitude parameters."),
+]
+
 _XSD_RANGE_BY_DATATYPE: dict[str, str] = {
     "char": "xsd:string",
     "int": "xsd:integer",
@@ -176,7 +219,6 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "datatype": "pdssp:datatype",
     "arraysize": "pdssp:arraysize",
     "requirement": "pdssp:requirement",
-    "category": "pdssp:category",
     "controlledVocabulary": {"@id": "pdssp:controlledVocabulary", _TYPE: "@id"},
     "notation": "skos:notation",
     "prefLabel": {"@id": "skos:prefLabel", "@language": "en"},
@@ -196,13 +238,6 @@ _DATA_PROPERTIES: list[tuple[str, str, str]] = [
         "EPN-TAP2's own three-tier requirement: value_required (column and "
         "value both mandatory), column_required (column mandatory, value may "
         "be null), or optional.",
-    ),
-    (
-        "category",
-        "xsd:string",
-        "The core parameter's own semantic group, per the specification's section "
-        "structure (e.g. 'Axes', 'Target description') -- core parameters only; "
-        "extension parameters are grouped by their own subclass instead.",
     ),
     (
         "controlledVocabulary",
@@ -294,6 +329,25 @@ def _build_extension_subclass_nodes(granule_class: dict[str, Any]) -> dict[str, 
     }
 
 
+def _build_category_subclass_nodes(granule_class: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """One ``owl:Class`` per core subsection, ``rdfs:subClassOf
+    pdssp:EpnTapGranule`` -- see module docstring for why this is sound
+    for the spec's twelve named core categories too. Returns
+    ``{category label: class node}``.
+    """
+    return {
+        label: {
+            "@id": f"pdssp:{class_name}",
+            _TYPE: _OWL_CLASS,
+            "name": class_name,
+            "label": class_name,
+            "comment": comment,
+            "subClassOf": granule_class,
+        }
+        for label, class_name, comment in _CORE_CATEGORIES_CLASSES
+    }
+
+
 def _build_property_nodes() -> list[dict[str, Any]]:
     """Every custom ``pdssp:`` property used to annotate a term node,
     declared ``owl:AnnotationProperty`` -- not ``owl:DatatypeProperty``/
@@ -368,11 +422,11 @@ def _build_controlled_vocabulary_concept_nodes(scheme_id: str) -> list[dict[str,
 def _build_term_node(
     param: EpnTapParameter,
     scheme_id: str,
-    granule_class: dict[str, Any],
+    category_classes: dict[str, dict[str, Any]],
     extension_classes: dict[str, dict[str, Any]],
     controlled_vocabularies: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
-    domain = granule_class if param.group == "core" else extension_classes[param.group]
+    domain = category_classes[CORE_CATEGORIES[param.name]] if param.group == "core" else extension_classes[param.group]
     node: dict[str, Any] = {
         "@id": f"{scheme_id}#{param.name}",
         _TYPE: "rdf:Property",
@@ -392,8 +446,6 @@ def _build_term_node(
         node["unit"] = param.unit
     if param.datatype == "char":
         node["arraysize"] = "*"
-    if param.group == "core":
-        node["category"] = CORE_CATEGORIES[param.name]
     if param.name in controlled_vocabularies:
         node["controlledVocabulary"] = controlled_vocabularies[param.name]
     return node
@@ -403,9 +455,9 @@ def build_epntap_vocabulary_jsonld(base: str, parameters: list[EpnTapParameter])
     """Serialise *parameters* as a JSON-LD RDFS/OWL document describing
     only the EPN-TAP vocabulary itself -- one ``rdf:Property`` term node
     per entry, with just its intrinsic properties (adqlName/ucd/unit/
-    datatype/arraysize/requirement/description), domained on
-    ``EpnTapGranule`` (core parameters) or the relevant extension
-    subclass (see module docstring). No STAC mapping information: see
+    datatype/arraysize/requirement/description), domained on its own
+    category subclass (core parameters) or extension subclass (see
+    module docstring). No STAC mapping information: see
     :func:`pdssp_ontology.stac_epntap_mapping.build_stac_epntap_mapping_jsonld`
     for that, in its own named graph.
 
@@ -422,18 +474,20 @@ def build_epntap_vocabulary_jsonld(base: str, parameters: list[EpnTapParameter])
     """
     scheme_id = f"{base}/vocabulary"
     granule_class = _build_granule_class_node()
+    category_classes = _build_category_subclass_nodes(granule_class)
     extension_classes = _build_extension_subclass_nodes(granule_class)
     controlled_vocabularies = _build_controlled_vocabulary_nodes(scheme_id)
 
     graph: list[dict[str, Any]] = [
         _build_ontology_node(scheme_id),
         granule_class,
+        *category_classes.values(),
         *extension_classes.values(),
         *_build_property_nodes(),
         *controlled_vocabularies.values(),
         *_build_controlled_vocabulary_concept_nodes(scheme_id),
         *(
-            _build_term_node(param, scheme_id, granule_class, extension_classes, controlled_vocabularies)
+            _build_term_node(param, scheme_id, category_classes, extension_classes, controlled_vocabularies)
             for param in parameters
         ),
     ]
