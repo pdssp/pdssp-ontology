@@ -111,7 +111,12 @@ _EPNTAP_EXTENSION_SUBCLASSES: list[tuple[str, str]] = [
     ("ExperimentalSpectroscopyGranule", "An EpnTapGranule that also carries the Experimental Spectroscopy extension's parameters."),
     ("ApisGranule", "An EpnTapGranule that also carries the APIS extension's parameters."),
     ("EventsGranule", "An EpnTapGranule that also carries the Events extension's parameters."),
-    ("OtherExtensionGranule", "An EpnTapGranule carrying a parameter from the specification's unnamed '2.3.8 Other extensions'."),
+    (
+        "OtherExtensionGranule",
+        "An EpnTapGranule carrying a parameter present in the specification's own extension block "
+        "but not named in any of its numbered extension subsections (the spec's own '2.3.8 Other "
+        "extensions').",
+    ),
 ]
 
 #: ``(local name, comment)`` for every EPN-TAP *core* category subclass
@@ -142,13 +147,34 @@ _EPNTAP_CORE_CATEGORY_SUBCLASSES: list[tuple[str, str]] = [
 #: names/comments mirror :mod:`pdssp_ontology.stac_vocabulary`'s own
 #: ``_CATEGORY_CLASS_NAMES``/:data:`pdssp_ontology.stac_model.CATEGORIES`.
 _STAC_CATEGORY_SUBCLASSES: list[tuple[str, str, str]] = [
-    ("StacIdentification", "StacItem", "Descriptive/identification metadata about the product."),
+    (
+        "StacIdentification",
+        "StacItem",
+        "Descriptive/identification metadata about the product (title, provenance actors, "
+        "classification, version, ...).",
+    ),
     ("StacTemporalProperty", "StacItem", "A date or time associated with the product."),
-    ("StacPhysicalProperty", "StacItem", "A physical/observational measurement."),
-    ("StacSpatialProperty", "StacItem", "A spatial/geometric property."),
-    ("StacProvenanceProperty", "StacItem", "Describes how the product was produced."),
+    (
+        "StacPhysicalProperty",
+        "StacItem",
+        "A physical/observational measurement (angle, orbit, solar geometry, map scale, ...).",
+    ),
+    (
+        "StacSpatialProperty",
+        "StacItem",
+        "A spatial/geometric property (target body, centroid, coordinate reference system).",
+    ),
+    (
+        "StacProvenanceProperty",
+        "StacItem",
+        "Describes how the product was produced (mapping lineage, software).",
+    ),
     ("StacFileProperty", "StacAsset", "A property of an asset file rather than of the item itself."),
-    ("StacResidualProperty", "StacItem", "An unmapped source field surfaced verbatim."),
+    (
+        "StacResidualProperty",
+        "StacItem",
+        "An unmapped PDS3 field surfaced verbatim, outside the fixed term list.",
+    ),
 ]
 
 #: ``(local name, domain class, comment)`` for every STAC extension (or
@@ -240,6 +266,10 @@ def _build_class_nodes() -> dict[str, dict[str, Any]]:
     return nodes
 
 
+#: Every builder below prefixes its comment with "Core category: "/
+#: "Extension: " so facetKind is visible without a SPARQL query --
+#: Widoco never renders custom annotation properties like facetKind
+#: itself (confirmed empirically), only rdfs:comment.
 def _build_epntap_extension_subclass_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     granule = classes["EpnTapGranule"]
     return [
@@ -248,7 +278,7 @@ def _build_epntap_extension_subclass_nodes(classes: dict[str, dict[str, Any]]) -
             _TYPE: _OWL_CLASS,
             "name": name,
             "label": name,
-            "comment": comment,
+            "comment": f"Extension: {comment}",
             "subClassOf": granule,
             "facetKind": "extension",
         }
@@ -264,7 +294,7 @@ def _build_epntap_core_category_subclass_nodes(classes: dict[str, dict[str, Any]
             _TYPE: _OWL_CLASS,
             "name": name,
             "label": name,
-            "comment": comment,
+            "comment": f"Core category: {comment}",
             "subClassOf": granule,
             "facetKind": "core",
         }
@@ -279,7 +309,7 @@ def _build_stac_category_subclass_nodes(classes: dict[str, dict[str, Any]]) -> l
             _TYPE: _OWL_CLASS,
             "name": name,
             "label": name,
-            "comment": comment,
+            "comment": f"Core category: {comment}",
             "subClassOf": classes[domain],
             "facetKind": "core",
         }
@@ -294,7 +324,7 @@ def _build_stac_extension_subclass_nodes(classes: dict[str, dict[str, Any]]) -> 
             _TYPE: _OWL_CLASS,
             "name": name,
             "label": name,
-            "comment": comment,
+            "comment": f"Extension: {comment}",
             "subClassOf": classes[domain],
             "facetKind": "extension",
         }

@@ -317,7 +317,11 @@ def _build_category_subclass_nodes(stac_classes: dict[str, dict[str, Any]]) -> d
             _TYPE: _OWL_CLASS,
             "name": class_name,
             "label": class_name,
-            "comment": CATEGORIES[category][0],
+            # The "Core category: " prefix makes facetKind visible without
+            # a SPARQL query -- Widoco never renders custom annotation
+            # properties like facetKind itself (confirmed empirically),
+            # only rdfs:comment.
+            "comment": f"Core category: {CATEGORIES[category][0]}",
             "subClassOf": stac_classes[_SCOPE_TO_STAC_CLASS[CATEGORIES[category][1]]],
             "facetKind": "core",
         }
@@ -336,7 +340,7 @@ def _build_extension_subclass_nodes(stac_classes: dict[str, dict[str, Any]]) -> 
             _TYPE: _OWL_CLASS,
             "name": class_name,
             "label": class_name,
-            "comment": comment,
+            "comment": f"Extension: {comment}",
             "subClassOf": stac_classes[_SCOPE_TO_STAC_CLASS[scope]],
             "facetKind": "extension",
         }

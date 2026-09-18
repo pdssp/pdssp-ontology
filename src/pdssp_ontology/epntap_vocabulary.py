@@ -386,7 +386,13 @@ def _build_extension_subclass_nodes(granule_class: dict[str, Any]) -> dict[str, 
             _TYPE: _OWL_CLASS,
             "name": class_name,
             "label": class_name,
-            "comment": comment,
+            # The "Extension: " prefix makes facetKind visible without a
+            # SPARQL query -- Widoco renders rdfs:comment prominently but
+            # never renders custom annotation properties like facetKind
+            # itself (confirmed empirically), so this is the only way a
+            # reader browsing the generated docs can tell core from
+            # extension at a glance.
+            "comment": f"Extension: {comment}",
             "subClassOf": granule_class,
             "facetKind": "extension",
         }
@@ -406,7 +412,7 @@ def _build_category_subclass_nodes(granule_class: dict[str, Any]) -> dict[str, d
             _TYPE: _OWL_CLASS,
             "name": class_name,
             "label": class_name,
-            "comment": comment,
+            "comment": f"Core category: {comment}",
             "subClassOf": granule_class,
             "facetKind": "core",
         }
