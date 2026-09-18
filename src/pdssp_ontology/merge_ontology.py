@@ -60,6 +60,7 @@ from pathlib import Path
 from rdflib import Dataset, Graph, URIRef
 
 from pdssp_ontology import epntap_seed, stac_seed
+from pdssp_ontology.epntap_spec import EPNTAP_SPEC_PARAMETERS
 from pdssp_ontology.epntap_vocabulary import build_epntap_vocabulary_jsonld
 from pdssp_ontology.stac_epntap_mapping import build_stac_epntap_mapping_jsonld
 from pdssp_ontology.stac_model import get_vocabulary_document
@@ -76,10 +77,13 @@ def build_stac_graph_jsonld(base: str) -> dict:
 
 
 def build_epntap_graph_jsonld(base: str) -> dict:
-    """Render this package's own EPN-TAP vocabulary as JSON-LD -- no STAC
-    mapping information (see :func:`build_stac_epntap_mapping_graph_jsonld`
-    for that, in its own graph)."""
-    return build_epntap_vocabulary_jsonld(base, epntap_seed.EPNTAP_COLUMNS)
+    """Render this package's own EPN-TAP vocabulary as JSON-LD: the full
+    EPN-TAP2/REC-2.0 parameter list (:mod:`.epntap_spec`), not just the
+    subset :data:`pdssp_ontology.epntap_seed.EPNTAP_COLUMNS` maps to STAC.
+    No STAC mapping information here (see
+    :func:`build_stac_epntap_mapping_graph_jsonld` for that, in its own
+    graph)."""
+    return build_epntap_vocabulary_jsonld(base, EPNTAP_SPEC_PARAMETERS)
 
 
 def build_stac_epntap_mapping_graph_jsonld(base: str) -> dict:

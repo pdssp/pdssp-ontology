@@ -1,25 +1,28 @@
-"""EPN-TAP vocabulary: JSON-LD rendering of a column list's own,
-intrinsic shape -- independent of any STAC mapping.
+"""EPN-TAP vocabulary: JSON-LD rendering of the full IVOA parameter list.
 ===================================================================
-One ``EpnTapColumn`` individual per :class:`~pdssp_ontology.model.ColumnMapping`
-(or any structurally compatible object -- see :mod:`.vocabulary`'s old
-docstring for the duck-typing rationale, unchanged here), carrying only
-what EPN-TAP itself says about that column: its ADQL name, UCD, unit,
-datatype, arraysize, EPN-TAP2-mandatory flag and description. Nothing
-about *how* it is populated from STAC lives here -- that's
-:mod:`.stac_epntap_mapping`'s job, in its own, separately evolving named
-graph (see this package's README for why the two are split: this
-vocabulary rarely changes: EPN-TAP2's column set is a fixed IVOA
+One ``EpnTapColumn`` individual per :class:`~pdssp_ontology.epntap_spec.EpnTapParameter`
+(see that module for the full EPN-TAP2/REC-2.0 transcription), carrying
+only what the specification itself says about that column: its ADQL
+name, UCD, unit, datatype, spec requirement tier and description.
+Nothing about *how* (or whether) it is populated from STAC lives here --
+that's :mod:`.stac_epntap_mapping`'s job, in its own, separately evolving
+named graph (see this package's README for why the two are split: this
+vocabulary rarely changes -- EPN-TAP2's column set is a fixed IVOA
 specification; the mapping to STAC changes far more often as the STAC
 side gains fields or the mapping is refined).
+
+Any column also present in :data:`pdssp_ontology.epntap_seed.EPNTAP_COLUMNS`
+(the STAC-mappable subset) shares the same ``name``, so it mints the
+*same* IRI here as :mod:`.stac_epntap_mapping` references for its
+``mappedFrom`` target -- the two lists agree by convention on that shared
+key, not by one importing the other.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from pdssp_ontology._shared import ColumnMapping
-from pdssp_ontology.model import EPNTAP_MANDATORY_COLUMNS
+from pdssp_ontology.epntap_spec import EpnTapParameter
 
 _TYPE = "@type"
 _OWL_CLASS = "owl:Class"
@@ -41,16 +44,30 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "unit": "pdssp:unit",
     "datatype": "pdssp:datatype",
     "arraysize": "pdssp:arraysize",
-    "mandatory": "pdssp:mandatory",
+    "requirement": "pdssp:requirement",
+    "extensionGroup": "pdssp:extensionGroup",
 }
 
 _DATA_PROPERTIES: list[tuple[str, str, str]] = [
     ("adqlName", "xsd:string", "The ADQL/EPN-TAP column name."),
     ("ucd", "xsd:string", "IVOA Unified Content Descriptor for this column."),
     ("unit", "xsd:string", "VOTable unit for this column's values."),
-    ("datatype", "xsd:string", "VOTable datatype (char, double, ...)."),
+    ("datatype", "xsd:string", "VOTable datatype (char, int, double)."),
     ("arraysize", "xsd:string", "VOTable arraysize (e.g. '*' for a variable-length string)."),
-    ("mandatory", "xsd:boolean", "True for one of EPN-TAP2's ten always-non-null columns."),
+    (
+        "requirement",
+        "xsd:string",
+        "EPN-TAP2's own three-tier requirement: value_required (column and "
+        "value both mandatory), column_required (column mandatory, value may "
+        "be null), or optional.",
+    ),
+    (
+        "extensionGroup",
+        "xsd:string",
+        "Which EPN-TAP2 table this column belongs to: core, or an optional "
+        "extension (solar_system_objects, maps, particle_spectroscopy, "
+        "contributive_works, experimental_spectroscopy, apis, events).",
+    ),
 ]
 
 
@@ -60,7 +77,7 @@ def _build_ontology_node(scheme_id: str) -> dict[str, Any]:
         _TYPE: "owl:Ontology",
         "name": "EPN-TAP vocabulary",
         "dcterms:title": "EPN-TAP vocabulary",
-        "dcterms:source": "https://ivoa.net/documents/EPNTAP/",
+        "dcterms:source": "https://www.ivoa.net/documents/EPNTAP/20220822/REC-EPNTAP-2.0.html",
     }
 
 
@@ -70,7 +87,7 @@ def _build_class_node() -> dict[str, Any]:
         _TYPE: _OWL_CLASS,
         "name": _EPNTAP_COLUMN_CLASS,
         "label": _EPNTAP_COLUMN_CLASS,
-        "comment": "One EPN-TAP/ADQL column this service can produce.",
+        "comment": "One EPN-TAP2 (epn_core, or one of its optional extension tables) column.",
     }
 
 
@@ -91,32 +108,34 @@ def _build_property_nodes(column_class: dict[str, Any]) -> list[dict[str, Any]]:
     return nodes
 
 
-def _build_column_node(col: ColumnMapping, scheme_id: str) -> dict[str, Any]:
+def _build_column_node(param: EpnTapParameter, scheme_id: str) -> dict[str, Any]:
     node: dict[str, Any] = {
-        "@id": f"{scheme_id}#{col.adql_name}",
+        "@id": f"{scheme_id}#{param.name}",
         _TYPE: f"pdssp:{_EPNTAP_COLUMN_CLASS}",
-        "name": col.adql_name,
-        "label": col.adql_name,
-        "adqlName": col.adql_name,
-        "datatype": col.datatype,
-        "mandatory": col.adql_name.lower() in {n.lower() for n in EPNTAP_MANDATORY_COLUMNS},
+        "name": param.name,
+        "label": param.name,
+        "adqlName": param.name,
+        "datatype": param.datatype,
+        "requirement": param.requirement,
+        "extensionGroup": param.group,
     }
-    if col.description:
-        node["comment"] = col.description
-    if col.ucd:
-        node["ucd"] = col.ucd
-    if col.unit:
-        node["unit"] = col.unit
-    if col.arraysize:
-        node["arraysize"] = col.arraysize
+    if param.description:
+        node["comment"] = param.description
+    if param.ucd:
+        node["ucd"] = param.ucd
+    if param.unit:
+        node["unit"] = param.unit
+    if param.datatype == "char":
+        node["arraysize"] = "*"
     return node
 
 
-def build_epntap_vocabulary_jsonld(base: str, columns: list[ColumnMapping]) -> dict[str, Any]:
-    """Serialise *columns* as a JSON-LD RDFS/OWL document describing only
-    the EPN-TAP vocabulary itself -- one ``EpnTapColumn`` node per entry,
-    with just its intrinsic properties (adqlName/ucd/unit/datatype/
-    arraysize/mandatory/description). No STAC mapping information: see
+def build_epntap_vocabulary_jsonld(base: str, parameters: list[EpnTapParameter]) -> dict[str, Any]:
+    """Serialise *parameters* as a JSON-LD RDFS/OWL document describing
+    only the EPN-TAP vocabulary itself -- one ``EpnTapColumn`` node per
+    entry, with just its intrinsic properties (adqlName/ucd/unit/datatype/
+    arraysize/requirement/extensionGroup/description). No STAC mapping
+    information: see
     :func:`pdssp_ontology.stac_epntap_mapping.build_stac_epntap_mapping_jsonld`
     for that, in its own named graph.
 
@@ -124,11 +143,12 @@ def build_epntap_vocabulary_jsonld(base: str, columns: list[ColumnMapping]) -> d
     ----------
     base:
         Public base URL used to mint each column's ``@id`` (this
-        package's own ``{base}/epntap`` when building the graph
+        package's own ``{base}/epn-tap`` when building the graph
         :mod:`.merge_ontology` loads into Fuseki).
-    columns:
-        Any list of objects satisfying the same structural shape as
-        :class:`pdssp_ontology.model.ColumnMapping`.
+    parameters:
+        Typically :data:`pdssp_ontology.epntap_spec.EPNTAP_SPEC_PARAMETERS`
+        (the full IVOA transcription), or any list of
+        :class:`~pdssp_ontology.epntap_spec.EpnTapParameter`.
     """
     scheme_id = f"{base}/vocabulary"
     column_class = _build_class_node()
@@ -137,6 +157,6 @@ def build_epntap_vocabulary_jsonld(base: str, columns: list[ColumnMapping]) -> d
         _build_ontology_node(scheme_id),
         column_class,
         *_build_property_nodes(column_class),
-        *(_build_column_node(col, scheme_id) for col in columns),
+        *(_build_column_node(param, scheme_id) for param in parameters),
     ]
     return {"@context": _JSONLD_CONTEXT, "@graph": graph}
