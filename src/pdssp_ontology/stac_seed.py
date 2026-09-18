@@ -204,6 +204,62 @@ _ALGO_VRT = (
 #: produce. ``pds3_fields``/``defined_in``/``controlled_vocabulary`` trace
 #: the term to its source field(s) and the ODE-plugin code that builds it.
 TERMS: list[dict] = [
+    # STAC Item envelope fields -- built directly in item_mapper.py, not
+    # via _common_metadata/_extra_props (those only build `properties.*`),
+    # so they're not "properties.<name>" paths the way every other term
+    # below is: EPN-TAP columns reading them (granule_uid <- id,
+    # granule_gid <- collection, s_region/c1min/... <- geometry) used to
+    # fall back to an anonymous StacProperty stub in the mapping graph
+    # for lack of a documented term to point at -- see
+    # stac_epntap_mapping._match_stac_term's own bare-path matching for
+    # how these are now recognized despite having no "properties." prefix.
+    {
+        "term": "id",
+        "category": "hasIdentification",
+        "namespace": None,
+        "type": "string",
+        "description": "The Item's own unique identifier.",
+        "pds3_fields": [],
+        "defined_in": "item_mapper.py",
+        "scope": "item",
+    },
+    {
+        "term": "collection",
+        "category": "hasIdentification",
+        "namespace": None,
+        "type": "string",
+        "description": "The id of the STAC Collection this Item belongs to.",
+        "pds3_fields": [],
+        "defined_in": "item_mapper.py",
+        "scope": "item",
+    },
+    {
+        "term": "geometry",
+        "category": "hasSpatialProperty",
+        "namespace": None,
+        "type": "string",
+        "description": "The Item's footprint as GeoJSON.",
+        "pds3_fields": [],
+        "defined_in": "item_mapper.py",
+        "scope": "item",
+    },
+    {
+        "term": "assets",
+        "category": "hasIdentification",
+        "namespace": None,
+        "type": "string",
+        "description": "The Item's own asset dictionary (a converter extracts one specific asset's href/role from it).",
+        "pds3_fields": [],
+        "note": (
+            "Categorized hasIdentification for lack of a better fit: this is a "
+            "structural/containment field (the same relationship the hasAsset "
+            "object property already expresses between StacItem and StacAsset), "
+            "not a property value like the other terms here -- flagged as a "
+            "judgment call, not a confident categorization."
+        ),
+        "defined_in": "item_mapper.py",
+        "scope": "item",
+    },
     {
         "term": "title",
         "category": "hasIdentification",

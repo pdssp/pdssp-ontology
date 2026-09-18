@@ -84,19 +84,37 @@ def _slug(text: str) -> str:
     return _NOT_IDENTIFIER.sub("_", text).strip("_") or "root"
 
 
+#: Matches a collection-scoped ``providers[role=<x>].name`` path (see
+#: ``epntap2cql2.discovery.resolve_collection_path``'s own filter-path
+#: syntax) -- these all index into the single, already-documented
+#: ``providers`` term (a role-filtered element's own ``name``, not a
+#: distinct term of its own).
+_PROVIDERS_PATH = re.compile(r"^providers\[.*\]\.name$")
+
+
 def _match_stac_term(path: str) -> str | None:
     """Return the bare STAC term name *path* (an EPN-TAP column's
-    ``stac_path``) refers to, if it is a ``properties.<name>`` path
-    documented in :data:`pdssp_ontology.stac_seed.TERMS` -- ``None`` for
-    anything else (a STAC core field, a collection path, ...), which gets
-    a lightweight local reference node instead (see this module's own
-    docstring).
+    ``stac_path``/``collection_path``) refers to, if it is documented in
+    :data:`pdssp_ontology.stac_seed.TERMS` -- ``None`` for anything else,
+    which gets a lightweight local reference node instead (see this
+    module's own docstring). Three shapes are recognized:
+
+    - ``properties.<name>`` -- the common case, most terms.
+    - ``providers[role=...].name`` -- a collection-scoped filter into the
+      ``providers`` term (confirmed empirically this used to fall
+      through to an anonymous stub despite ``providers`` already being
+      documented, purely because it isn't spelled ``properties.providers``).
+    - a bare name (e.g. ``id``, ``collection``, ``geometry``) -- a STAC
+      Item envelope field, built outside ``properties`` entirely (see
+      ``stac_seed.TERMS``'s own comment on its first four entries).
     """
     prefix = "properties."
-    if not path.startswith(prefix):
-        return None
-    name = path[len(prefix) :]
-    return name if name in _DOCUMENTED_STAC_TERMS else None
+    if path.startswith(prefix):
+        name = path[len(prefix) :]
+        return name if name in _DOCUMENTED_STAC_TERMS else None
+    if _PROVIDERS_PATH.match(path):
+        return "providers" if "providers" in _DOCUMENTED_STAC_TERMS else None
+    return path if path in _DOCUMENTED_STAC_TERMS else None
 
 
 def _build_ontology_node(scheme_id: str, epntap_base: str, stac_base: str) -> dict[str, Any]:
