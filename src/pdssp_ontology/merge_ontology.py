@@ -27,7 +27,7 @@ default graph, for Widoco, which does not distinguish named graphs).
 
 Usage::
 
-    uv run python -m pdssp_ontology.merge_ontology --base https://w3id.org/pdssp/stac-epntap
+    uv run python -m pdssp_ontology.merge_ontology --base https://pdssp.github.io/pdssp-ontology
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ from pdssp_ontology.stac_model import get_vocabulary_document
 from pdssp_ontology.stac_vocabulary import build_vocabulary_jsonld as build_stac_jsonld
 from pdssp_ontology.vocabulary import build_vocabulary_jsonld as build_epntap_jsonld
 
-DEFAULT_BASE = "https://w3id.org/pdssp/stac-epntap"
+DEFAULT_BASE = "https://pdssp.github.io/pdssp-ontology"
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "development"
 
 

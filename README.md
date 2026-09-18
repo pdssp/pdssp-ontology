@@ -43,7 +43,7 @@ later pass.
 ## Regenerate the ontology
 
 ```bash
-uv run python -m pdssp_ontology.merge_ontology --base https://w3id.org/pdssp/stac-epntap
+uv run python -m pdssp_ontology.merge_ontology --base https://pdssp.github.io/pdssp-ontology
 ```
 
 Writes `development/ontology.trig` (named-graph-aware; what Fuseki loads)

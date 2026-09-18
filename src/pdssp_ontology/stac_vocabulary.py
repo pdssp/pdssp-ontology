@@ -48,7 +48,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "dcterms": "http://purl.org/dc/terms/",
     "prov": "http://www.w3.org/ns/prov#",
     "schema": "http://schema.org/",
-    "pdssp": "https://pdssp.github.io/pdssp_data_model/vocab#",
+    "pdssp": "https://pdssp.github.io/pdssp-ontology/vocab#",
     "name": "schema:name",
     "label": "rdfs:label",
     "comment": "rdfs:comment",

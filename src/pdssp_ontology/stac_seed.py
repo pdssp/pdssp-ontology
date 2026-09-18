@@ -28,7 +28,7 @@ from __future__ import annotations
 PDSSP_DATA_MODEL_SPEC: dict[str, str] = {
     "title": "PDSSP Data Model v1.0.1",
     "url": "https://raw.githubusercontent.com/malapert/pdssp_schema/main/schema.json",
-    "doc_url": "https://pdssp.github.io/pdssp_data_model/",
+    "doc_url": "https://pdssp.github.io/pdssp-ontology/",
     "author": "Jean-Christophe Malapert",
 }
 

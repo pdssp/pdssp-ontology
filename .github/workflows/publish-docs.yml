@@ -31,7 +31,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  BASE: https://w3id.org/pdssp/stac-epntap
+  BASE: https://pdssp.github.io/pdssp-ontology
   WIDOCO_VERSION: "1.4.25"
 
 jobs:
