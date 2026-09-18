@@ -1,19 +1,15 @@
 name: Publish ontology documentation
 
-# Regenerates the merged ontology (this repo's own EPN-TAP data + a live
-# HTTP fetch of ode-stac-proxy's GET /vocabulary -- see
-# src/pdssp_ontology/merge_ontology.py's own docstring for why that's a
-# plain HTTP call and not a Python import: neither ode-stac-proxy nor
-# epntap2cql2 is importable from a public runner, both being hosted on a
-# private GitLab), runs Widoco over it, and publishes the result to
-# GitHub Pages.
+# Regenerates the merged ontology entirely from this repo's own source
+# (src/pdssp_ontology/stac_seed.py + epntap_seed.py -- see
+# merge_ontology.py's own docstring: this package owns the whole ontology,
+# no live third-party service is ever contacted), runs Widoco over it, and
+# publishes the result to GitHub Pages.
 #
 # One-time setup this workflow can't do for you: in this repo's Settings
 # -> Pages, set "Source" to "GitHub Actions".
 #
-# Runs on every push touching the ontology's own source, on a weekly
-# schedule (ode-stac-proxy's live vocabulary can change without any commit
-# here), and on demand.
+# Runs on every push touching the ontology's own source, and on demand.
 
 on:
   push:
@@ -21,8 +17,6 @@ on:
     paths:
       - "src/pdssp_ontology/**"
       - ".github/workflows/publish-docs.yml"
-  schedule:
-    - cron: "0 6 * * 1" # every Monday 06:00 UTC
   workflow_dispatch:
 
 permissions:
@@ -37,8 +31,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  STAC_BASE_URL: https://odestac.staging.stacplanet.pdssp.eu
-  EPNTAP_BASE: https://w3id.org/pdssp/stac-epntap/epntap
+  BASE: https://w3id.org/pdssp/stac-epntap
   WIDOCO_VERSION: "1.4.25"
 
 jobs:
@@ -54,10 +47,7 @@ jobs:
         run: uv sync
 
       - name: Build the merged ontology (development/ontology.ttl)
-        run: |
-          uv run python -m pdssp_ontology.merge_ontology \
-            --stac-base-url "$STAC_BASE_URL" \
-            --epntap-base "$EPNTAP_BASE"
+        run: uv run python -m pdssp_ontology.merge_ontology --base "$BASE"
 
       - name: Set up Java (for Widoco)
         uses: actions/setup-java@v4

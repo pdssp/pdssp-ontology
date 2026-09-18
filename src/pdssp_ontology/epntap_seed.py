@@ -7,16 +7,13 @@ stopped being its own source of truth: that service now fetches its
 ``discovery.columns`` template (and serves ``GET /vocabulary``) from the
 Fuseki-hosted graph :mod:`.merge_ontology` builds *from* this module --
 i.e. this is upstream of ``epntap2cql2`` now, not the other way around.
-This mirrors ``ode_stac_proxy``'s own ``vocabulary.py`` for its PDS3 ->
-STAC mapping (a different, unrelated crosswalk: that one documents where a
-STAC property comes from upstream; this one documents where an EPN-TAP
-column comes from *in* STAC) -- that module stays a live, code-generated
-document owned by that service; :mod:`.merge_ontology` fetches its JSON-LD
-**output over HTTP** rather than importing ``ode_stac_proxy`` (or
-``epntap2cql2``) as Python code, specifically so this package -- the
-authoring/CI side -- has no dependency on either service's source
-repository (both privately hosted; see :mod:`.merge_ontology`'s own
-docstring for the full reasoning).
+This mirrors :mod:`.stac_seed`'s own move for the PDS3 -> STAC crosswalk
+(a different, unrelated one: that one documents where a STAC property
+comes from upstream; this one documents where an EPN-TAP column comes
+from *in* STAC) -- both now live here, rendered locally by
+:mod:`.merge_ontology`, so this package has no dependency on either
+consuming service's source repository (both privately hosted; see
+:mod:`.merge_ontology`'s own docstring for the full reasoning).
 
 Uses this package's own :class:`pdssp_ontology.model.ColumnMapping` (not
 ``epntap2cql2.settings.ColumnMapping``) and its own
