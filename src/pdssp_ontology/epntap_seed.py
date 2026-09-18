@@ -10,34 +10,33 @@ i.e. this is upstream of ``epntap2cql2`` now, not the other way around.
 This mirrors ``ode_stac_proxy``'s own ``vocabulary.py`` for its PDS3 ->
 STAC mapping (a different, unrelated crosswalk: that one documents where a
 STAC property comes from upstream; this one documents where an EPN-TAP
-column comes from *in* STAC) -- that module is *not* moved here, since it
-stays a live, code-generated document owned by that service; only its
-JSON-LD output is consumed by :mod:`.merge_ontology`.
+column comes from *in* STAC) -- that module stays a live, code-generated
+document owned by that service; :mod:`.merge_ontology` fetches its JSON-LD
+**output over HTTP** rather than importing ``ode_stac_proxy`` (or
+``epntap2cql2``) as Python code, specifically so this package -- the
+authoring/CI side -- has no dependency on either service's source
+repository (both privately hosted; see :mod:`.merge_ontology`'s own
+docstring for the full reasoning).
 
-Data only -- deliberately *not* duplicating
-``epntap2cql2.vocabulary.build_vocabulary_jsonld`` (the JSON-LD-building
-logic): :mod:`.merge_ontology` imports that function directly from
-``epntap2cql2`` and calls it with :data:`EPNTAP_COLUMNS`, so the rendering
-code that produces this data's JSON-LD shape exists in exactly one place,
-regardless of which repo ends up calling it.
+Uses this package's own :class:`pdssp_ontology.model.ColumnMapping` (not
+``epntap2cql2.settings.ColumnMapping``) and its own
+:func:`pdssp_ontology.vocabulary.build_vocabulary_jsonld` for the same
+reason -- see both modules' docstrings.
 
-Every ``to_stac``/``from_stac`` converter name is expected to resolve
-against ``epntap2cql2.converters.CONVERTERS`` -- see
-:class:`epntap2cql2.settings.ColumnMapping`'s own validation for that
-check (``epntap2cql2`` remains a dependency of this module purely for that
-pydantic model, a meaningful fact about that service's runtime shape).
-Each converter is also cited by its own dereferenceable source URL (see
-:mod:`.merge_ontology`), since every converter but
-``get_datalink_url_for_item`` lives in the standalone `converters
-<https://github.com/pdssp/converters>`_ package, one module per function.
+Every ``to_stac``/``from_stac`` converter name here is simply a string:
+this package validates no registry (see :mod:`pdssp_ontology.model`'s own
+note); each is cited by its own dereferenceable source URL when rendered
+to JSON-LD, since every converter but ``get_datalink_url_for_item`` lives
+in the standalone `converters <https://github.com/pdssp/converters>`_
+package, one module per function.
 """
 
 from __future__ import annotations
 
-from epntap2cql2.settings import ColumnMapping
+from pdssp_ontology.model import ColumnMapping
 
 #: Where the shared, generic converters are published, one module per
-#: function (see :mod:`epntap2cql2.converters`'s own docstring).
+#: function.
 CONVERTERS_REPO_URL = "https://github.com/pdssp/converters"
 CONVERTERS_REF = "main"
 

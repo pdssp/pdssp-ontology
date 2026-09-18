@@ -10,14 +10,8 @@ requires-python = ">=3.12"
 dependencies = [
     "rdflib>=7.0.0",
     "httpx>=0.28.1",
-    "epntap2cql2",
-    "ode_stac_proxy",
+    "pydantic>=2.13.5",
 ]
-
-# TODO: switch to the published git URLs once these are pushed.
-[tool.uv.sources]
-epntap2cql2 = { path = "../epntap2cql2" }
-ode_stac_proxy = { path = "../ode-stac-proxy" }
 
 # ── Build ────────────────────────────────────────────────────────────────────
 [build-system]

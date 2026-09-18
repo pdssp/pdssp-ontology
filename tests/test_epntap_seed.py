@@ -1,4 +1,4 @@
-from epntap2cql2.settings import EPNTAP_MANDATORY_COLUMNS
+from pdssp_ontology.model import EPNTAP_MANDATORY_COLUMNS
 
 from pdssp_ontology.epntap_seed import EPNTAP_COLUMNS
 
