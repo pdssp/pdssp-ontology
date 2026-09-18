@@ -125,11 +125,31 @@ jobs:
           cp site/mappings/pdssp-stac-epn-tap/index-en.html site/mappings/pdssp-stac-epn-tap/index.html
           cp site/vocab/index-en.html site/vocab/index.html
 
-      # The two vocabulary named-graph IRIs merge_ontology.py mints
-      # (.../pdssp-stac/vocabulary, .../epn-tap/vocabulary) have one path
-      # segment ("vocabulary") beyond their own site directory -- a
-      # redirect to that vocabulary's own Widoco/WebVOWL page resolves
-      # them instead of 404ing.
+      # Widoco has no notion that pdssp:X (e.g. pdssp:EpnTapGranule,
+      # referenced from the pdssp-stac/epn-tap/mappings sites but *defined*
+      # on the separate vocab site) lives on another page it itself
+      # generated -- for any class/property outside the file it is
+      # currently documenting, it always emits a same-page anchor
+      # (href="#<full external IRI>"), which is only ever correct for a
+      # genuinely external, undocumented resource. Rewritten here into a
+      # real link to where that term is actually documented.
+      - name: Fix cross-site links to the shared vocabulary
+        run: |
+          grep -rl 'href="#https://pdssp.github.io/pdssp-ontology/vocab#' site/ | while read -r f; do
+            sed -i 's|href="#https://pdssp\.github\.io/pdssp-ontology/vocab#\([^"]*\)"|href="https://pdssp.github.io/pdssp-ontology/vocab/index-en.html#\1"|g' "$f"
+          done
+
+      # The named-graph IRIs merge_ontology.py mints for the two
+      # vocabularies (.../pdssp-stac/vocabulary, .../epn-tap/vocabulary)
+      # have one path segment ("vocabulary") beyond their own site
+      # directory -- a redirect to that vocabulary's own Widoco/WebVOWL
+      # page resolves them instead of 404ing. A meta-refresh alone drops
+      # the original URL's fragment (e.g. a specific term's own
+      # #access_estsize anchor), silently landing every such link on the
+      # top of the page instead of that term -- the inline script fixes
+      # that for the common case (JS enabled) by carrying it over
+      # explicitly; the meta-refresh stays as a no-JS fallback (which does
+      # lose the fragment, an accepted, minor degradation).
       - name: Add named-graph IRI redirects
         run: |
           mkdir -p site/pdssp-stac/vocabulary site/epn-tap/vocabulary
@@ -139,6 +159,7 @@ jobs:
           <html lang="en">
           <head>
             <meta charset="utf-8">
+            <script>location.replace("../index-en.html" + location.hash);</script>
             <meta http-equiv="refresh" content="0; url=../index-en.html">
             <link rel="canonical" href="../index-en.html">
             <title>Redirecting...</title>
