@@ -183,18 +183,23 @@ def _build_property_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, 
     return nodes
 
 
-def _collect_stac_property_nodes(columns: list[ColumnMapping]) -> dict[str, dict[str, Any]]:
+def _collect_stac_property_nodes(columns: list[ColumnMapping], mapping_base: str) -> dict[str, dict[str, Any]]:
     """Lightweight reference nodes for paths with no documented
     stac/vocabulary term (see :func:`_match_stac_term`) -- documented
     terms are linked directly by their real IRI instead, not duplicated
-    here."""
+    here. Minted under *mapping_base* (this graph's own IRI, where they
+    are actually published), not the shared ``pdssp:`` namespace -- that
+    one is for shared *class/property definitions* only (see
+    :mod:`.shared_vocab`); an individual minted there instead would be a
+    dangling reference, since nothing is ever published to resolve it.
+    """
     nodes: dict[str, dict[str, Any]] = {}
     for col in columns:
         path = col.stac_path if col.stac_path is not None else col.collection_path
         if path is None or path in nodes or _match_stac_term(path) is not None:
             continue
         nodes[path] = {
-            "@id": f"pdssp:{_STAC_PROPERTY_CLASS}_{_slug(path)}",
+            "@id": f"{mapping_base}#{_STAC_PROPERTY_CLASS}_{_slug(path)}",
             _TYPE: f"pdssp:{_STAC_PROPERTY_CLASS}",
             "name": path,
             "label": path,
@@ -219,8 +224,10 @@ _LOCAL_CONVERTER_SOURCE: dict[str, str] = {
 
 
 def _collect_converter_nodes(
-    columns: list[ColumnMapping], *, converters_repo: str, converters_ref: str
+    columns: list[ColumnMapping], mapping_base: str, *, converters_repo: str, converters_ref: str
 ) -> dict[str, dict[str, Any]]:
+    """Minted under *mapping_base* (see :func:`_collect_stac_property_nodes`
+    for why, not the shared ``pdssp:`` namespace)."""
     nodes: dict[str, dict[str, Any]] = {}
     for col in columns:
         for name in (col.to_stac, col.from_stac):
@@ -230,7 +237,7 @@ def _collect_converter_nodes(
                 name, f"{converters_repo}/blob/{converters_ref}/src/converters/{name}.py"
             )
             nodes[name] = {
-                "@id": f"pdssp:{_CONVERTER_CLASS}_{name}",
+                "@id": f"{mapping_base}#{_CONVERTER_CLASS}_{name}",
                 _TYPE: f"pdssp:{_CONVERTER_CLASS}",
                 "name": name,
                 "label": name,
@@ -304,8 +311,10 @@ def build_stac_epntap_mapping_jsonld(
         A list of objects satisfying the same structural shape as
         :class:`pdssp_ontology.model.ColumnMapping`.
     """
-    stac_properties = _collect_stac_property_nodes(columns)
-    converters = _collect_converter_nodes(columns, converters_repo=converters_repo, converters_ref=converters_ref)
+    stac_properties = _collect_stac_property_nodes(columns, mapping_base)
+    converters = _collect_converter_nodes(
+        columns, mapping_base, converters_repo=converters_repo, converters_ref=converters_ref
+    )
     classes = _build_class_nodes()
 
     graph: list[dict[str, Any]] = [

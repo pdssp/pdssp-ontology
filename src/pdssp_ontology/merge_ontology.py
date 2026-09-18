@@ -32,11 +32,16 @@ for why):
   (which STAC path/converter feeds each EPN-TAP column, cross-linking
   back to both vocabularies above). Published at
   ``{base}/mappings/pdssp-stac-epn-tap/``.
+- ``<{base}/vocab>``                           <- :mod:`.shared_vocab`
+  (the classes/properties the three graphs above mint under the shared
+  ``pdssp:`` namespace, e.g. ``StacItem``/``EpnTapGranule``/``mappedFrom``
+  -- published here so those IRIs actually resolve instead of 404ing).
+  Published at ``{base}/vocab/``.
 
 ``{base}/`` itself is a plain catalogue page listing the above -- never a
-fourth, merged ontology; each data model's ontology stays independently
-dereferenceable, per this package's own design principle (see the
-README).
+merged ontology of its own; each data model's ontology stays
+independently dereferenceable, per this package's own design principle
+(see the README).
 
 Writes ``development/ontology.trig`` (the named-graph-aware source of
 truth Fuseki loads), a flattened ``development/ontology.ttl`` (single
@@ -62,6 +67,7 @@ from rdflib import Dataset, Graph, URIRef
 from pdssp_ontology import epntap_seed, stac_seed
 from pdssp_ontology.epntap_spec import EPNTAP_SPEC_PARAMETERS
 from pdssp_ontology.epntap_vocabulary import build_epntap_vocabulary_jsonld
+from pdssp_ontology.shared_vocab import build_shared_vocab_jsonld
 from pdssp_ontology.stac_epntap_mapping import build_stac_epntap_mapping_jsonld
 from pdssp_ontology.stac_model import get_vocabulary_document
 from pdssp_ontology.stac_vocabulary import build_vocabulary_jsonld as build_stac_jsonld
@@ -100,13 +106,16 @@ def build_stac_epntap_mapping_graph_jsonld(base: str) -> dict:
 
 
 def build_dataset(base: str = DEFAULT_BASE) -> Dataset:
-    """Return a three-named-graph :class:`~rdflib.Dataset`: one graph per
-    vocabulary this package authors, plus one for the mapping between
-    them, each named after its own ontology IRI.
+    """Return a four-named-graph :class:`~rdflib.Dataset`: one graph per
+    vocabulary this package authors, one for the mapping between them,
+    and one for the shared ``pdssp:`` classes/properties those three
+    reference by IRI (see :mod:`.shared_vocab`'s own docstring for why
+    that graph exists), each named after its own ontology IRI.
     """
     stac_base = f"{base}/pdssp-stac"
     epntap_base = f"{base}/epn-tap"
     mapping_iri = f"{base}/mappings/pdssp-stac-epn-tap"
+    vocab_iri = f"{base}/vocab"
 
     dataset = Dataset()
     dataset.graph(URIRef(f"{stac_base}/vocabulary")).parse(
@@ -117,6 +126,9 @@ def build_dataset(base: str = DEFAULT_BASE) -> Dataset:
     )
     dataset.graph(URIRef(mapping_iri)).parse(
         data=json.dumps(build_stac_epntap_mapping_graph_jsonld(base)), format="json-ld"
+    )
+    dataset.graph(URIRef(vocab_iri)).parse(
+        data=json.dumps(build_shared_vocab_jsonld(vocab_iri)), format="json-ld"
     )
     return dataset
 

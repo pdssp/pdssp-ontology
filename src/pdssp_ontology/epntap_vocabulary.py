@@ -5,11 +5,20 @@ One ``rdf:Property`` node per :class:`~pdssp_ontology.epntap_spec.EpnTapParamete
 EPN-TAP parameter (``time_min``, ``granule_uid``, ...) is a vocabulary
 *term* (a keyword this specification defines), not instance data, the
 same way :mod:`.stac_vocabulary` mints one ``rdf:Property`` per STAC
-term rather than individuals of a generic "term" class. Each term node
-also carries the marker type ``pdssp:EpnTapVocabularyTerm`` (mirroring
-``pdssp:StacVocabularyTerm``) so a SPARQL query can select all of them
-directly, and carries its own UCD/unit/datatype/spec requirement
-tier/description as literal annotations.
+term rather than individuals of a generic "term" class. A term is
+selectable in SPARQL via ``?term rdfs:domain pdssp:EpnTapGranule`` --
+not via a second ``rdf:type`` (a marker class) as an earlier version of
+this module did: OWL-punning a resource as both ``rdf:Property`` and an
+individual of some class makes OWL API (and therefore Widoco) treat it
+as ambiguous, and it then silently drops that resource's ``rdfs:label``/
+``rdfs:comment`` from the generated documentation entirely (confirmed
+empirically -- the exact bug behind every term page missing its
+description). The same reasoning is why every custom ``pdssp:``
+property used to annotate a term (``adqlName``, ``ucd``, ...) is
+declared ``owl:AnnotationProperty`` here, not ``owl:DatatypeProperty``/
+``owl:ObjectProperty``: an annotation property carries no OWL DL
+semantics, so using one never triggers this punning, regardless of
+whether its value is a literal or an IRI (like ``partOfExtension``'s).
 
 Nothing about *how* (or whether) a term is populated from STAC lives
 here -- that's :mod:`.stac_epntap_mapping`'s job, in its own, separately
@@ -44,16 +53,6 @@ _OWL_CLASS = "owl:Class"
 #: pattern in ``stac_vocabulary`` only renders because every STAC term
 #: carries a domain, e.g. ``StacItem``).
 _EPNTAP_GRANULE_CLASS = "EpnTapGranule"
-
-#: The additional marker class every term node carries (see this
-#: module's own docstring), mirroring
-#: ``pdssp_ontology.stac_vocabulary``'s ``StacVocabularyTerm``.
-_EPNTAP_VOCAB_TERM_CLASS = "EpnTapVocabularyTerm"
-_EPNTAP_VOCAB_TERM_COMMENT = (
-    "One EPN-TAP2 (epn_core, or one of its optional extension tables) parameter -- "
-    "the marker every term node in this graph carries (on top of rdf:Property), so "
-    "a SPARQL query can select all of them without relying on a less direct signal."
-)
 
 #: A named EPN-TAP2 table this vocabulary's terms are grouped into (core,
 #: or one of its optional extensions) -- a real, dereferenceable
@@ -115,6 +114,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "publisher": "dcterms:publisher",
     "issued": {"@id": "dcterms:issued", _TYPE: "xsd:date"},
     "versionInfo": "owl:versionInfo",
+    "language": "dcterms:language",
     "source": {"@id": "dcterms:source", _TYPE: "@id"},
     "adqlName": "pdssp:adqlName",
     "ucd": "pdssp:ucd",
@@ -141,10 +141,19 @@ _DATA_PROPERTIES: list[tuple[str, str, str]] = [
 ]
 
 
+#: This PDSSP rendering's own metadata -- distinct from the source
+#: specification's own front matter (below): this file (not the IVOA
+#: standard it transcribes) is what has a creator and a version here.
+#: TODO(user): bump as this rendering evolves; 0.1 is its first cut.
+_RENDERING_VERSION = "0.1"
+_RENDERING_CREATOR = "Jean-Christophe Malapert"
+
 #: Front-matter metadata taken directly from the specification's own
 #: title page (version/date/working-group/author list), not invented --
 #: REC-EPNTAP-2.0 states no explicit licence of its own, so none is
-#: asserted here rather than guessing one.
+#: asserted here rather than guessing one. Cited in the description
+#: (dcterms:source is the actual link), not conflated with
+#: dcterms:creator, which names this file's own author instead.
 _SPEC_TITLE = "EPN-TAP: Publishing Solar System Data to the Virtual Observatory"
 _SPEC_VERSION = "2.0"
 _SPEC_ISSUED = "2022-08-22"
@@ -164,6 +173,7 @@ _SPEC_DESCRIPTION = (
     "physical parameters), access, references, etc. Its implementation with TAP (Table "
     "Access Protocol) is presented, including service registration guidelines. Topical "
     "extension metadata dictionaries are also presented."
+    f" (EPN-TAP2 REC-{_SPEC_VERSION}, {_SPEC_ISSUED}, authored by {', '.join(_SPEC_AUTHORS)}.)"
 )
 
 
@@ -172,11 +182,12 @@ def _build_ontology_node(scheme_id: str) -> dict[str, Any]:
         "@id": scheme_id,
         _TYPE: "owl:Ontology",
         "name": "EPN-TAP vocabulary",
-        "title": f"{_SPEC_TITLE} (v{_SPEC_VERSION}) -- PDSSP vocabulary rendering",
+        "title": f"PDSSP rendering of {_SPEC_TITLE} (EPN-TAP2 REC-{_SPEC_VERSION})",
         "description": _SPEC_DESCRIPTION,
-        "versionInfo": _SPEC_VERSION,
+        "versionInfo": _RENDERING_VERSION,
+        "language": "en",
         "issued": _SPEC_ISSUED,
-        "creator": list(_SPEC_AUTHORS),
+        "creator": _RENDERING_CREATOR,
         "publisher": "International Virtual Observatory Alliance (IVOA)",
         "source": SPEC_URL,
     }
@@ -192,16 +203,6 @@ def _build_granule_class_node() -> dict[str, Any]:
     }
 
 
-def _build_term_class_node() -> dict[str, Any]:
-    return {
-        "@id": f"pdssp:{_EPNTAP_VOCAB_TERM_CLASS}",
-        _TYPE: _OWL_CLASS,
-        "name": _EPNTAP_VOCAB_TERM_CLASS,
-        "label": _EPNTAP_VOCAB_TERM_CLASS,
-        "comment": _EPNTAP_VOCAB_TERM_COMMENT,
-    }
-
-
 def _build_extension_class_node() -> dict[str, Any]:
     return {
         "@id": f"pdssp:{_EXTENSION_CLASS}",
@@ -212,10 +213,16 @@ def _build_extension_class_node() -> dict[str, Any]:
     }
 
 
-def _build_extension_individual_nodes(extension_class: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _build_extension_individual_nodes(scheme_id: str, extension_class: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Minted under *scheme_id* (this graph's own IRI, where they are
+    actually published) -- not the shared ``pdssp:`` namespace, which is
+    for shared class/property *definitions* only (see
+    :mod:`.shared_vocab`); an individual minted there instead would be a
+    dangling reference, since nothing is ever published to resolve it.
+    """
     return {
         key: {
-            "@id": f"pdssp:{_EXTENSION_CLASS}_{key}",
+            "@id": f"{scheme_id}#{_EXTENSION_CLASS}_{key}",
             _TYPE: extension_class["@id"],
             "name": label,
             "label": label,
@@ -225,29 +232,35 @@ def _build_extension_individual_nodes(extension_class: dict[str, Any]) -> dict[s
     }
 
 
-def _build_property_nodes(term_class: dict[str, Any], extension_class: dict[str, Any]) -> list[dict[str, Any]]:
+def _build_property_nodes() -> list[dict[str, Any]]:
+    """Every custom ``pdssp:`` property used to annotate a term node,
+    declared ``owl:AnnotationProperty`` -- not ``owl:DatatypeProperty``/
+    ``owl:ObjectProperty`` -- specifically so that using one never
+    OWL-punns the term it annotates (see this module's own docstring for
+    why that distinction is not cosmetic: a DatatypeProperty/ObjectProperty
+    usage does exactly that, and Widoco then drops the term's own label/
+    comment). Annotation properties carry no OWL DL semantics, so
+    ``rdfs:domain``/``rdfs:range`` are deliberately not asserted on them
+    either -- those are DL-only concepts that don't apply here.
+    """
     nodes = []
-    for name, xsd_range, comment in _DATA_PROPERTIES:
+    for name, _xsd_range, comment in _DATA_PROPERTIES:
         nodes.append(
             {
                 "@id": f"pdssp:{name}",
-                _TYPE: "owl:DatatypeProperty",
+                _TYPE: "owl:AnnotationProperty",
                 "name": name,
                 "label": name,
                 "comment": comment,
-                "domain": term_class,
-                "range": xsd_range,
             }
         )
     nodes.append(
         {
             "@id": "pdssp:partOfExtension",
-            _TYPE: "owl:ObjectProperty",
+            _TYPE: "owl:AnnotationProperty",
             "name": "partOfExtension",
             "label": "partOfExtension",
             "comment": "Which named EPN-TAP2 table (core, or an optional extension) this term belongs to.",
-            "domain": term_class,
-            "range": extension_class,
         }
     )
     return nodes
@@ -261,7 +274,7 @@ def _build_term_node(
 ) -> dict[str, Any]:
     node: dict[str, Any] = {
         "@id": f"{scheme_id}#{param.name}",
-        _TYPE: ["rdf:Property", f"pdssp:{_EPNTAP_VOCAB_TERM_CLASS}"],
+        _TYPE: "rdf:Property",
         "name": param.name,
         "label": param.name,
         "domain": granule_class,
@@ -303,18 +316,16 @@ def build_epntap_vocabulary_jsonld(base: str, parameters: list[EpnTapParameter])
         :class:`~pdssp_ontology.epntap_spec.EpnTapParameter`.
     """
     scheme_id = f"{base}/vocabulary"
-    term_class = _build_term_class_node()
     granule_class = _build_granule_class_node()
     extension_class = _build_extension_class_node()
-    extensions = _build_extension_individual_nodes(extension_class)
+    extensions = _build_extension_individual_nodes(scheme_id, extension_class)
 
     graph: list[dict[str, Any]] = [
         _build_ontology_node(scheme_id),
-        term_class,
         granule_class,
         extension_class,
         *(extensions[key] for key, _, _ in _EXTENSIONS),
-        *_build_property_nodes(term_class, extension_class),
+        *_build_property_nodes(),
         *(_build_term_node(param, scheme_id, granule_class, extensions) for param in parameters),
     ]
     return {"@context": _JSONLD_CONTEXT, "@graph": graph}

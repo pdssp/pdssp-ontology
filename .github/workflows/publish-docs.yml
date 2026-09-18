@@ -49,7 +49,7 @@ jobs:
         run: uv sync
 
       # Writes one development/<name>.ttl per named graph (pdssp-stac.ttl,
-      # epn-tap.ttl, mappings-pdssp-stac-epn-tap.ttl -- see
+      # epn-tap.ttl, mappings-pdssp-stac-epn-tap.ttl, vocab.ttl -- see
       # write_per_graph_turtle), each getting its own separate Widoco run
       # below so every data model's ontology -- and the mapping between
       # two of them -- is independently dereferenceable.
@@ -100,6 +100,21 @@ jobs:
             -webVowl \
             -rewriteAll
 
+      # The shared pdssp: classes/properties the three graphs above
+      # reference by IRI but never themselves define (see
+      # shared_vocab.py's own docstring) -- this graph's own IRI
+      # ({base}/vocab) already matches its site directory, same as the
+      # mapping graph above, so it needs no separate redirect either.
+      - name: Generate documentation with Widoco (shared vocabulary)
+        run: |
+          java -jar widoco.jar \
+            -ontFile development/vocab.ttl \
+            -outFolder site/vocab \
+            -lang en \
+            -getOntologyMetadata \
+            -webVowl \
+            -rewriteAll
+
       # Widoco only generates index-en.html; GitHub Pages needs index.html
       # as the default document for a bare directory URL to resolve, at
       # each site.
@@ -108,6 +123,7 @@ jobs:
           cp site/pdssp-stac/index-en.html site/pdssp-stac/index.html
           cp site/epn-tap/index-en.html site/epn-tap/index.html
           cp site/mappings/pdssp-stac-epn-tap/index-en.html site/mappings/pdssp-stac-epn-tap/index.html
+          cp site/vocab/index-en.html site/vocab/index.html
 
       # The two vocabulary named-graph IRIs merge_ontology.py mints
       # (.../pdssp-stac/vocabulary, .../epn-tap/vocabulary) have one path
@@ -155,6 +171,7 @@ jobs:
               <li><a href="pdssp-stac/">PDSSP/STAC vocabulary</a></li>
               <li><a href="epn-tap/">EPN-TAP vocabulary</a></li>
               <li><a href="mappings/pdssp-stac-epn-tap/">STAC &lt;-&gt; EPN-TAP mapping</a></li>
+              <li><a href="vocab/">Shared vocabulary (classes/properties common to the above)</a></li>
             </ul>
           </body>
           </html>

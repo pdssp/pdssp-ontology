@@ -5,12 +5,13 @@ from pdssp_ontology.merge_ontology import build_dataset, flatten, write_per_grap
 _BASE = "https://example.org/test"
 
 
-def test_dataset_has_three_named_graphs():
+def test_dataset_has_four_named_graphs():
     dataset = build_dataset(_BASE)
     identifiers = {g.identifier for g in dataset.graphs()}
     assert URIRef(f"{_BASE}/pdssp-stac/vocabulary") in identifiers
     assert URIRef(f"{_BASE}/epn-tap/vocabulary") in identifiers
     assert URIRef(f"{_BASE}/mappings/pdssp-stac-epn-tap") in identifiers
+    assert URIRef(f"{_BASE}/vocab") in identifiers
 
 
 def test_stac_graph_has_stac_classes():
@@ -38,10 +39,16 @@ def test_graphs_do_not_leak_into_each_other():
 
 
 def test_flatten_combines_every_triple():
+    """The flattened graph is deduplicated (a plain Graph is a set), so
+    it can be <= the sum of each graph's own triple count once any two
+    graphs assert the same triple -- which shared_vocab.py's classes/
+    properties deliberately do, since the other three graphs also embed
+    their own copies of them (see that module's own docstring). It must
+    never be *more*, though: flatten() cannot invent triples."""
     dataset = build_dataset(_BASE)
     flat = flatten(dataset)
     total = sum(len(g) for g in dataset.graphs())
-    assert len(flat) == total
+    assert len(flat) <= total
 
 
 def test_dataset_round_trips_through_trig(tmp_path):
@@ -63,7 +70,7 @@ def test_write_per_graph_turtle_writes_one_file_per_named_graph(tmp_path):
     paths = write_per_graph_turtle(dataset, tmp_path, _BASE)
 
     names = {p.name for p in paths}
-    assert names == {"pdssp-stac.ttl", "epn-tap.ttl", "mappings-pdssp-stac-epn-tap.ttl"}
+    assert names == {"pdssp-stac.ttl", "epn-tap.ttl", "mappings-pdssp-stac-epn-tap.ttl", "vocab.ttl"}
 
     stac_graph = Graph().parse(tmp_path / "pdssp-stac.ttl", format="turtle")
     assert len(stac_graph) == len(dataset.graph(URIRef(f"{_BASE}/pdssp-stac/vocabulary")))
@@ -89,3 +96,24 @@ def test_mapping_ontology_node_links_back_to_both_vocabularies():
     mapping_graph = dataset.graph(URIRef(f"{_BASE}/mappings/pdssp-stac-epn-tap"))
     see_also = {str(o) for s, p, o in mapping_graph if str(p).endswith("seeAlso")}
     assert see_also == {f"{_BASE}/epn-tap/vocabulary", f"{_BASE}/pdssp-stac/vocabulary"}
+
+
+def test_shared_vocab_defines_every_pdssp_class_the_other_graphs_reference():
+    """Every pdssp:-prefixed class/property the other three graphs point
+    at (e.g. rdfs:domain pdssp:EpnTapGranule) must actually be *defined*
+    (as a subject, not just referenced) in the vocab graph -- otherwise
+    that IRI still 404s in practice even though it resolves in theory."""
+    dataset = build_dataset(_BASE)
+    vocab_graph = dataset.graph(URIRef(f"{_BASE}/vocab"))
+    defined = {str(s) for s in vocab_graph.subjects()}
+
+    referenced: set[str] = set()
+    for graph in dataset.graphs():
+        if graph.identifier == URIRef(f"{_BASE}/vocab"):
+            continue
+        for _, _, o in graph:
+            if str(o).startswith("https://pdssp.github.io/pdssp-ontology/vocab#"):
+                referenced.add(str(o))
+
+    missing = referenced - defined
+    assert not missing, f"referenced but never defined in the vocab graph: {missing}"
