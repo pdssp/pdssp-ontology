@@ -17,8 +17,9 @@ consuming service's source repository (both privately hosted; see
 
 Uses this package's own :class:`pdssp_ontology.model.ColumnMapping` (not
 ``epntap2cql2.settings.ColumnMapping``) and its own
-:func:`pdssp_ontology.vocabulary.build_vocabulary_jsonld` for the same
-reason -- see both modules' docstrings.
+:func:`pdssp_ontology.epntap_vocabulary.build_epntap_vocabulary_jsonld`/
+:func:`pdssp_ontology.stac_epntap_mapping.build_stac_epntap_mapping_jsonld`
+for the same reason -- see those modules' docstrings.
 
 Every ``to_stac``/``from_stac`` converter name here is simply a string:
 this package validates no registry (see :mod:`pdssp_ontology.model`'s own

@@ -1,32 +1,41 @@
 #!/usr/bin/env python3
 """Build the merged STAC/EPN-TAP ontology.
 
-Two named graphs, both rendered **locally** from data this package itself
-authors (:mod:`.stac_seed`/:mod:`.stac_model`/:mod:`.stac_vocabulary` for
-PDS3 <-> STAC, :mod:`.epntap_seed`/:mod:`.model`/:mod:`.vocabulary` for
-EPN-TAP <-> STAC): no import of, or HTTP call to, ``ode-stac-proxy`` or
+Three named graphs, all rendered **locally** from data this package
+itself authors -- no import of, or HTTP call to, ``ode-stac-proxy`` or
 ``epntap2cql2`` -- this package is the single place the *entire* ontology
-is described (both vocabularies and the mapping between them), and every
-consuming service (``ode-stac-proxy``, ``epntap2cql2``, any future one)
-is a pure SPARQL consumer of what this script publishes to Fuseki, never
-the other way around. An earlier version of this script fetched the STAC
-side from a live ``ode-stac-proxy`` deployment's own ``GET /vocabulary``;
-that broke the "one place owns the whole ontology" property this package
-exists for (a new service's mapping would need to live in *that* service
-instead of here) and made this build depend on a live, third-party HTTP
-endpoint for something that should be a pure, offline function of this
-repo's own source. See ``ode-stac-proxy``'s own ``sparql_client.py`` for
-how it now queries this package's own published data back.
+is described, and every consuming service (``ode-stac-proxy``,
+``epntap2cql2``, any future one) is a pure SPARQL consumer of what this
+script publishes to Fuseki, never the other way around. An earlier
+version of this script fetched the STAC side from a live
+``ode-stac-proxy`` deployment's own ``GET /vocabulary``; that broke the
+"one place owns the whole ontology" property this package exists for (a
+new service's mapping would need to live in *that* service instead of
+here) and made this build depend on a live, third-party HTTP endpoint for
+something that should be a pure, offline function of this repo's own
+source. See ``ode-stac-proxy``'s own ``sparql_client.py`` for how it now
+queries this package's own published data back.
 
-- ``<{base}/stac/vocabulary>``   <- :mod:`.stac_seed` (PDS3 <-> STAC)
-- ``<{base}/epntap/vocabulary>`` <- :mod:`.epntap_seed` (EPN-TAP <-> STAC)
+Each data model gets its own, stable vocabulary graph, and the mapping
+between two models -- which changes far more often -- lives in its own,
+separate graph instead of being bundled into either vocabulary (see
+:mod:`.stac_epntap_mapping`'s own docstring, and this package's README,
+for why):
+
+- ``<{base}/stac/vocabulary>``          <- :mod:`.stac_seed`/:mod:`.stac_vocabulary`
+  (the PDS3 <-> STAC vocabulary+mapping -- not yet split the same way;
+  real follow-up work, see the README).
+- ``<{base}/epntap/vocabulary>``        <- :mod:`.epntap_seed`/:mod:`.epntap_vocabulary`
+  (EPN-TAP's own vocabulary, nothing about STAC).
+- ``<{base}/mappings/stac-epntap>``     <- :mod:`.stac_epntap_mapping`
+  (which STAC path/converter feeds each EPN-TAP column).
 
 Writes ``development/ontology.trig`` (the named-graph-aware source of
 truth Fuseki loads), a flattened ``development/ontology.ttl`` (single
 default graph, for a combined-overview Widoco run), and one
-``development/<name>.ttl`` per named graph (``stac.ttl``/``epntap.ttl``)
-so each vocabulary can also get its own, separate Widoco/WebVOWL site --
-see the GitHub Actions workflow, which runs Widoco three times.
+``development/<name>.ttl`` per named graph so each can also get its own,
+separate Widoco/WebVOWL site -- see the GitHub Actions workflow, which
+runs Widoco once per file.
 
 Usage::
 
@@ -42,9 +51,10 @@ from pathlib import Path
 from rdflib import Dataset, Graph, URIRef
 
 from pdssp_ontology import epntap_seed, stac_seed
+from pdssp_ontology.epntap_vocabulary import build_epntap_vocabulary_jsonld
+from pdssp_ontology.stac_epntap_mapping import build_stac_epntap_mapping_jsonld
 from pdssp_ontology.stac_model import get_vocabulary_document
 from pdssp_ontology.stac_vocabulary import build_vocabulary_jsonld as build_stac_jsonld
-from pdssp_ontology.vocabulary import build_vocabulary_jsonld as build_epntap_jsonld
 
 DEFAULT_BASE = "https://pdssp.github.io/pdssp-ontology"
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "development"
@@ -57,22 +67,32 @@ def build_stac_graph_jsonld(base: str) -> dict:
 
 
 def build_epntap_graph_jsonld(base: str) -> dict:
-    """Render this package's own EPN-TAP <-> STAC mapping as JSON-LD."""
-    return build_epntap_jsonld(
-        base,
-        epntap_seed.EPNTAP_COLUMNS,
-        converters_repo=epntap_seed.CONVERTERS_REPO_URL,
-        converters_ref=epntap_seed.CONVERTERS_REF,
+    """Render this package's own EPN-TAP vocabulary as JSON-LD -- no STAC
+    mapping information (see :func:`build_stac_epntap_mapping_graph_jsonld`
+    for that, in its own graph)."""
+    return build_epntap_vocabulary_jsonld(base, epntap_seed.EPNTAP_COLUMNS)
+
+
+def build_stac_epntap_mapping_graph_jsonld(base: str) -> dict:
+    """Render the STAC <-> EPN-TAP mapping as its own JSON-LD document,
+    cross-referencing the real ``stac/vocabulary`` and ``epntap/vocabulary``
+    graphs' own IRIs rather than duplicating either."""
+    return build_stac_epntap_mapping_jsonld(
+        mapping_base=f"{base}/mappings/stac-epntap",
+        epntap_base=f"{base}/epntap",
+        stac_base=f"{base}/stac",
+        columns=epntap_seed.EPNTAP_COLUMNS,
     )
 
 
 def build_dataset(base: str = DEFAULT_BASE) -> Dataset:
-    """Return a two-named-graph :class:`~rdflib.Dataset`: one graph per
-    vocabulary this package authors, each named after its own
-    ``build_vocabulary_jsonld``-minted ontology IRI.
+    """Return a three-named-graph :class:`~rdflib.Dataset`: one graph per
+    vocabulary this package authors, plus one for the mapping between
+    them, each named after its own ontology IRI.
     """
     stac_base = f"{base}/stac"
     epntap_base = f"{base}/epntap"
+    mapping_iri = f"{base}/mappings/stac-epntap"
 
     dataset = Dataset()
     dataset.graph(URIRef(f"{stac_base}/vocabulary")).parse(
@@ -80,6 +100,9 @@ def build_dataset(base: str = DEFAULT_BASE) -> Dataset:
     )
     dataset.graph(URIRef(f"{epntap_base}/vocabulary")).parse(
         data=json.dumps(build_epntap_graph_jsonld(epntap_base)), format="json-ld"
+    )
+    dataset.graph(URIRef(mapping_iri)).parse(
+        data=json.dumps(build_stac_epntap_mapping_graph_jsonld(base)), format="json-ld"
     )
     return dataset
 
@@ -95,20 +118,29 @@ def flatten(dataset: Dataset) -> Graph:
     return flat
 
 
-def write_per_graph_turtle(dataset: Dataset, output_dir: Path) -> list[Path]:
+def _graph_file_stem(base: str, graph_iri: str) -> str:
+    """``{base}/stac/vocabulary`` -> ``stac``; ``{base}/mappings/stac-epntap``
+    (no ``/vocabulary`` suffix) -> ``mappings-stac-epntap``."""
+    relative = graph_iri[len(base) :].strip("/")
+    suffix = "/vocabulary"
+    if relative.endswith(suffix):
+        return relative[: -len(suffix)]
+    return relative.replace("/", "-")
+
+
+def write_per_graph_turtle(dataset: Dataset, output_dir: Path, base: str) -> list[Path]:
     """Serialise each of *dataset*'s real named graphs to its own
-    ``<name>.ttl`` (*name* being the graph IRI's second-to-last path
-    segment, e.g. ``.../stac/vocabulary`` -> ``stac.ttl``) -- one file per
-    vocabulary, so each can get its own separate Widoco/WebVOWL site
-    instead of only appearing merged into the combined :func:`flatten`
-    output.
+    ``<name>.ttl`` (see :func:`_graph_file_stem`) -- one file per
+    vocabulary/mapping, so each can get its own separate Widoco/WebVOWL
+    site instead of only appearing merged into the combined
+    :func:`flatten` output.
     """
     written: list[Path] = []
     default_id = dataset.default_graph.identifier
     for graph in dataset.graphs():
         if graph.identifier == default_id:
             continue
-        name = str(graph.identifier).rstrip("/").split("/")[-2]
+        name = _graph_file_stem(base, str(graph.identifier))
         path = output_dir / f"{name}.ttl"
         graph.serialize(destination=path, format="turtle")
         written.append(path)
@@ -132,7 +164,7 @@ def main() -> None:
     flatten(dataset).serialize(destination=ttl_path, format="turtle")
     print(f"wrote {ttl_path}")
 
-    for path in write_per_graph_turtle(dataset, args.output_dir):
+    for path in write_per_graph_turtle(dataset, args.output_dir, args.base):
         print(f"wrote {path}")
 
 
