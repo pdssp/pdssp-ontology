@@ -55,7 +55,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "description": {"@id": "dcterms:description", "@language": "en"},
     "domain": {"@id": "rdfs:domain", _TYPE: "@id"},
     "range": {"@id": "rdfs:range", _TYPE: "@id"},
-    "subClassOf": {"@id": "rdfs:subClassOf", _TYPE: "@id"},
+    "subClassOf": {"@id": "rdfs:subClassOf", _TYPE: "@id", "@container": "@set"},
     "creator": "dcterms:creator",
     "publisher": "dcterms:publisher",
     "license": {"@id": "dcterms:license", _TYPE: "@id"},
@@ -139,40 +139,49 @@ _EPNTAP_CORE_CATEGORY_SUBCLASSES: list[tuple[str, str]] = [
     ("VerticalScalesOnPlanets", "An EpnTapGranule considered for its above/below-surface altitude parameters."),
 ]
 
-#: ``(local name, domain class, comment)`` for every STAC vocabulary
+#: ``(local name, domain classes, comment)`` for every STAC vocabulary
 #: category subclass -- see pdssp-stac/vocabulary's own docstring for why
 #: a category is a subclass (facetKind "core"), not a
 #: ``rdfs:subPropertyOf``-linked property as an earlier version had (the
 #: same OWL-punning bug fixed for EPN-TAP's own core categories). Class
 #: names/comments mirror :mod:`pdssp_ontology.stac_vocabulary`'s own
-#: ``_CATEGORY_CLASS_NAMES``/:data:`pdssp_ontology.stac_model.CATEGORIES`.
-_STAC_CATEGORY_SUBCLASSES: list[tuple[str, str, str]] = [
+#: ``_CATEGORY_CLASS_NAMES``/:data:`pdssp_ontology.stac_model.CATEGORIES`;
+#: domain classes mirror that module's own *computed* (not hand-declared)
+#: ``_category_scopes`` -- ``StacIdentification`` has two because
+#: ``providers`` (a real STAC Collection field, confirmed against
+#: collection_mapper.py) is categorized ``hasIdentification`` alongside
+#: item-scoped members like ``title`` -- keep in sync with that
+#: computation by hand if ``stac_seed.TERMS`` ever adds another
+#: category/scope combination stac_vocabulary.py doesn't already cover
+#: here (this file cannot import stac_seed's live data the way that
+#: module does; see this file's own "harmless duplication" note).
+_STAC_CATEGORY_SUBCLASSES: list[tuple[str, tuple[str, ...], str]] = [
     (
         "StacIdentification",
-        "StacItem",
+        ("StacItem", "StacCollection"),
         "Descriptive/identification metadata about the product (title, provenance actors, "
         "classification, version, ...).",
     ),
-    ("StacTemporalProperty", "StacItem", "A date or time associated with the product."),
+    ("StacTemporalProperty", ("StacItem",), "A date or time associated with the product."),
     (
         "StacPhysicalProperty",
-        "StacItem",
+        ("StacItem",),
         "A physical/observational measurement (angle, orbit, solar geometry, map scale, ...).",
     ),
     (
         "StacSpatialProperty",
-        "StacItem",
+        ("StacItem",),
         "A spatial/geometric property (target body, centroid, coordinate reference system).",
     ),
     (
         "StacProvenanceProperty",
-        "StacItem",
+        ("StacItem",),
         "Describes how the product was produced (mapping lineage, software).",
     ),
-    ("StacFileProperty", "StacAsset", "A property of an asset file rather than of the item itself."),
+    ("StacFileProperty", ("StacAsset",), "A property of an asset file rather than of the item itself."),
     (
         "StacResidualProperty",
-        "StacItem",
+        ("StacItem",),
         "An unmapped PDS3 field surfaced verbatim, outside the fixed term list.",
     ),
 ]
@@ -210,7 +219,11 @@ _STRUCTURAL_PROPERTIES: list[tuple[str, str, str, str]] = [
 ]
 
 #: ``(local name, comment)`` for every other annotation property (from
-#: :mod:`.epntap_vocabulary` and :mod:`.stac_epntap_mapping`).
+#: :mod:`.epntap_vocabulary` and :mod:`.stac_epntap_mapping`). ``mappedFrom``/
+#: ``toStacConverter``/``fromStacConverter``/``constantValue``/
+#: ``collectionScoped``/``geometryDerived`` are deliberately *not* here --
+#: see :data:`_MAPPING_STRUCTURAL_OBJECT_PROPERTIES`/
+#: :data:`_MAPPING_STRUCTURAL_DATA_PROPERTIES` below for why.
 _ANNOTATION_PROPERTIES: list[tuple[str, str]] = [
     ("adqlName", "The ADQL/EPN-TAP column name."),
     ("ucd", "IVOA Unified Content Descriptor."),
@@ -218,12 +231,6 @@ _ANNOTATION_PROPERTIES: list[tuple[str, str]] = [
     ("datatype", "VOTable datatype (char, int, float, double)."),
     ("arraysize", "VOTable arraysize (e.g. '*' for a variable-length string)."),
     ("requirement", "EPN-TAP2's own three-tier requirement: value_required, column_required, or optional."),
-    ("mappedFrom", "The STAC (or STAC Collection) path an EPN-TAP column's value comes from."),
-    ("toStacConverter", "Converter applied to an EPN-TAP/ADQL literal before it reaches STAC."),
-    ("fromStacConverter", "Converter applied to a STAC value before it is reported as an EPN-TAP column."),
-    ("constantValue", "The fixed value of a column with no real STAC equivalent."),
-    ("collectionScoped", "True if mappedFrom points into the STAC Collection rather than the Item."),
-    ("geometryDerived", "True for a column computed from the item's GeoJSON geometry."),
     ("scope", "Whether a STAC term applies to an item or an asset."),
     ("valueType", "The declared value type of a STAC term."),
     ("controlledVocabulary", "Where the controlled vocabulary for a term's value is defined."),
@@ -234,6 +241,39 @@ _ANNOTATION_PROPERTIES: list[tuple[str, str]] = [
         'core theme ("core") or an optional extension ("extension") -- descriptive '
         "metadata only, no OWL DL semantics.",
     ),
+]
+
+#: ``(local name, range class, comment)`` -- declared ``owl:ObjectProperty``,
+#: *not* ``owl:AnnotationProperty`` like every property above, matching
+#: :mod:`.stac_epntap_mapping`'s own copy (see that module's own comment
+#: on its identically-named list for why this is a deliberate, confirmed
+#: exception, not an oversight: an EPN-TAP column subject has no
+#: ``rdf:type`` of its own within the mapping graph, so an
+#: annotation-only usage leaves OWL-API nothing to recognize that subject
+#: -- or the ``StacProperty``/``Converter`` individual these three point
+#: at -- as real content from; every ``mappedFrom``-bearing column
+#: silently vanished from the generated docs when this was (wrongly)
+#: unified into ``owl:AnnotationProperty``, confirmed empirically).
+_MAPPING_STRUCTURAL_OBJECT_PROPERTIES: list[tuple[str, str, str]] = [
+    ("mappedFrom", "StacProperty", "The STAC (or STAC Collection) path an EPN-TAP column's value comes from."),
+    ("toStacConverter", "Converter", "Converter applied to an EPN-TAP/ADQL literal before it reaches STAC."),
+    ("fromStacConverter", "Converter", "Converter applied to a STAC value before it is reported as an EPN-TAP column."),
+]
+
+#: ``(local name, xsd range, comment)`` -- same exception as
+#: :data:`_MAPPING_STRUCTURAL_OBJECT_PROPERTIES` above, ``owl:DatatypeProperty``
+#: instead: a column whose *only* fact here is ``constantValue`` (e.g.
+#: ``access_format``, ``service_title``) needs it to be a real axiom the
+#: same way, or that column vanishes too (confirmed empirically).
+#: ``collectionScoped``/``geometryDerived`` are always co-asserted
+#: alongside a real ``mappedFrom`` on the same subject, so they do not
+#: strictly need this to keep that subject visible -- kept here anyway,
+#: for the same cross-graph type-agreement reason, not because Widoco
+#: requires it of these two specifically.
+_MAPPING_STRUCTURAL_DATA_PROPERTIES: list[tuple[str, str, str]] = [
+    ("constantValue", "xsd:string", "The fixed value of a column with no real STAC equivalent."),
+    ("collectionScoped", "xsd:boolean", "True if mappedFrom points into the STAC Collection rather than the Item."),
+    ("geometryDerived", "xsd:boolean", "True for a column computed from the item's GeoJSON geometry."),
 ]
 
 
@@ -310,10 +350,10 @@ def _build_stac_category_subclass_nodes(classes: dict[str, dict[str, Any]]) -> l
             "name": name,
             "label": name,
             "comment": f"Core category: {comment}",
-            "subClassOf": classes[domain],
+            "subClassOf": [classes[d] for d in domains],
             "facetKind": "core",
         }
-        for name, domain, comment in _STAC_CATEGORY_SUBCLASSES
+        for name, domains, comment in _STAC_CATEGORY_SUBCLASSES
     ]
 
 
@@ -354,6 +394,32 @@ def _build_annotation_property_nodes() -> list[dict[str, Any]]:
     ]
 
 
+def _build_mapping_structural_property_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    nodes = [
+        {
+            "@id": f"pdssp:{name}",
+            _TYPE: "owl:ObjectProperty",
+            "name": name,
+            "label": name,
+            "comment": comment,
+            "range": classes[range_class],
+        }
+        for name, range_class, comment in _MAPPING_STRUCTURAL_OBJECT_PROPERTIES
+    ]
+    nodes += [
+        {
+            "@id": f"pdssp:{name}",
+            _TYPE: "owl:DatatypeProperty",
+            "name": name,
+            "label": name,
+            "comment": comment,
+            "range": xsd_range,
+        }
+        for name, xsd_range, comment in _MAPPING_STRUCTURAL_DATA_PROPERTIES
+    ]
+    return nodes
+
+
 def build_shared_vocab_jsonld(base: str) -> dict[str, Any]:
     """Serialise the shared ``pdssp:`` vocabulary as a JSON-LD RDFS/OWL
     document: every class and annotation property the other three graphs
@@ -378,6 +444,7 @@ def build_shared_vocab_jsonld(base: str) -> dict[str, Any]:
         *_build_stac_category_subclass_nodes(classes),
         *_build_stac_extension_subclass_nodes(classes),
         *_build_structural_property_nodes(classes),
+        *_build_mapping_structural_property_nodes(classes),
         *_build_annotation_property_nodes(),
     ]
     return {"@context": _JSONLD_CONTEXT, "@graph": graph}

@@ -74,6 +74,7 @@ jobs:
             -outFolder site/pdssp-stac \
             -lang en \
             -getOntologyMetadata \
+            -includeAnnotationProperties \
             -webVowl \
             -rewriteAll
 
@@ -84,6 +85,7 @@ jobs:
             -outFolder site/epn-tap \
             -lang en \
             -getOntologyMetadata \
+            -includeAnnotationProperties \
             -webVowl \
             -rewriteAll
 
@@ -97,6 +99,7 @@ jobs:
             -outFolder site/mappings/pdssp-stac-epn-tap \
             -lang en \
             -getOntologyMetadata \
+            -includeAnnotationProperties \
             -webVowl \
             -rewriteAll
 
@@ -112,8 +115,54 @@ jobs:
             -outFolder site/vocab \
             -lang en \
             -getOntologyMetadata \
+            -includeAnnotationProperties \
             -webVowl \
             -rewriteAll
+
+      # Widoco's own generated loadHash() (in every index-en.html) scrolls
+      # to a URL fragment on load via `$(hash).offset()` -- jQuery treats
+      # a leading-"#" string as a CSS selector, which works for a simple
+      # slug (`#providers`) but throws "Syntax error, unrecognized
+      # expression" for the full-IRI-style fragments this ontology's own
+      # shared pdssp:X classes/properties use as their own id
+      # (`#https://.../vocab#collectionScoped`, two "#" characters) --
+      # confirmed empirically (Node + jsdom + the real jquery package)
+      # both that this exact selector throws and that
+      # `document.getElementById` (a literal string lookup, no CSS
+      # parsing) finds the same element without issue either way. Patched
+      # in-place after every build, not upstreamed to Widoco itself: this
+      # ontology suite's own fully-qualified ids are the unusual case, not
+      # a bug in Widoco's own typical usage.
+      - name: Fix Widoco's loadHash() to use getElementById, not a CSS selector
+        run: |
+          python3 - <<'PYEOF'
+          from pathlib import Path
+
+          broken = """\tvar hash = location.hash;
+          \tif($(hash).offset()!=null){
+          \t  $('html, body').animate({scrollTop: $(hash).offset().top}, 0);
+          }"""
+          fixed = """\tvar hash = location.hash;
+          \tif (hash) {
+          \t  var el = document.getElementById(decodeURIComponent(hash.substring(1))) || document.getElementById(hash.substring(1));
+          \t  if (el) {
+          \t    $('html, body').animate({scrollTop: $(el).offset().top}, 0);
+          \t  }
+          \t}"""
+
+          paths = [
+              "site/pdssp-stac/index-en.html",
+              "site/epn-tap/index-en.html",
+              "site/mappings/pdssp-stac-epn-tap/index-en.html",
+              "site/vocab/index-en.html",
+          ]
+          for path in paths:
+              text = Path(path).read_text()
+              if broken not in text:
+                  raise SystemExit(f"{path}: expected loadHash() snippet not found -- Widoco version changed?")
+              Path(path).write_text(text.replace(broken, fixed))
+              print(f"patched {path}")
+          PYEOF
 
       # Widoco only generates index-en.html; GitHub Pages needs index.html
       # as the default document for a bare directory URL to resolve, at

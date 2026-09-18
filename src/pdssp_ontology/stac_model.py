@@ -34,7 +34,7 @@ class VocabularyTerm(BaseModel):
 
     term: str
     namespace: str | None = None
-    scope: Literal["item", "asset"] = "item"
+    scope: Literal["item", "asset", "collection"] = "item"
     type: str
     description: str
     pds3_fields: list[str] = Field(default_factory=list)
@@ -70,37 +70,31 @@ class VocabularyDocument(BaseModel):
 
 
 #: Semantic categories every :data:`~.stac_seed.TERMS` entry's ``category``
-#: key names (``{category: (comment, scope)}``): *what kind* of property a
-#: term is, independent of *which STAC class* it applies to (``rdfs:domain``,
-#: from ``scope``). ``scope`` here is the category's own domain -- every
-#: member term happens to share one scope (``"item"`` for all but
-#: ``hasFileProperty``, whose two members are both asset-scoped), so the
-#: category property's ``rdfs:domain`` can reuse it rather than needing a
-#: union.
-CATEGORIES: dict[str, tuple[str, str]] = {
+#: key names (``{category: comment}``): *what kind* of property a term is,
+#: independent of *which STAC class* it applies to. Unlike an earlier
+#: version, this carries no hardcoded scope of its own any more: a
+#: category's rdfs:domain is derived in :mod:`.stac_vocabulary` from the
+#: *actual* ``scope`` of its member terms (usually just one -- ``"item"``
+#: for most, ``"asset"`` for ``hasFileProperty`` -- but confirmed not
+#: always: ``hasIdentification`` has both ``"item"`` members and one
+#: ``"collection"`` member, ``providers``, a real STAC Collection field
+#: EPN-TAP's own `publisher`/`producer_name`/`producer_institute` columns
+#: read via ``collection_path``). Hardcoding a single scope per category
+#: here, as before, would have silently mis-scoped that one term's
+#: category-domain entailment -- computing it from real per-term data
+#: instead means this can never drift out of sync the way a hand-maintained
+#: duplicate would.
+CATEGORIES: dict[str, str] = {
     "hasIdentification": (
         "Descriptive/identification metadata about the product (title, provenance "
-        "actors, classification, version, ...).",
-        "item",
+        "actors, classification, version, ...)."
     ),
-    "hasTemporalProperty": ("A date or time associated with the product.", "item"),
-    "hasPhysicalProperty": (
-        "A physical/observational measurement (angle, orbit, solar geometry, map scale, ...).",
-        "item",
-    ),
-    "hasSpatialProperty": (
-        "A spatial/geometric property (target body, centroid, coordinate reference system).",
-        "item",
-    ),
-    "hasProvenanceProperty": (
-        "Describes how the product was produced (mapping lineage, software).",
-        "item",
-    ),
-    "hasFileProperty": ("A property of an asset file rather than of the item itself.", "asset"),
-    "hasResidualProperty": (
-        "An unmapped PDS3 field surfaced verbatim, outside the fixed term list.",
-        "item",
-    ),
+    "hasTemporalProperty": "A date or time associated with the product.",
+    "hasPhysicalProperty": "A physical/observational measurement (angle, orbit, solar geometry, map scale, ...).",
+    "hasSpatialProperty": "A spatial/geometric property (target body, centroid, coordinate reference system).",
+    "hasProvenanceProperty": "Describes how the product was produced (mapping lineage, software).",
+    "hasFileProperty": "A property of an asset file rather than of the item itself.",
+    "hasResidualProperty": "An unmapped PDS3 field surfaced verbatim, outside the fixed term list.",
 }
 
 

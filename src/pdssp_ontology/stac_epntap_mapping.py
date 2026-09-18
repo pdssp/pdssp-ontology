@@ -91,14 +91,27 @@ def _slug(text: str) -> str:
 #: distinct term of its own).
 _PROVIDERS_PATH = re.compile(r"^providers\[.*\]\.name$")
 
+#: The one placeholder term stac_seed.TERMS itself declares for the whole
+#: ``pdsode`` namespace (see stac_seed.NAMESPACES's own note:
+#: "One pdsode:<PDS3FieldName> term per ODE field never consumed by the
+#: mapping -- not enumerable in advance"). Every individual
+#: ``properties.pdsode:<X>`` path matches *this* one term, not a distinct
+#: term of its own -- there is deliberately no such thing to match.
+_PDSODE_PLACEHOLDER_TERM = "pdsode:<PDS3FieldName>"
+
 
 def _match_stac_term(path: str) -> str | None:
     """Return the bare STAC term name *path* (an EPN-TAP column's
     ``stac_path``/``collection_path``) refers to, if it is documented in
     :data:`pdssp_ontology.stac_seed.TERMS` -- ``None`` for anything else,
     which gets a lightweight local reference node instead (see this
-    module's own docstring). Three shapes are recognized:
+    module's own docstring). Four shapes are recognized:
 
+    - ``properties.pdsode:<X>`` -- any residual PDS3 field, matched to
+      the one ``pdsode:<PDS3FieldName>`` placeholder term (see
+      :data:`_PDSODE_PLACEHOLDER_TERM`) -- checked before the generic
+      ``properties.<name>`` case below since ``<X>`` itself is never
+      individually documented.
     - ``properties.<name>`` -- the common case, most terms.
     - ``providers[role=...].name`` -- a collection-scoped filter into the
       ``providers`` term (confirmed empirically this used to fall
@@ -109,6 +122,8 @@ def _match_stac_term(path: str) -> str | None:
       ``stac_seed.TERMS``'s own comment on its first four entries).
     """
     prefix = "properties."
+    if path.startswith(f"{prefix}pdsode:"):
+        return _PDSODE_PLACEHOLDER_TERM if _PDSODE_PLACEHOLDER_TERM in _DOCUMENTED_STAC_TERMS else None
     if path.startswith(prefix):
         name = path[len(prefix) :]
         return name if name in _DOCUMENTED_STAC_TERMS else None
@@ -165,6 +180,29 @@ def _build_class_nodes() -> dict[str, dict[str, Any]]:
     }
 
 
+#: Declared ``owl:ObjectProperty``/``owl:DatatypeProperty``, *not*
+#: ``owl:AnnotationProperty`` like every other custom ``pdssp:`` property
+#: in this ontology suite -- confirmed empirically to be a deliberate,
+#: load-bearing exception, not an oversight to "fix" into consistency: an
+#: EPN-TAP column subject (``access_format``, ``obs_id``, ...) has *no*
+#: ``rdf:type`` of its own within this graph (that lives only in
+#: epn-tap.ttl, a different file Widoco never sees while building this
+#: one) -- an ``owl:AnnotationProperty``-only usage carries no OWL DL
+#: axiom for OWL-API to register the *subject* as an individual worth its
+#: own page from, so every column asserting only annotation-typed facts
+#: (e.g. ``access_format``, whose only fact here is ``constantValue``)
+#: silently vanished entirely from the generated docs when this was tried
+#: (every ``mappedFrom``-bearing column vanished the same way). Declaring
+#: these six as real object/data properties instead is what makes OWL-API
+#: recognize the column subjects (and, via ``mappedFrom``'s/
+#: ``toStacConverter``'s/``fromStacConverter``'s ``range``, the
+#: ``StacProperty``/``Converter`` individuals they point at) as real
+#: content at all. This *is* a genuine, if practically harmless, disagreement
+#: with :mod:`.shared_vocab`'s own copy (declared ``owl:AnnotationProperty``
+#: there to match the punning-avoidance rule that correctly applies to
+#: every *other* custom property) -- shared_vocab.py's copy is the one
+#: that must give way here, not this one; see its own comment on
+#: ``_MAPPING_STRUCTURAL_PROPERTIES``.
 _OBJECT_PROPERTIES: list[tuple[str, str, str]] = [
     ("mappedFrom", _STAC_PROPERTY_CLASS, "The STAC (or STAC Collection) path this column's value comes from."),
     (
@@ -231,6 +269,20 @@ def _collect_stac_property_nodes(columns: list[ColumnMapping], mapping_base: str
     for col in columns:
         path = col.stac_path if col.stac_path is not None else col.collection_path
         if path is None or path in nodes or _match_stac_term(path) is not None:
+            continue
+        if path == "":
+            # No single field: a from_stac converter (see get_datalink_url_for_item)
+            # reads the whole item itself -- an empty "name"/"label" would be
+            # confusing (confirmed: reported as a bare, unlabeled fact), so
+            # this gets a description instead of the raw (empty) path string
+            # every other stub here is named after.
+            nodes[path] = {
+                "@id": f"{mapping_base}#{_STAC_PROPERTY_CLASS}_root",
+                _TYPE: f"pdssp:{_STAC_PROPERTY_CLASS}",
+                "name": "(the STAC item as a whole)",
+                "label": "(the STAC item as a whole)",
+                "comment": "No single field is read; the converter computes its value from the whole item.",
+            }
             continue
         nodes[path] = {
             "@id": f"{mapping_base}#{_STAC_PROPERTY_CLASS}_{_slug(path)}",

@@ -100,7 +100,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "introduction": {"@id": "widoco:introduction", "@language": "en"},
     "domain": {"@id": "rdfs:domain", _TYPE: "@id", "@container": "@set"},
     "range": _id_valued("rdfs:range"),
-    "subClassOf": _id_valued("rdfs:subClassOf"),
+    "subClassOf": {"@id": "rdfs:subClassOf", _TYPE: "@id", "@container": "@set"},
     "isDefinedBy": _id_valued("rdfs:isDefinedBy"),
     "controlledVocabulary": "pdssp:controlledVocabulary",
     "valueType": "pdssp:valueType",
@@ -156,7 +156,7 @@ _STAC_STRUCTURAL_PROPERTIES: list[tuple[str, str, str, str]] = [
     ("hasLink", "StacCatalog", "StacLink", "Catalog/Collection points to a Link"),
 ]
 
-_SCOPE_TO_STAC_CLASS: dict[str, str] = {"item": "StacItem", "asset": "StacAsset"}
+_SCOPE_TO_STAC_CLASS: dict[str, str] = {"item": "StacItem", "asset": "StacAsset", "collection": "StacCollection"}
 
 #: ``{category key (from stac_model.CATEGORIES) -> class name}`` -- see
 #: module docstring for why a category is a subclass, not a property.
@@ -220,7 +220,7 @@ def build_vocabulary_jsonld(document: VocabularyDocument, base: str) -> dict[str
     """
     scheme_id = f"{base}/vocabulary"
     stac_classes = _build_stac_class_nodes()
-    category_classes = _build_category_subclass_nodes(stac_classes)
+    category_classes = _build_category_subclass_nodes(stac_classes, document.terms)
     extension_classes = _build_extension_subclass_nodes(stac_classes)
 
     nodes: list[dict[str, Any]] = [
@@ -306,11 +306,28 @@ def _build_stac_class_nodes() -> dict[str, dict[str, Any]]:
     return nodes
 
 
-def _build_category_subclass_nodes(stac_classes: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """One ``owl:Class`` per STAC vocabulary category, ``rdfs:subClassOf
-    StacItem``/``StacAsset`` -- see module docstring. Returns
-    ``{category key: class node}``.
+def _category_scopes(terms: list[VocabularyTerm]) -> dict[str, set[str]]:
+    """``{category key -> every scope at least one of its member terms
+    actually uses}`` -- computed from real data, not hand-maintained,
+    specifically because a hand-maintained single scope per category
+    already drifted wrong once (see module docstring:
+    ``hasIdentification`` has both item- and collection-scoped members).
     """
+    scopes: dict[str, set[str]] = {}
+    for term in terms:
+        scopes.setdefault(term.category, set()).add(term.scope)
+    return scopes
+
+
+def _build_category_subclass_nodes(
+    stac_classes: dict[str, dict[str, Any]], terms: list[VocabularyTerm]
+) -> dict[str, dict[str, Any]]:
+    """One ``owl:Class`` per STAC vocabulary category, ``rdfs:subClassOf``
+    every ``StacItem``/``StacAsset``/``StacCollection`` its member terms'
+    own scopes actually touch -- see module docstring and
+    :func:`_category_scopes`. Returns ``{category key: class node}``.
+    """
+    scopes_by_category = _category_scopes(terms)
     return {
         category: {
             "@id": f"pdssp:{class_name}",
@@ -321,8 +338,10 @@ def _build_category_subclass_nodes(stac_classes: dict[str, dict[str, Any]]) -> d
             # a SPARQL query -- Widoco never renders custom annotation
             # properties like facetKind itself (confirmed empirically),
             # only rdfs:comment.
-            "comment": f"Core category: {CATEGORIES[category][0]}",
-            "subClassOf": stac_classes[_SCOPE_TO_STAC_CLASS[CATEGORIES[category][1]]],
+            "comment": f"Core category: {CATEGORIES[category]}",
+            "subClassOf": [
+                stac_classes[_SCOPE_TO_STAC_CLASS[scope]] for scope in sorted(scopes_by_category[category])
+            ],
             "facetKind": "core",
         }
         for category, class_name in _CATEGORY_CLASS_NAMES.items()

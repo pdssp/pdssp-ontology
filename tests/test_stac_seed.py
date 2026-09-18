@@ -53,5 +53,26 @@ def test_file_property_category_and_extension_are_asset_scoped():
     jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
     stac_file_property = next(n for n in jsonld["@graph"] if n.get("name") == "StacFileProperty")
     stac_file_asset = next(n for n in jsonld["@graph"] if n.get("name") == "StacFileAsset")
-    assert stac_file_property["subClassOf"]["@id"] == "pdssp:StacAsset"
+    assert {d["@id"] for d in stac_file_property["subClassOf"]} == {"pdssp:StacAsset"}
     assert stac_file_asset["subClassOf"]["@id"] == "pdssp:StacAsset"
+
+
+def test_identification_category_is_subclass_of_both_item_and_collection():
+    # providers is a real STAC Collection field (confirmed against
+    # collection_mapper.py, not properties_builder.py) categorized
+    # hasIdentification alongside item-scoped members like title -- the
+    # category's own domain must reflect both, computed from the real
+    # per-term scopes, not a single hardcoded one (an earlier version
+    # hardcoded "item" for every hasIdentification member, silently
+    # mis-scoping providers).
+    jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
+    stac_identification = next(n for n in jsonld["@graph"] if n.get("name") == "StacIdentification")
+    assert {d["@id"] for d in stac_identification["subClassOf"]} == {"pdssp:StacItem", "pdssp:StacCollection"}
+
+
+def test_providers_term_is_collection_scoped():
+    jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
+    providers = next(n for n in jsonld["@graph"] if n.get("name") == "providers")
+    domain_ids = {d["@id"] for d in providers["domain"]}
+    assert domain_ids == {"pdssp:StacIdentification"}
+    assert providers["scope"] == "collection"

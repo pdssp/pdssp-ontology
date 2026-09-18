@@ -416,8 +416,15 @@ TERMS: list[dict] = [
         "type": "array<Provider>",
         "description": "Data producer.",
         "pds3_fields": ["Producer_id"],
-        "defined_in": _COMMON_METADATA,
-        "scope": "item",
+        "defined_in": "collection_mapper.py",
+        "scope": "collection",
+        "note": (
+            "A real STAC Collection field, not Item common metadata despite living "
+            "in this same namespace=None group -- confirmed against collection_mapper.py, "
+            "not properties_builder.py. EPN-TAP's own publisher/producer_name/"
+            "producer_institute columns read it via collection_path (see "
+            "epntap_seed.EPNTAP_COLUMNS), not stac_path."
+        ),
     },
     {
         "term": "version",
