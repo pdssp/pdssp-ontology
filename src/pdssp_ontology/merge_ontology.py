@@ -22,8 +22,11 @@ how it now queries this package's own published data back.
 - ``<{base}/epntap/vocabulary>`` <- :mod:`.epntap_seed` (EPN-TAP <-> STAC)
 
 Writes ``development/ontology.trig`` (the named-graph-aware source of
-truth Fuseki loads) and a flattened ``development/ontology.ttl`` (single
-default graph, for Widoco, which does not distinguish named graphs).
+truth Fuseki loads), a flattened ``development/ontology.ttl`` (single
+default graph, for a combined-overview Widoco run), and one
+``development/<name>.ttl`` per named graph (``stac.ttl``/``epntap.ttl``)
+so each vocabulary can also get its own, separate Widoco/WebVOWL site --
+see the GitHub Actions workflow, which runs Widoco three times.
 
 Usage::
 
@@ -92,6 +95,26 @@ def flatten(dataset: Dataset) -> Graph:
     return flat
 
 
+def write_per_graph_turtle(dataset: Dataset, output_dir: Path) -> list[Path]:
+    """Serialise each of *dataset*'s real named graphs to its own
+    ``<name>.ttl`` (*name* being the graph IRI's second-to-last path
+    segment, e.g. ``.../stac/vocabulary`` -> ``stac.ttl``) -- one file per
+    vocabulary, so each can get its own separate Widoco/WebVOWL site
+    instead of only appearing merged into the combined :func:`flatten`
+    output.
+    """
+    written: list[Path] = []
+    default_id = dataset.default_graph.identifier
+    for graph in dataset.graphs():
+        if graph.identifier == default_id:
+            continue
+        name = str(graph.identifier).rstrip("/").split("/")[-2]
+        path = output_dir / f"{name}.ttl"
+        graph.serialize(destination=path, format="turtle")
+        written.append(path)
+    return written
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", default=DEFAULT_BASE, help="base IRI for the merged ontology")
@@ -108,6 +131,9 @@ def main() -> None:
     ttl_path = args.output_dir / "ontology.ttl"
     flatten(dataset).serialize(destination=ttl_path, format="turtle")
     print(f"wrote {ttl_path}")
+
+    for path in write_per_graph_turtle(dataset, args.output_dir):
+        print(f"wrote {path}")
 
 
 if __name__ == "__main__":

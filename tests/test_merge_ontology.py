@@ -1,6 +1,6 @@
 from rdflib import URIRef
 
-from pdssp_ontology.merge_ontology import build_dataset, flatten
+from pdssp_ontology.merge_ontology import build_dataset, flatten, write_per_graph_turtle
 
 _BASE = "https://example.org/test"
 
@@ -53,3 +53,16 @@ def test_dataset_round_trips_through_trig(tmp_path):
     reloaded = Dataset()
     reloaded.parse(path, format="trig")
     assert len(reloaded) == len(dataset)
+
+
+def test_write_per_graph_turtle_writes_one_file_per_named_graph(tmp_path):
+    from rdflib import Graph
+
+    dataset = build_dataset(_BASE)
+    paths = write_per_graph_turtle(dataset, tmp_path)
+
+    names = {p.name for p in paths}
+    assert names == {"stac.ttl", "epntap.ttl"}
+
+    stac_graph = Graph().parse(tmp_path / "stac.ttl", format="turtle")
+    assert len(stac_graph) == len(dataset.graph(URIRef(f"{_BASE}/stac/vocabulary")))

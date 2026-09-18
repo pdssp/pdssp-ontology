@@ -46,7 +46,13 @@ jobs:
       - name: Install Python dependencies
         run: uv sync
 
-      - name: Build the merged ontology (development/ontology.ttl)
+      # Writes development/ontology.ttl (combined, for the root overview
+      # site below) plus one development/<name>.ttl per named graph
+      # (stac.ttl/epntap.ttl, see write_per_graph_turtle) -- each gets its
+      # own separate Widoco/WebVOWL run below, so e.g. the epntap named
+      # graph's own IRI can resolve to an EPN-TAP-only WebVOWL instead of
+      # only ever appearing merged into the combined view.
+      - name: Build the ontology (combined + one Turtle file per named graph)
         run: uv run python -m pdssp_ontology.merge_ontology --base "$BASE"
 
       - name: Set up Java (for Widoco)
@@ -60,7 +66,10 @@ jobs:
           curl -sL -o widoco.jar \
             "https://github.com/dgarijo/Widoco/releases/download/v${WIDOCO_VERSION}/widoco-${WIDOCO_VERSION}-jar-with-dependencies_JDK-17.jar"
 
-      - name: Generate documentation with Widoco
+      # Three independent Widoco runs: the combined overview at the site
+      # root, and one per vocabulary so each has its own WebVOWL graph
+      # (not mixed with the other vocabulary's classes/properties).
+      - name: Generate documentation with Widoco (combined overview)
         run: |
           java -jar widoco.jar \
             -ontFile development/ontology.ttl \
@@ -70,10 +79,58 @@ jobs:
             -webVowl \
             -rewriteAll
 
+      - name: Generate documentation with Widoco (STAC vocabulary)
+        run: |
+          java -jar widoco.jar \
+            -ontFile development/stac.ttl \
+            -outFolder site/stac \
+            -lang en \
+            -getOntologyMetadata \
+            -webVowl \
+            -rewriteAll
+
+      - name: Generate documentation with Widoco (EPN-TAP vocabulary)
+        run: |
+          java -jar widoco.jar \
+            -ontFile development/epntap.ttl \
+            -outFolder site/epntap \
+            -lang en \
+            -getOntologyMetadata \
+            -webVowl \
+            -rewriteAll
+
       # Widoco only generates index-en.html; GitHub Pages needs index.html
-      # as the default document for the bare root URL to resolve.
-      - name: Add index.html
-        run: cp site/index-en.html site/index.html
+      # as the default document for a bare directory URL to resolve, at
+      # each of the three site roots.
+      - name: Add index.html to each site
+        run: |
+          cp site/index-en.html site/index.html
+          cp site/stac/index-en.html site/stac/index.html
+          cp site/epntap/index-en.html site/epntap/index.html
+
+      # The named graph IRIs merge_ontology.py mints (.../stac/vocabulary,
+      # .../epntap/vocabulary) need to actually resolve to something --
+      # a redirect to that vocabulary's own Widoco/WebVOWL page.
+      - name: Add named-graph IRI redirects
+        run: |
+          mkdir -p site/stac/vocabulary site/epntap/vocabulary
+          for name in stac epntap; do
+            cat > "site/$name/vocabulary/index.html" <<EOF
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0; url=../index-en.html">
+            <link rel="canonical" href="../index-en.html">
+            <title>Redirecting...</title>
+          </head>
+          <body>
+            <p>This is the ${name} vocabulary's graph identifier. See its
+            <a href="../index-en.html">documentation</a>.</p>
+          </body>
+          </html>
+          EOF
+          done
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

@@ -26,9 +26,11 @@ be queried in isolation:
 
 - `<{base}/stac/vocabulary>` -- the PDS3 <-> STAC vocabulary
   (`ode-stac-proxy` fetches this one for its own `GET /vocabulary`).
+  Resolves to its own Widoco/WebVOWL site at `{base}/stac/`.
 - `<{base}/epntap/vocabulary>` -- the EPN-TAP <-> STAC vocabulary and
   mapping (`epntap2cql2` fetches this one at startup and for its own
-  `GET /vocabulary`).
+  `GET /vocabulary`). Resolves to its own Widoco/WebVOWL site at
+  `{base}/epntap/`.
 
 **Known limitation**: the two graphs are not cross-identified. The EPN-TAP
 graph's `StacProperty` individuals (e.g. `properties.start_datetime`) are
@@ -46,20 +48,35 @@ later pass.
 uv run python -m pdssp_ontology.merge_ontology --base https://pdssp.github.io/pdssp-ontology
 ```
 
-Writes `development/ontology.trig` (named-graph-aware; what Fuseki loads)
-and `development/ontology.ttl` (flattened; what Widoco reads -- it has no
-notion of named graphs). Pure function of this repo's own source -- no
-network access needed.
+Writes `development/ontology.trig` (named-graph-aware; what Fuseki loads),
+`development/ontology.ttl` (flattened; a combined overview for Widoco,
+which has no notion of named graphs), and one `development/<name>.ttl`
+per named graph (`stac.ttl`/`epntap.ttl`). Pure function of this repo's
+own source -- no network access needed.
 
 ## Publish the documentation site
+
+Three independent Widoco runs -- a combined overview at the site root,
+and one per vocabulary, so each named graph's own WebVOWL only shows
+*its* classes/properties instead of both mixed together:
 
 ```bash
 curl -LO https://github.com/dgarijo/Widoco/releases/download/v1.4.25/widoco-1.4.25-jar-with-dependencies_JDK-17.jar
 java -jar widoco-1.4.25-jar-with-dependencies_JDK-17.jar \
-  -ontFile development/ontology.ttl \
-  -outFolder site \
+  -ontFile development/ontology.ttl -outFolder site \
+  -lang en -getOntologyMetadata -webVowl -rewriteAll
+java -jar widoco-1.4.25-jar-with-dependencies_JDK-17.jar \
+  -ontFile development/stac.ttl -outFolder site/stac \
+  -lang en -getOntologyMetadata -webVowl -rewriteAll
+java -jar widoco-1.4.25-jar-with-dependencies_JDK-17.jar \
+  -ontFile development/epntap.ttl -outFolder site/epntap \
   -lang en -getOntologyMetadata -webVowl -rewriteAll
 ```
+
+The GitHub Actions workflow (below) also drops a small redirect page at
+`site/stac/vocabulary/index.html` and `site/epntap/vocabulary/index.html`
+so the named-graph IRIs above actually resolve to their own site instead
+of 404ing.
 
 ## Run the SPARQL endpoint
 
@@ -84,9 +101,10 @@ content, so this is safe to repeat.
 ## Published documentation (GitHub Pages)
 
 [`.github/workflows/publish-docs.yml`](.github/workflows/publish-docs.yml)
-rebuilds `development/ontology.ttl` (a pure function of this repo's own
-source, no network access needed), runs Widoco over it, and publishes the
-result to GitHub Pages. Runs on every push touching
+rebuilds the ontology (a pure function of this repo's own source, no
+network access needed), runs Widoco three times (combined overview +
+one per vocabulary), adds the named-graph IRI redirects, and publishes
+the result to GitHub Pages. Runs on every push touching
 `src/pdssp_ontology/`, and on demand.
 
 **One-time setup**: in this repo's Settings -> Pages, set "Source" to
