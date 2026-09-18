@@ -73,3 +73,16 @@ query to one vocabulary; omitting `GRAPH` queries the union.
 Re-run `merge_ontology` then `load_fuseki` whenever either source
 vocabulary changes -- `load_fuseki` `PUT`s each named graph, replacing its
 prior content, so this is safe to repeat.
+
+## Published documentation (GitHub Pages)
+
+[`.github/workflows/publish-docs.yml`](.github/workflows/publish-docs.yml)
+rebuilds `development/ontology.ttl` (fetching `ode-stac-proxy`'s live
+`GET /vocabulary` over HTTP -- no GitLab credentials needed, see
+`merge_ontology.py`'s own docstring for why), runs Widoco over it, and
+publishes the result to GitHub Pages. Runs on every push touching
+`src/pdssp_ontology/`, weekly (the STAC side can change without a commit
+here), and on demand.
+
+**One-time setup**: in this repo's Settings -> Pages, set "Source" to
+"GitHub Actions" -- the workflow can't do that part for you.

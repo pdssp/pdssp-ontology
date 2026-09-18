@@ -1,0 +1,97 @@
+name: Publish ontology documentation
+
+# Regenerates the merged ontology (this repo's own EPN-TAP data + a live
+# HTTP fetch of ode-stac-proxy's GET /vocabulary -- see
+# src/pdssp_ontology/merge_ontology.py's own docstring for why that's a
+# plain HTTP call and not a Python import: neither ode-stac-proxy nor
+# epntap2cql2 is importable from a public runner, both being hosted on a
+# private GitLab), runs Widoco over it, and publishes the result to
+# GitHub Pages.
+#
+# One-time setup this workflow can't do for you: in this repo's Settings
+# -> Pages, set "Source" to "GitHub Actions".
+#
+# Runs on every push touching the ontology's own source, on a weekly
+# schedule (ode-stac-proxy's live vocabulary can change without any commit
+# here), and on demand.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/pdssp_ontology/**"
+      - ".github/workflows/publish-docs.yml"
+  schedule:
+    - cron: "0 6 * * 1" # every Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; let an in-flight run finish rather
+# than cancelling it mid-deploy.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+env:
+  STAC_BASE_URL: https://odestac.staging.stacplanet.pdssp.eu
+  EPNTAP_BASE: https://w3id.org/pdssp/stac-epntap/epntap
+  WIDOCO_VERSION: "1.4.25"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      - name: Build the merged ontology (development/ontology.ttl)
+        run: |
+          uv run python -m pdssp_ontology.merge_ontology \
+            --stac-base-url "$STAC_BASE_URL" \
+            --epntap-base "$EPNTAP_BASE"
+
+      - name: Set up Java (for Widoco)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Download Widoco
+        run: |
+          curl -sL -o widoco.jar \
+            "https://github.com/dgarijo/Widoco/releases/download/v${WIDOCO_VERSION}/widoco-${WIDOCO_VERSION}-jar-with-dependencies_JDK-17.jar"
+
+      - name: Generate documentation with Widoco
+        run: |
+          java -jar widoco.jar \
+            -ontFile development/ontology.ttl \
+            -outFolder site \
+            -lang en \
+            -getOntologyMetadata \
+            -webVowl \
+            -rewriteAll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
