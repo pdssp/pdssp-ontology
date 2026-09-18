@@ -54,7 +54,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from pdssp_ontology.epntap_spec import SPEC_URL, EpnTapParameter
+from pdssp_ontology.epntap_spec import (
+    CORE_CATEGORIES,
+    DATAPRODUCT_TYPE_VALUES,
+    PROCESSING_LEVEL_VALUES,
+    SPEC_URL,
+    EpnTapParameter,
+)
 
 _TYPE = "@type"
 _OWL_CLASS = "owl:Class"
@@ -115,6 +121,26 @@ _XSD_RANGE_BY_DATATYPE: dict[str, str] = {
     "int": "xsd:integer",
     "float": "xsd:float",
     "double": "xsd:double",
+    "timestamp": "xsd:dateTime",
+}
+
+#: Terms with a controlled vocabulary the spec spells out in full (as
+#: opposed to the many terms merely noted "from enumerated list" with no
+#: values given) -- rendered as a real ``skos:ConceptScheme`` each term's
+#: ``controlledVocabulary`` points at, not just prose. ``dataproduct_type``
+#: and ``processing_level`` are the only two so covered today.
+#:
+#: ``{term name: (scheme class name, [(concept id suffix, notation, prefLabel, definition), ...])}``
+#: -- ``dataproduct_type``'s notations are each already unique, so its own
+#: id suffix is just its notation; ``processing_level`` reuses notation
+#: "5" for two different concepts (see :data:`pdssp_ontology.epntap_spec.PROCESSING_LEVEL_VALUES`'s
+#: own docstring), so it needs its own distinct id suffixes.
+_CONTROLLED_VOCABULARIES: dict[str, tuple[str, list[tuple[str, str, str, str]]]] = {
+    "dataproduct_type": (
+        "DataproductTypeScheme",
+        [(notation, notation, label, definition) for notation, label, definition in DATAPRODUCT_TYPE_VALUES],
+    ),
+    "processing_level": ("ProcessingLevelScheme", PROCESSING_LEVEL_VALUES),
 }
 
 _JSONLD_CONTEXT: dict[str, Any] = {
@@ -124,6 +150,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "dcterms": "http://purl.org/dc/terms/",
     "schema": "http://schema.org/",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
     "pdssp": "https://pdssp.github.io/pdssp-ontology/vocab#",
     # This vocabulary is English-only (matching its source specification's
     # own language) -- @language on every natural-language-text term
@@ -149,6 +176,12 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "datatype": "pdssp:datatype",
     "arraysize": "pdssp:arraysize",
     "requirement": "pdssp:requirement",
+    "category": "pdssp:category",
+    "controlledVocabulary": {"@id": "pdssp:controlledVocabulary", _TYPE: "@id"},
+    "notation": "skos:notation",
+    "prefLabel": {"@id": "skos:prefLabel", "@language": "en"},
+    "definition": {"@id": "skos:definition", "@language": "en"},
+    "inScheme": {"@id": "skos:inScheme", _TYPE: "@id"},
 }
 
 _DATA_PROPERTIES: list[tuple[str, str, str]] = [
@@ -163,6 +196,19 @@ _DATA_PROPERTIES: list[tuple[str, str, str]] = [
         "EPN-TAP2's own three-tier requirement: value_required (column and "
         "value both mandatory), column_required (column mandatory, value may "
         "be null), or optional.",
+    ),
+    (
+        "category",
+        "xsd:string",
+        "The core parameter's own semantic group, per the specification's section "
+        "structure (e.g. 'Axes', 'Target description') -- core parameters only; "
+        "extension parameters are grouped by their own subclass instead.",
+    ),
+    (
+        "controlledVocabulary",
+        None,
+        "The skos:ConceptScheme enumerating this term's allowed values, for the few "
+        "terms whose controlled vocabulary the specification spells out in full.",
     ),
 ]
 
@@ -273,11 +319,58 @@ def _build_property_nodes() -> list[dict[str, Any]]:
     return nodes
 
 
+def _build_controlled_vocabulary_nodes(scheme_id: str) -> dict[str, dict[str, Any]]:
+    """One ``skos:ConceptScheme`` + one ``skos:Concept`` per allowed value,
+    per term listed in :data:`_CONTROLLED_VOCABULARIES` -- plain
+    individuals (a ``skos:Concept`` is never also typed as anything else
+    here), so none of this risks the OWL-punning rendering bug described
+    in this module's own docstring. Minted under *scheme_id* (this
+    graph's own IRI) rather than the shared ``pdssp:`` namespace, since
+    these are instance data specific to this vocabulary, not a shared
+    class/property definition -- the same reasoning as the extension
+    individuals an earlier version of this module used to mint under
+    ``pdssp:`` by mistake (see :mod:`.shared_vocab`'s own docstring).
+
+    Returns ``{term name: scheme node}`` so :func:`_build_term_node` can
+    look up the right scheme for ``controlledVocabulary``.
+    """
+    schemes: dict[str, dict[str, Any]] = {}
+    for term_name, (class_name, values) in _CONTROLLED_VOCABULARIES.items():
+        schemes[term_name] = {
+            "@id": f"{scheme_id}#{class_name}",
+            _TYPE: "skos:ConceptScheme",
+            "label": f"{term_name}'s controlled vocabulary",
+            "prefLabel": f"{term_name}'s controlled vocabulary",
+            "comment": f"Every value the EPN-TAP2 specification allows for the {term_name} parameter.",
+        }
+    return schemes
+
+
+def _build_controlled_vocabulary_concept_nodes(scheme_id: str) -> list[dict[str, Any]]:
+    nodes: list[dict[str, Any]] = []
+    for term_name, (class_name, values) in _CONTROLLED_VOCABULARIES.items():
+        scheme_ref = {"@id": f"{scheme_id}#{class_name}"}
+        for id_suffix, notation, label, definition in values:
+            nodes.append(
+                {
+                    "@id": f"{scheme_id}#{class_name}_{id_suffix}",
+                    _TYPE: "skos:Concept",
+                    "inScheme": scheme_ref,
+                    "notation": notation,
+                    "label": label,
+                    "prefLabel": label,
+                    "definition": definition,
+                }
+            )
+    return nodes
+
+
 def _build_term_node(
     param: EpnTapParameter,
     scheme_id: str,
     granule_class: dict[str, Any],
     extension_classes: dict[str, dict[str, Any]],
+    controlled_vocabularies: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     domain = granule_class if param.group == "core" else extension_classes[param.group]
     node: dict[str, Any] = {
@@ -299,6 +392,10 @@ def _build_term_node(
         node["unit"] = param.unit
     if param.datatype == "char":
         node["arraysize"] = "*"
+    if param.group == "core":
+        node["category"] = CORE_CATEGORIES[param.name]
+    if param.name in controlled_vocabularies:
+        node["controlledVocabulary"] = controlled_vocabularies[param.name]
     return node
 
 
@@ -326,12 +423,18 @@ def build_epntap_vocabulary_jsonld(base: str, parameters: list[EpnTapParameter])
     scheme_id = f"{base}/vocabulary"
     granule_class = _build_granule_class_node()
     extension_classes = _build_extension_subclass_nodes(granule_class)
+    controlled_vocabularies = _build_controlled_vocabulary_nodes(scheme_id)
 
     graph: list[dict[str, Any]] = [
         _build_ontology_node(scheme_id),
         granule_class,
         *extension_classes.values(),
         *_build_property_nodes(),
-        *(_build_term_node(param, scheme_id, granule_class, extension_classes) for param in parameters),
+        *controlled_vocabularies.values(),
+        *_build_controlled_vocabulary_concept_nodes(scheme_id),
+        *(
+            _build_term_node(param, scheme_id, granule_class, extension_classes, controlled_vocabularies)
+            for param in parameters
+        ),
     ]
     return {"@context": _JSONLD_CONTEXT, "@graph": graph}

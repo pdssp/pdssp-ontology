@@ -70,7 +70,9 @@ SPEC_URL = "https://www.ivoa.net/documents/EPNTAP/20220822/REC-EPNTAP-2.0.html"
 class EpnTapParameter(NamedTuple):
     name: str
     ucd: str | None
-    datatype: str  # VOTable datatype: "char" (incl. ISO 8601 text), "int", "float", "double"
+    datatype: str  # VOTable datatype: "char", "int", "float", "double", or "timestamp" (an
+    # ISO 8601 string in the actual VOTable, but kept distinct from "char" so the
+    # ontology can render it as xsd:dateTime instead of the generic xsd:string).
     unit: str | None
     requirement: str  # "value_required" | "column_required" | "optional"
     group: str
@@ -122,9 +124,9 @@ _CORE_MANDATORY: list[tuple[str, str | None, str, str | None, str, str]] = [
     ("instrument_host_name", "meta.id;instr.obsty", "char", None, "column_required", "Standard name of the observatory or spacecraft"),
     ("instrument_name", "meta.id;instr", "char", None, "column_required", "Standard name of instrument"),
     ("service_title", "meta.title", "char", None, "value_required", "Title of resource = schema name"),
-    ("creation_date", "time.creation", "char", None, "value_required", "Date of first entry of this granule"),
-    ("modification_date", "time.processing", "char", None, "value_required", "Date of last modification"),
-    ("release_date", "time.release", "char", None, "value_required", "Start of public access period (set to creation_date if no proprietary period)"),
+    ("creation_date", "time.creation", "timestamp", None, "value_required", "Date of first entry of this granule (ISO 8601)"),
+    ("modification_date", "time.processing", "timestamp", None, "value_required", "Date of last modification (ISO 8601)"),
+    ("release_date", "time.release", "timestamp", None, "value_required", "Start of public access period (set to creation_date if no proprietary period) (ISO 8601)"),
 ]
 
 _CORE_OPTIONAL: list[tuple[str, str | None, str, str | None, str, str]] = [
@@ -157,8 +159,8 @@ _CORE_OPTIONAL: list[tuple[str, str | None, str, str | None, str, str]] = [
     ("local_time_max", "time.phase;time.period.rotation;stat.max", "float", "h", "optional", "Max local time at observed region"),
     ("target_distance_min", "pos.distance;stat.min", "float", "km", "optional", "Min observer-target distance"),
     ("target_distance_max", "pos.distance;stat.max", "float", "km", "optional", "Max observer-target distance"),
-    ("target_time_min", "time.start;src", "char", None, "optional", "Min observing time in target frame"),
-    ("target_time_max", "time.end;src", "char", None, "optional", "Max observing time in target frame"),
+    ("target_time_min", "time.start;src", "timestamp", None, "optional", "Min observing time in target frame (ISO 8601)"),
+    ("target_time_max", "time.end;src", "timestamp", None, "optional", "Max observing time in target frame (ISO 8601)"),
     ("earth_distance_min", "pos.distance;stat.min", "float", "AU", "optional", "Min Earth-target distance"),
     ("earth_distance_max", "pos.distance;stat.max", "float", "AU", "optional", "Max Earth-target distance"),
     ("sun_distance_min", "pos.distance;stat.min", "float", "AU", "optional", "Min Sun-target distance"),
@@ -320,3 +322,225 @@ EPNTAP_VALUE_REQUIRED: tuple[str, ...] = tuple(
 EPNTAP_COLUMN_REQUIRED: tuple[str, ...] = tuple(
     p.name for p in EPNTAP_SPEC_PARAMETERS if p.requirement == "column_required"
 )
+
+#: The spec's own semantic grouping of every *core* (section 2.1
+#: "Mandatory parameters" + 2.2 "Optional parameters") parameter into one
+#: of its twelve named subsections -- verified against the spec's own
+#: heading structure and per-section parameter lists (2.1.1-2.1.6,
+#: 2.2.1-2.2.6), not inferred. Extension parameters (section 2.3) are not
+#: covered here -- they already have their own grouping via each
+#: :class:`EpnTapParameter`'s own ``group``/subclass (see
+#: :mod:`.epntap_vocabulary`).
+_CORE_CATEGORY_MEMBERS: list[tuple[str, tuple[str, ...]]] = [
+    ("Granule references", ("granule_uid", "obs_id", "granule_gid")),
+    ("Data Description", ("dataproduct_type", "measurement_type", "processing_level")),
+    ("Target description", ("target_name", "target_class")),
+    (
+        "Axes",
+        (
+            "time_min", "time_max",
+            "time_sampling_step_min", "time_sampling_step_max",
+            "time_exp_min", "time_exp_max",
+            "spectral_range_min", "spectral_range_max",
+            "spectral_sampling_step_min", "spectral_sampling_step_max",
+            "spectral_resolution_min", "spectral_resolution_max",
+            "c1min", "c1max", "c2min", "c2max", "c3min", "c3max",
+            "c1_resol_min", "c1_resol_max", "c2_resol_min", "c2_resol_max", "c3_resol_min", "c3_resol_max",
+            "spatial_frame_type",
+            "incidence_min", "incidence_max",
+            "emergence_min", "emergence_max",
+            "phase_min", "phase_max",
+            "s_region",
+        ),
+    ),
+    ("Data origin", ("instrument_host_name", "instrument_name")),
+    ("Granule call-back info", ("service_title", "creation_date", "modification_date", "release_date")),
+    ("Data Access Reference", ("access_url", "access_format", "access_estsize")),
+    ("Miscellaneous file metadata", ("thumbnail_url", "file_name", "access_md5", "datalink_url")),
+    (
+        "Supplementary description",
+        (
+            "bib_reference", "publisher", "processing_level_desc", "internal_reference", "external_link",
+            "species", "messenger", "filter", "alt_target_name", "feature_name", "target_region", "coverage",
+        ),
+    ),
+    ("Description of coordinate frame", ("spatial_coordinate_description", "spatial_origin", "time_refposition", "time_scale")),
+    (
+        "Target configuration and observing geometry",
+        (
+            "solar_longitude_min", "solar_longitude_max",
+            "local_time_min", "local_time_max",
+            "target_distance_min", "target_distance_max",
+            "target_time_min", "target_time_max",
+            "earth_distance_min", "earth_distance_max",
+            "sun_distance_min", "sun_distance_max",
+            "subobserver_longitude_min", "subobserver_longitude_max",
+            "subobserver_latitude_min", "subobserver_latitude_max",
+            "subsolar_longitude_min", "subsolar_longitude_max",
+            "subsolar_latitude_min", "subsolar_latitude_max",
+            "ra", "dec",
+        ),
+    ),
+    ("Vertical scales on planets", ("radial_distance_min", "radial_distance_max", "altitude_fromshape_min", "altitude_fromshape_max")),
+]
+
+#: ``{parameter name: category label}`` -- the reverse index of
+#: :data:`_CORE_CATEGORY_MEMBERS`, one entry per core parameter (all 95:
+#: 46 mandatory + 49 optional).
+CORE_CATEGORIES: dict[str, str] = {
+    name: category for category, names in _CORE_CATEGORY_MEMBERS for name in names
+}
+
+# Every core parameter must have a category, and only core parameters.
+assert set(CORE_CATEGORIES) == {p.name for p in EPNTAP_SPEC_PARAMETERS if p.group == "core"}
+
+#: ``dataproduct_type``'s controlled vocabulary (spec section 2.1.2) --
+#: ``(notation, preferred label, definition)``. Transcribed verbatim.
+DATAPRODUCT_TYPE_VALUES: list[tuple[str, str, str]] = [
+    (
+        "im", "image",
+        "Scalar field with two spatial axes, or association of several such fields, e.g., images with "
+        "multiple color planes, from multichannel or filter cameras. Preview images (e.g., map with axis "
+        "and caption) also belong here. Conversely, vectorial 2D fields are described as spatial_vector.",
+    ),
+    (
+        "ma", "map",
+        "Scalar field / rasters with two spatial axes covering a large area and projected either on the "
+        "sky or on a planetary body, associated to spatial_coordinate_description and map_projection "
+        "parameters (with a short enumerated list of possible values); each pixel is associated to 2D "
+        "coordinates (e.g., fits with WCS). This is mostly intended to identify radiometrically calibrated "
+        "and orthorectified images with complete coverage that can be used as reference basemaps, but this "
+        "also includes HiPS.",
+    ),
+    (
+        "sp", "spectrum",
+        "Measurements organized primarily along a spectral axis, e.g., radiance spectra. This includes "
+        "spectral aggregates (series of related spectral segments with non-connected spectral ranges, "
+        "e.g., from several channels of the same instrument, various orders from an echelle spectrometer, "
+        "composite spectra, SED, etc).",
+    ),
+    (
+        "ds", "dynamic_spectrum",
+        "Consecutive spectral measurements through time, organized primarily as a time series. This "
+        "typically implies successive spectra of the same target / field of view.",
+    ),
+    (
+        "sc", "spectral_cube",
+        "Sets of consecutive spectral measurements with 1 or 2D spatial coverage, e.g., imaging "
+        "spectroscopy. The choice between image and spectral_cube is dictated by the characteristics of "
+        "the instrument (which dimension is most resolved and which dimensions are acquired "
+        "simultaneously). The choice between dynamic_spectrum and spectral_cube is related to the "
+        "uniformity of the field of view and by practices in the science field.",
+    ),
+    (
+        "pr", "profile",
+        "Scalar or vectorial measurements along 1 spatial dimension, e.g., atmospheric profiles, "
+        "atmospheric paths, sub-surface profiles, traverses.",
+    ),
+    (
+        "pf", "photometric_function",
+        "Scalar or vectorial measurements along 1 angular dimension, e.g., phase or polarization curves, "
+        "phase functions, emission-phase function sequences. Does not handle variations along several "
+        "angular axes. This is typically associated to variations in illumination angle parameters.",
+    ),
+    (
+        "vo", "volume",
+        "Measurements with 3 spatial dimensions, e.g., internal or atmospheric structures, including "
+        "shells/shape models (3D surfaces).",
+    ),
+    ("mo", "movie", "Sets of chronological 2D spatial measurements (consecutive images)."),
+    (
+        "cu", "cube",
+        "Multidimensional data with 3 or more axes, e.g., all that is not described by other 3D data "
+        "types such as spectral cube, volume, or movie. This is intended to accommodate unusual data with "
+        "multiple dimensions. This can be used for 3D ancillary data associated to spectral cubes, e.g., "
+        "providing the coordinates or illumination angles for each spectrum.",
+    ),
+    (
+        "ts", "time_series",
+        "Measurements organized primarily as a function of time (with exception of dynamical spectra and "
+        "movies, i.e., usually a scalar quantity). Typical examples of time series include space-borne "
+        "dust detector measurements, daily or seasonal curves measured at a given location (e.g., a "
+        "lander), and light curves.",
+    ),
+    (
+        "ca", "catalogue",
+        "Applies to a granule providing a catalogue of object parameters, a list of features, a table of "
+        "granules in another TAP service, a list of events, a list of spectral lines. The result metadata "
+        "table of a service query can also be considered as a catalogue. Catalogues can be provided as "
+        "VOTable (possibly containing multiple tables, although this is not supported by SAMP). It is "
+        "good practice to describe the type of data included in the catalogue using a "
+        "hash-separated-list (e.g., a table of spectra should be described by ca#sp, so that it will "
+        "respond to a query for spectra).",
+    ),
+    (
+        "ci", "catalogue_item",
+        "Applies when the service itself provides a catalogue with entries described as individual "
+        "granules, in particular when there is no associated file (e.g., a list of asteroid properties or "
+        "spectral lines). Catalogue_item can be limited to scalar quantities (including strings), and "
+        "possibly to a single element. This organization allows the user to search inside the catalogue "
+        "from the TAP query interface. In practice, Spice kernels are identified as catalogue_items "
+        "because they are usually associated to a set of scalar parameters.",
+    ),
+    (
+        "sv", "spatial_vector",
+        "Vector information associated to localization, such as a spatial footprints, a GIS-related "
+        "element, etc, e.g., a kml or geojson file (STC-S strings are provided though the s_region "
+        "parameter, though). This includes maps of vectors, e.g., wind maps.",
+    ),
+    (
+        "ev", "event",
+        "Introduces individual VOevents formatted according to IVOA standard (or possibly events with "
+        "other formatting). Characteristics are provided via the event_* parameters.",
+    ),
+]
+
+#: ``processing_level``'s controlled vocabulary (spec section 2.1.2,
+#: cross-referenced against PSA/NASA/PDS3/PDS4/ObsTAP conventions) --
+#: ``(concept id suffix, notation, preferred label, definition)``.
+#: Transcribed verbatim, including the "2 or 3" transitional PDS4 case
+#: and the spec's own flagged oddity that "resampled" uses EPN-TAP2 code
+#: 5 (not 4, despite that being PSA's own number for it).
+PROCESSING_LEVEL_VALUES: list[tuple[str, str, str, str]] = [
+    (
+        "1", "1", "raw",
+        "Unprocessed Data Record (low-level encoding, e.g., telemetry from a spacecraft instrument. "
+        "Normally available only to the original team). Cross-references: PSA 1 (raw), NASA (0?), "
+        "PDS4 UDR, ObsTAP Telemetry (code 0).",
+    ),
+    (
+        "2", "2", "edited",
+        'Experiment Data Record (often referred to as "raw data": decommutated, but still affected by '
+        "instrumental effects). Cross-references: PSA 2 (edited), NASA 1, PDS3 0, PDS4 EDR, ObsTAP Raw "
+        "(code 1).",
+    ),
+    (
+        "2or3", "2 or 3", "partially calibrated",
+        "Processed beyond the raw stage, but not yet reached calibrated status (a PDS4-only concept, "
+        "with no distinct EPN-TAP2 code of its own). Cross-reference: PDS4 'Partially calibrated'.",
+    ),
+    (
+        "3", "3", "calibrated",
+        'Reduced Data Record ("calibrated" in physical units, no resampling). Cross-references: PSA 3 '
+        "(calibrated), NASA 2, PDS3 1A, PDS4 RDR, ObsTAP Calibrated (code 2).",
+    ),
+    (
+        "5-resampled", "5", "resampled",
+        "Reformatted Data Record (mosaics or composite of several observing sessions, involving some "
+        "level of data fusion). Note: the EPN-TAP2 code is unusually 5 here, not 4, despite PSA's own "
+        "scale calling this level 4 (resampled) -- an oddity flagged in the spec itself. "
+        "Cross-references: PSA 4 (resampled), PDS3 1B, PDS4 REFDR, ObsTAP Derived (code 3).",
+    ),
+    (
+        "5-derived", "5", "derived",
+        "Derived Data Record (result of data analysis, directly usable by other communities with no "
+        "further processing). Cross-references: PSA 5 (derived), NASA 3, PDS3 2-5, PDS4 DDR, ObsTAP "
+        "Derived (code 4).",
+    ),
+    (
+        "6", "6", "ancillary",
+        "Ancillary Data Record (extra data specifically supporting a data set, such as coordinates, "
+        "geometry, but also dark currents, flat fields). Cross-references: PSA 6 (ancillary), PDS4 "
+        "ANCDR, ObsTAP Derived.",
+    ),
+]
