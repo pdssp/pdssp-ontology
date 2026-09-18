@@ -136,6 +136,17 @@ def build_vocabulary_jsonld(document: VocabularyDocument, base: str) -> dict[str
     return {"@context": _JSONLD_CONTEXT, "@graph": nodes}
 
 
+#: This rendering's own metadata -- see epntap_vocabulary's own docstring
+#: for why publisher/license/created describe *this* RDF file,
+#: consistently across every graph in this ontology suite. Unlike that
+#: static rendering, ``dcterms:creator`` here stays dynamic
+#: (``document.data_model_spec``'s own author, the live service being
+#: documented), so it is deliberately not overridden alongside these.
+_RENDERING_PUBLISHER = "PDSSP"
+_RENDERING_CREATED = "2026-09-18"
+_RENDERING_LICENSE = "https://creativecommons.org/licenses/by/4.0/"
+
+
 def _build_ontology_node(document: VocabularyDocument, scheme_id: str) -> dict[str, Any]:
     title = f"{document.data_model_spec['title']} — STAC/PDSSP vocabulary"
     node: dict[str, Any] = {
@@ -144,6 +155,9 @@ def _build_ontology_node(document: VocabularyDocument, scheme_id: str) -> dict[s
         "name": title,
         "dcterms:title": title,
         "dcterms:creator": document.data_model_spec.get("author"),
+        "dcterms:publisher": _RENDERING_PUBLISHER,
+        "dcterms:license": {"@id": _RENDERING_LICENSE},
+        "dcterms:created": {"@value": _RENDERING_CREATED, "@type": "xsd:date"},
         "isDefinedBy": document.data_model_spec["url"],
     }
     if document.data_model_spec.get("doc_url"):

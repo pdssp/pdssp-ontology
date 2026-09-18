@@ -148,6 +148,21 @@ EPNTAP_COLUMNS: list[ColumnMapping] = [
         datatype="char",
         arraysize="*",
         ucd="meta.code",
+        # EPN-TAP2's real spec types this column `int` (see
+        # epntap_spec.EPNTAP_SPEC_PARAMETERS -- that, not this entry's own
+        # now-vestigial `datatype` above, is what the SPARQL-sourced
+        # ColumnMapping actually gets), but ODE's STAC backend reports a
+        # closed 4-value label taxonomy instead (see
+        # ode_stac_proxy_ode_plugin.plugin's own
+        # enum_values=["Ancillary", "Raw", "Calibrated", "Derived"]) --
+        # every one of those four matches an EPN-TAP2 PROCESSING_LEVEL_VALUES
+        # label exactly (raw=1, calibrated=3, derived=5, ancillary=6), so
+        # the conversion is a direct, unambiguous lookup, not a judgment
+        # call. Without it, astropy's VOTable writer raised "invalid
+        # literal for int(): 'Ancillary'" on any query selecting this
+        # column -- confirmed empirically against a real running service.
+        to_stac="epntap_processing_level_to_stac",
+        from_stac="stac_processing_level_to_epntap",
     ),
     ColumnMapping(
         adql_name="creation_date",

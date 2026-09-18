@@ -57,9 +57,20 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "range": {"@id": "rdfs:range", _TYPE: "@id"},
     "subClassOf": {"@id": "rdfs:subClassOf", _TYPE: "@id"},
     "creator": "dcterms:creator",
+    "publisher": "dcterms:publisher",
+    "license": {"@id": "dcterms:license", _TYPE: "@id"},
+    "created": {"@id": "dcterms:created", _TYPE: "xsd:date"},
     "language": "dcterms:language",
     "facetKind": "pdssp:facetKind",
 }
+
+#: This rendering's own metadata -- see epntap_vocabulary's own docstring
+#: for why creator/publisher/created/license describe *this* RDF file,
+#: consistently across every graph in this ontology suite.
+_RENDERING_CREATOR = "Jean-Christophe Malapert"
+_RENDERING_PUBLISHER = "PDSSP"
+_RENDERING_CREATED = "2026-09-18"
+_RENDERING_LICENSE = "https://creativecommons.org/licenses/by/4.0/"
 
 #: ``(local name, comment)`` for every class defined here.
 _CLASSES: list[tuple[str, str]] = [
@@ -174,7 +185,10 @@ def _build_ontology_node(scheme_id: str) -> dict[str, Any]:
             "here so pdssp:-prefixed IRIs referenced from those graphs actually resolve."
         ),
         "language": "en",
-        "creator": "Jean-Christophe Malapert",
+        "created": _RENDERING_CREATED,
+        "creator": _RENDERING_CREATOR,
+        "publisher": _RENDERING_PUBLISHER,
+        "license": _RENDERING_LICENSE,
     }
 
 

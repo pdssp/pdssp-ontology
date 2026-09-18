@@ -194,6 +194,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "dcterms": "http://purl.org/dc/terms/",
     "schema": "http://schema.org/",
     "skos": "http://www.w3.org/2004/02/skos/core#",
+    "widoco": "https://w3id.org/widoco/vocab#",
     "pdssp": "https://pdssp.github.io/pdssp-ontology/vocab#",
     # This vocabulary is English-only (matching its source specification's
     # own language) -- @language on every natural-language-text term
@@ -208,11 +209,17 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "range": {"@id": "rdfs:range", _TYPE: "@id"},
     "subClassOf": {"@id": "rdfs:subClassOf", _TYPE: "@id"},
     "creator": {"@id": "dcterms:creator", "@container": "@set"},
+    "contributor": {"@id": "dcterms:contributor", "@container": "@set"},
     "publisher": "dcterms:publisher",
+    "created": {"@id": "dcterms:created", _TYPE: "xsd:date"},
     "issued": {"@id": "dcterms:issued", _TYPE: "xsd:date"},
     "versionInfo": "owl:versionInfo",
     "language": "dcterms:language",
     "source": {"@id": "dcterms:source", _TYPE: "@id"},
+    "bibliographicCitation": {"@id": "dcterms:bibliographicCitation", "@language": "en"},
+    "license": {"@id": "dcterms:license", _TYPE: "@id"},
+    "abstract": {"@id": "dcterms:abstract", "@language": "en"},
+    "introduction": {"@id": "widoco:introduction", "@language": "en"},
     "adqlName": "pdssp:adqlName",
     "ucd": "pdssp:ucd",
     "unit": "pdssp:unit",
@@ -260,18 +267,55 @@ _DATA_PROPERTIES: list[tuple[str, str, str]] = [
 
 
 #: This PDSSP rendering's own metadata -- distinct from the source
-#: specification's own front matter (below): this file (not the IVOA
-#: standard it transcribes) is what has a creator and a version here.
-#: TODO(user): bump as this rendering evolves; 0.1 is its first cut.
-_RENDERING_VERSION = "0.1"
+#: specification's own front matter (below): every one of
+#: creator/publisher/created/issued/versionInfo/license below describes
+#: *this RDF file*, per ordinary Dublin Core convention (these terms
+#: attached to an owl:Ontology resource are always about that resource
+#: itself, never about an external document it happens to transcribe) --
+#: never the IVOA standard it renders, even though that standard also has
+#: its own, textually similar-looking front matter (see _SPEC_* below).
+#: An earlier version of this module conflated the two (its own `issued`
+#: was actually the *spec's* date, and `publisher` named the IVOA rather
+#: than PDSSP), which is exactly the confusion this comment exists to
+#: prevent from recurring.
+#: TODO(user): bump as this rendering evolves; 0.2 is this metadata
+#: overhaul's own first cut.
+_RENDERING_VERSION = "0.2"
 _RENDERING_CREATOR = "Jean-Christophe Malapert"
+_RENDERING_PUBLISHER = "PDSSP"
+_RENDERING_CREATED = "2026-09-18"
+_RENDERING_ISSUED = "2026-09-18"
+_RENDERING_LICENSE = "https://creativecommons.org/licenses/by/4.0/"
+_RENDERING_ABSTRACT = (
+    "A PDSSP OWL/RDFS rendering of EPN-TAP2 (IVOA Recommendation "
+    "REC-EPNTAP-2.0), the TAP-based framework for publishing Solar System "
+    "science data to the Virtual Observatory. One rdf:Property term per "
+    "EPNCore parameter (mandatory core plus topical extensions), each "
+    "domained on a class matching the specification's own core-category "
+    "or extension grouping, so the vocabulary stays queryable and "
+    "cross-referenceable like any other Linked Data vocabulary."
+)
+_RENDERING_INTRODUCTION = (
+    "EPN-TAP2 defines EPNCore, a common metadata dictionary, and a "
+    "TAP-based query interface for discovering Solar System science data "
+    "across independently operated archives. This document is not a new "
+    "specification: it is PDSSP's own RDF/OWL rendering of the existing "
+    "IVOA Recommendation, transcribed term-for-term from its published "
+    "text (see the Description section and dcterms:source below) so that "
+    "EPN-TAP's vocabulary can be queried, cross-referenced and mapped "
+    "(see the STAC <-> EPN-TAP mapping graph) the same way any other "
+    "Linked Data vocabulary is. The authors of the original EPN-TAP2 "
+    "specification are credited under Contributor(s) below; this "
+    "rendering's own maintainer is credited under Creator(s)."
+)
 
 #: Front-matter metadata taken directly from the specification's own
 #: title page (version/date/working-group/author list), not invented --
-#: REC-EPNTAP-2.0 states no explicit licence of its own, so none is
-#: asserted here rather than guessing one. Cited in the description
-#: (dcterms:source is the actual link), not conflated with
-#: dcterms:creator, which names this file's own author instead.
+#: REC-EPNTAP-2.0 states no explicit licence of its own, so this
+#: rendering's own licence (above) is not presented as if it also covered
+#: the original text. Cited via dcterms:source (the actual link) and
+#: dcterms:bibliographicCitation/dcterms:contributor below -- never
+#: conflated with this rendering's own dcterms:creator.
 _SPEC_TITLE = "EPN-TAP: Publishing Solar System Data to the Virtual Observatory"
 _SPEC_VERSION = "2.0"
 _SPEC_ISSUED = "2022-08-22"
@@ -282,6 +326,10 @@ _SPEC_AUTHORS = (
     "Markus Demleitner",
     "Mark Taylor",
 )
+_SPEC_CITATION = (
+    f"{', '.join(_SPEC_AUTHORS)} ({_SPEC_ISSUED[:4]}). {_SPEC_TITLE}. "
+    f"IVOA Recommendation REC-EPNTAP-{_SPEC_VERSION}, {_SPEC_ISSUED}. {SPEC_URL}"
+)
 _SPEC_DESCRIPTION = (
     "This document defines the EPN-TAP framework, which is using TAP with the EPNCore "
     "metadata dictionary. The EPNCore metadata dictionary defines the core components "
@@ -291,7 +339,6 @@ _SPEC_DESCRIPTION = (
     "physical parameters), access, references, etc. Its implementation with TAP (Table "
     "Access Protocol) is presented, including service registration guidelines. Topical "
     "extension metadata dictionaries are also presented."
-    f" (EPN-TAP2 REC-{_SPEC_VERSION}, {_SPEC_ISSUED}, authored by {', '.join(_SPEC_AUTHORS)}.)"
 )
 
 
@@ -301,13 +348,19 @@ def _build_ontology_node(scheme_id: str) -> dict[str, Any]:
         _TYPE: "owl:Ontology",
         "name": "EPN-TAP vocabulary",
         "title": f"PDSSP rendering of {_SPEC_TITLE} (EPN-TAP2 REC-{_SPEC_VERSION})",
+        "abstract": _RENDERING_ABSTRACT,
+        "introduction": _RENDERING_INTRODUCTION,
         "description": _SPEC_DESCRIPTION,
         "versionInfo": _RENDERING_VERSION,
         "language": "en",
-        "issued": _SPEC_ISSUED,
+        "created": _RENDERING_CREATED,
+        "issued": _RENDERING_ISSUED,
         "creator": _RENDERING_CREATOR,
-        "publisher": "International Virtual Observatory Alliance (IVOA)",
+        "contributor": list(_SPEC_AUTHORS),
+        "publisher": _RENDERING_PUBLISHER,
+        "license": _RENDERING_LICENSE,
         "source": SPEC_URL,
+        "bibliographicCitation": _SPEC_CITATION,
     }
 
 

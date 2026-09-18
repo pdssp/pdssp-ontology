@@ -59,7 +59,19 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "constantValue": "pdssp:constantValue",
     "collectionScoped": "pdssp:collectionScoped",
     "geometryDerived": "pdssp:geometryDerived",
+    "creator": "dcterms:creator",
+    "publisher": "dcterms:publisher",
+    "license": {"@id": "dcterms:license", _TYPE: "@id"},
+    "created": {"@id": "dcterms:created", _TYPE: "xsd:date"},
 }
+
+#: This rendering's own metadata -- see epntap_vocabulary's own docstring
+#: for why creator/publisher/created/license describe *this* RDF file,
+#: consistently across every graph in this ontology suite.
+_RENDERING_CREATOR = "Jean-Christophe Malapert"
+_RENDERING_PUBLISHER = "PDSSP"
+_RENDERING_CREATED = "2026-09-18"
+_RENDERING_LICENSE = "https://creativecommons.org/licenses/by/4.0/"
 
 _NOT_IDENTIFIER = re.compile(r"[^A-Za-z0-9]+")
 
@@ -102,6 +114,10 @@ def _build_ontology_node(scheme_id: str, epntap_base: str, stac_base: str) -> di
         # either vocabulary this mapping bridges, rather than only being
         # reachable the other way around.
         "seeAlso": [f"{epntap_base}/vocabulary", f"{stac_base}/vocabulary"],
+        "created": _RENDERING_CREATED,
+        "creator": _RENDERING_CREATOR,
+        "publisher": _RENDERING_PUBLISHER,
+        "license": _RENDERING_LICENSE,
     }
 
 
