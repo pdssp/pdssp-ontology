@@ -6,19 +6,35 @@ EPN-TAP parameter (``time_min``, ``granule_uid``, ...) is a vocabulary
 *term* (a keyword this specification defines), not instance data, the
 same way :mod:`.stac_vocabulary` mints one ``rdf:Property`` per STAC
 term rather than individuals of a generic "term" class. A term is
-selectable in SPARQL via ``?term rdfs:domain pdssp:EpnTapGranule`` --
-not via a second ``rdf:type`` (a marker class) as an earlier version of
-this module did: OWL-punning a resource as both ``rdf:Property`` and an
-individual of some class makes OWL API (and therefore Widoco) treat it
-as ambiguous, and it then silently drops that resource's ``rdfs:label``/
-``rdfs:comment`` from the generated documentation entirely (confirmed
-empirically -- the exact bug behind every term page missing its
-description). The same reasoning is why every custom ``pdssp:``
-property used to annotate a term (``adqlName``, ``ucd``, ...) is
-declared ``owl:AnnotationProperty`` here, not ``owl:DatatypeProperty``/
-``owl:ObjectProperty``: an annotation property carries no OWL DL
-semantics, so using one never triggers this punning, regardless of
-whether its value is a literal or an IRI (like ``partOfExtension``'s).
+selectable in SPARQL via its ``rdfs:domain`` (``pdssp:EpnTapGranule`` or
+one of its subclasses below) -- not via a second ``rdf:type`` (a marker
+class) as an earlier version of this module did: OWL-punning a resource
+as both ``rdf:Property`` and an individual of some class makes OWL API
+(and therefore Widoco) treat it as ambiguous, and it then silently drops
+that resource's ``rdfs:label``/``rdfs:comment`` from the generated
+documentation entirely (confirmed empirically -- the exact bug behind
+every term page missing its description). The same reasoning is why
+every custom ``pdssp:`` property used to annotate a term (``adqlName``,
+``ucd``, ...) is declared ``owl:AnnotationProperty`` here, not
+``owl:DatatypeProperty``/``owl:ObjectProperty``: an annotation property
+carries no OWL DL semantics, so using one never triggers this punning.
+
+EPN-TAP2's *physical* model is one flat table (every column nullable),
+but its *conceptual* model is a mandatory core plus optional
+extensions, each in a 1-to-(0 or 1) relationship with the core: a
+granule is always an ``EpnTapGranule``, and *additionally* an instance
+of one or more extension subclasses (``SolarSystemObjectGranule``,
+``MapsGranule``, ...) when that extension applies to it -- ordinary OWL
+multiple membership, not a conflict. The ontology follows the
+conceptual model, not the storage layout: each extension's own
+parameters are domained on its own subclass, not on the generic
+``EpnTapGranule``, exactly the standard OWL pattern for optional
+specialisation. Core parameters stay domained on ``EpnTapGranule``
+itself. (An earlier version instead minted a separate ``EpnTapExtension``
+class with one individual per extension, linked from each term via a
+``partOfExtension`` annotation -- subclassing replaces that: the
+subclass itself carries what "belongs to this extension" means, so a
+separate individual for it is redundant.)
 
 Nothing about *how* (or whether) a term is populated from STAC lives
 here -- that's :mod:`.stac_epntap_mapping`'s job, in its own, separately
@@ -54,33 +70,43 @@ _OWL_CLASS = "owl:Class"
 #: carries a domain, e.g. ``StacItem``).
 _EPNTAP_GRANULE_CLASS = "EpnTapGranule"
 
-#: A named EPN-TAP2 table this vocabulary's terms are grouped into (core,
-#: or one of its optional extensions) -- a real, dereferenceable
-#: individual each term's ``partOfExtension`` points at, not a bare
-#: string: ``rdfs:subPropertyOf`` (used for STAC's categories) would be
-#: semantically wrong here (grouping-by-table is membership, not
-#: specialisation), so this is a plain class + object property instead,
-#: the ontologically correct shape for "these terms belong to the same
-#: named group" (the same role SKOS concept schemes play, kept as a
-#: custom class here for consistency with this module's existing
-#: domain/range style).
-_EXTENSION_CLASS = "EpnTapExtension"
-
-#: ``(group key from epntap_spec, human label, description)``.
+#: ``(group key from epntap_spec, class name, comment)`` for every
+#: optional extension -- each becomes an ``owl:Class`` declared
+#: ``rdfs:subClassOf pdssp:EpnTapGranule`` (see module docstring for why
+#: subclassing, not a separate class-with-individuals, is the correct
+#: shape). ``"core"`` is deliberately absent: core parameters stay
+#: domained on ``EpnTapGranule`` itself, since every granule -- with no
+#: "1-to-(0 or 1)" optionality -- is one.
 _EXTENSIONS: list[tuple[str, str, str]] = [
-    ("core", "EPN-TAP core", "The epn_core table's own mandatory and optional parameters."),
-    ("particle_spectroscopy", "Particle Spectroscopy extension", "Particle energy/mass spectral parameters."),
-    ("solar_system_objects", "Solar System Objects extension", "Physical and orbital parameters of a Solar System object."),
-    ("maps", "Maps extension", "Map projection and pixel-scale parameters."),
-    ("contributive_works", "Contributive Works extension", "Observer/producer attribution parameters."),
-    ("experimental_spectroscopy", "Experimental Spectroscopy extension", "Laboratory sample and measurement-condition parameters."),
-    ("apis", "APIS extension", "Aeronomy/planetary-imaging instrument and geometry parameters."),
-    ("events", "Events extension", "Transient/predicted-event classification parameters."),
+    (
+        "particle_spectroscopy",
+        "ParticleSpectroscopyGranule",
+        "An EpnTapGranule that also carries the Particle Spectroscopy extension's parameters.",
+    ),
+    (
+        "solar_system_objects",
+        "SolarSystemObjectGranule",
+        "An EpnTapGranule that also carries the Solar System Objects extension's parameters.",
+    ),
+    ("maps", "MapsGranule", "An EpnTapGranule that also carries the Maps extension's parameters."),
+    (
+        "contributive_works",
+        "ContributiveWorksGranule",
+        "An EpnTapGranule that also carries the Contributive Works extension's parameters.",
+    ),
+    (
+        "experimental_spectroscopy",
+        "ExperimentalSpectroscopyGranule",
+        "An EpnTapGranule that also carries the Experimental Spectroscopy extension's parameters.",
+    ),
+    ("apis", "ApisGranule", "An EpnTapGranule that also carries the APIS extension's parameters."),
+    ("events", "EventsGranule", "An EpnTapGranule that also carries the Events extension's parameters."),
     (
         "other",
-        "Other extensions",
-        "Parameters present in the specification's own extension block but not named in any "
-        "of its numbered extension subsections (the spec's own 2.3.8 'Other extensions').",
+        "OtherExtensionGranule",
+        "An EpnTapGranule carrying a parameter present in the specification's own extension block "
+        "but not named in any of its numbered extension subsections (the spec's own '2.3.8 Other "
+        "extensions').",
     ),
 ]
 
@@ -110,6 +136,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "description": {"@id": "dcterms:description", "@language": "en"},
     "domain": {"@id": "rdfs:domain", _TYPE: "@id"},
     "range": {"@id": "rdfs:range", _TYPE: "@id"},
+    "subClassOf": {"@id": "rdfs:subClassOf", _TYPE: "@id"},
     "creator": {"@id": "dcterms:creator", "@container": "@set"},
     "publisher": "dcterms:publisher",
     "issued": {"@id": "dcterms:issued", _TYPE: "xsd:date"},
@@ -122,7 +149,6 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "datatype": "pdssp:datatype",
     "arraysize": "pdssp:arraysize",
     "requirement": "pdssp:requirement",
-    "partOfExtension": {"@id": "pdssp:partOfExtension", _TYPE: "@id"},
 }
 
 _DATA_PROPERTIES: list[tuple[str, str, str]] = [
@@ -199,36 +225,26 @@ def _build_granule_class_node() -> dict[str, Any]:
         _TYPE: _OWL_CLASS,
         "name": _EPNTAP_GRANULE_CLASS,
         "label": _EPNTAP_GRANULE_CLASS,
-        "comment": "One row (granule) of the EPN-TAP2 epn_core table, or one of its optional extension tables.",
+        "comment": "One row (granule) of the EPN-TAP2 epn_core table.",
     }
 
 
-def _build_extension_class_node() -> dict[str, Any]:
-    return {
-        "@id": f"pdssp:{_EXTENSION_CLASS}",
-        _TYPE: _OWL_CLASS,
-        "name": _EXTENSION_CLASS,
-        "label": _EXTENSION_CLASS,
-        "comment": "A named EPN-TAP2 table (core, or one of its optional extensions) grouping related terms.",
-    }
-
-
-def _build_extension_individual_nodes(scheme_id: str, extension_class: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    """Minted under *scheme_id* (this graph's own IRI, where they are
-    actually published) -- not the shared ``pdssp:`` namespace, which is
-    for shared class/property *definitions* only (see
-    :mod:`.shared_vocab`); an individual minted there instead would be a
-    dangling reference, since nothing is ever published to resolve it.
+def _build_extension_subclass_nodes(granule_class: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """One ``owl:Class`` per optional extension, ``rdfs:subClassOf
+    pdssp:EpnTapGranule`` -- see module docstring for why subclassing (not
+    a separate class-with-individuals) is the ontologically correct shape
+    for a 1-to-(0 or 1) core/extension relationship.
     """
     return {
         key: {
-            "@id": f"{scheme_id}#{_EXTENSION_CLASS}_{key}",
-            _TYPE: extension_class["@id"],
-            "name": label,
-            "label": label,
+            "@id": f"pdssp:{class_name}",
+            _TYPE: _OWL_CLASS,
+            "name": class_name,
+            "label": class_name,
             "comment": comment,
+            "subClassOf": granule_class,
         }
-        for key, label, comment in _EXTENSIONS
+        for key, class_name, comment in _EXTENSIONS
     }
 
 
@@ -254,15 +270,6 @@ def _build_property_nodes() -> list[dict[str, Any]]:
                 "comment": comment,
             }
         )
-    nodes.append(
-        {
-            "@id": "pdssp:partOfExtension",
-            _TYPE: "owl:AnnotationProperty",
-            "name": "partOfExtension",
-            "label": "partOfExtension",
-            "comment": "Which named EPN-TAP2 table (core, or an optional extension) this term belongs to.",
-        }
-    )
     return nodes
 
 
@@ -270,19 +277,19 @@ def _build_term_node(
     param: EpnTapParameter,
     scheme_id: str,
     granule_class: dict[str, Any],
-    extensions: dict[str, dict[str, Any]],
+    extension_classes: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
+    domain = granule_class if param.group == "core" else extension_classes[param.group]
     node: dict[str, Any] = {
         "@id": f"{scheme_id}#{param.name}",
         _TYPE: "rdf:Property",
         "name": param.name,
         "label": param.name,
-        "domain": granule_class,
+        "domain": domain,
         "range": _XSD_RANGE_BY_DATATYPE[param.datatype],
         "adqlName": param.name,
         "datatype": param.datatype,
         "requirement": param.requirement,
-        "partOfExtension": extensions[param.group],
     }
     if param.description:
         node["comment"] = param.description
@@ -299,8 +306,9 @@ def build_epntap_vocabulary_jsonld(base: str, parameters: list[EpnTapParameter])
     """Serialise *parameters* as a JSON-LD RDFS/OWL document describing
     only the EPN-TAP vocabulary itself -- one ``rdf:Property`` term node
     per entry, with just its intrinsic properties (adqlName/ucd/unit/
-    datatype/arraysize/requirement/partOfExtension/description). No STAC
-    mapping information: see
+    datatype/arraysize/requirement/description), domained on
+    ``EpnTapGranule`` (core parameters) or the relevant extension
+    subclass (see module docstring). No STAC mapping information: see
     :func:`pdssp_ontology.stac_epntap_mapping.build_stac_epntap_mapping_jsonld`
     for that, in its own named graph.
 
@@ -317,15 +325,13 @@ def build_epntap_vocabulary_jsonld(base: str, parameters: list[EpnTapParameter])
     """
     scheme_id = f"{base}/vocabulary"
     granule_class = _build_granule_class_node()
-    extension_class = _build_extension_class_node()
-    extensions = _build_extension_individual_nodes(scheme_id, extension_class)
+    extension_classes = _build_extension_subclass_nodes(granule_class)
 
     graph: list[dict[str, Any]] = [
         _build_ontology_node(scheme_id),
         granule_class,
-        extension_class,
-        *(extensions[key] for key, _, _ in _EXTENSIONS),
+        *extension_classes.values(),
         *_build_property_nodes(),
-        *(_build_term_node(param, scheme_id, granule_class, extensions) for param in parameters),
+        *(_build_term_node(param, scheme_id, granule_class, extension_classes) for param in parameters),
     ]
     return {"@context": _JSONLD_CONTEXT, "@graph": graph}

@@ -55,6 +55,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "description": {"@id": "dcterms:description", "@language": "en"},
     "domain": {"@id": "rdfs:domain", _TYPE: "@id"},
     "range": {"@id": "rdfs:range", _TYPE: "@id"},
+    "subClassOf": {"@id": "rdfs:subClassOf", _TYPE: "@id"},
     "creator": "dcterms:creator",
     "language": "dcterms:language",
 }
@@ -69,10 +70,24 @@ _CLASSES: list[tuple[str, str]] = [
         "StacVocabularyTerm",
         "Marker for a documented STAC/extension/custom term -- see pdssp-stac/vocabulary.",
     ),
-    ("EpnTapGranule", "One row (granule) of the EPN-TAP2 epn_core table, or one of its optional extension tables -- see epn-tap/vocabulary."),
-    ("EpnTapExtension", "A named EPN-TAP2 table (core, or one of its optional extensions) -- see epn-tap/vocabulary."),
+    ("EpnTapGranule", "One row (granule) of the EPN-TAP2 epn_core table -- see epn-tap/vocabulary."),
     ("StacProperty", "A STAC (or STAC Collection) path an EpnTapColumn mapping reads -- see mappings/pdssp-stac-epn-tap."),
     ("Converter", "A named value-conversion function a mapping applies in one direction -- see mappings/pdssp-stac-epn-tap."),
+]
+
+#: ``(local name, comment)`` for every EPN-TAP optional-extension
+#: subclass of ``EpnTapGranule`` -- see epn-tap/vocabulary's own
+#: docstring for why subclassing (not a separate class-with-individuals)
+#: is the correct shape for a 1-to-(0 or 1) core/extension relationship.
+_EPNTAP_EXTENSION_SUBCLASSES: list[tuple[str, str]] = [
+    ("ParticleSpectroscopyGranule", "An EpnTapGranule that also carries the Particle Spectroscopy extension's parameters."),
+    ("SolarSystemObjectGranule", "An EpnTapGranule that also carries the Solar System Objects extension's parameters."),
+    ("MapsGranule", "An EpnTapGranule that also carries the Maps extension's parameters."),
+    ("ContributiveWorksGranule", "An EpnTapGranule that also carries the Contributive Works extension's parameters."),
+    ("ExperimentalSpectroscopyGranule", "An EpnTapGranule that also carries the Experimental Spectroscopy extension's parameters."),
+    ("ApisGranule", "An EpnTapGranule that also carries the APIS extension's parameters."),
+    ("EventsGranule", "An EpnTapGranule that also carries the Events extension's parameters."),
+    ("OtherExtensionGranule", "An EpnTapGranule carrying a parameter from the specification's unnamed '2.3.8 Other extensions'."),
 ]
 
 #: ``(local name, domain class, comment)`` for every STAC "category"
@@ -107,7 +122,6 @@ _ANNOTATION_PROPERTIES: list[tuple[str, str]] = [
     ("datatype", "VOTable datatype (char, int, float, double)."),
     ("arraysize", "VOTable arraysize (e.g. '*' for a variable-length string)."),
     ("requirement", "EPN-TAP2's own three-tier requirement: value_required, column_required, or optional."),
-    ("partOfExtension", "Which named EPN-TAP2 table (core, or an optional extension) a term belongs to."),
     ("mappedFrom", "The STAC (or STAC Collection) path an EPN-TAP column's value comes from."),
     ("toStacConverter", "Converter applied to an EPN-TAP/ADQL literal before it reaches STAC."),
     ("fromStacConverter", "Converter applied to a STAC value before it is reported as an EPN-TAP column."),
@@ -142,6 +156,21 @@ def _build_class_nodes() -> dict[str, dict[str, Any]]:
         name: {"@id": f"pdssp:{name}", _TYPE: _OWL_CLASS, "name": name, "label": name, "comment": comment}
         for name, comment in _CLASSES
     }
+
+
+def _build_epntap_extension_subclass_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    granule = classes["EpnTapGranule"]
+    return [
+        {
+            "@id": f"pdssp:{name}",
+            _TYPE: _OWL_CLASS,
+            "name": name,
+            "label": name,
+            "comment": comment,
+            "subClassOf": granule,
+        }
+        for name, comment in _EPNTAP_EXTENSION_SUBCLASSES
+    ]
 
 
 def _build_category_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
@@ -199,6 +228,7 @@ def build_shared_vocab_jsonld(base: str) -> dict[str, Any]:
     graph: list[dict[str, Any]] = [
         _build_ontology_node(base),
         *classes.values(),
+        *_build_epntap_extension_subclass_nodes(classes),
         *_build_category_nodes(classes),
         *_build_structural_property_nodes(classes),
         *_build_annotation_property_nodes(),
