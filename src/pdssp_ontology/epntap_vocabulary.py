@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pdssp_ontology.epntap_spec import EpnTapParameter
+from pdssp_ontology.epntap_spec import SPEC_URL, EpnTapParameter
 
 _TYPE = "@type"
 _OWL_CLASS = "owl:Class"
@@ -77,11 +77,18 @@ _EXTENSIONS: list[tuple[str, str, str]] = [
     ("experimental_spectroscopy", "Experimental Spectroscopy extension", "Laboratory sample and measurement-condition parameters."),
     ("apis", "APIS extension", "Aeronomy/planetary-imaging instrument and geometry parameters."),
     ("events", "Events extension", "Transient/predicted-event classification parameters."),
+    (
+        "other",
+        "Other extensions",
+        "Parameters present in the specification's own extension block but not named in any "
+        "of its numbered extension subsections (the spec's own 2.3.8 'Other extensions').",
+    ),
 ]
 
 _XSD_RANGE_BY_DATATYPE: dict[str, str] = {
     "char": "xsd:string",
     "int": "xsd:integer",
+    "float": "xsd:float",
     "double": "xsd:double",
 }
 
@@ -93,11 +100,22 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "dcterms": "http://purl.org/dc/terms/",
     "schema": "http://schema.org/",
     "pdssp": "https://pdssp.github.io/pdssp-ontology/vocab#",
-    "name": "schema:name",
-    "label": "rdfs:label",
-    "comment": "rdfs:comment",
+    # This vocabulary is English-only (matching its source specification's
+    # own language) -- @language on every natural-language-text term
+    # definition, rather than plain untagged strings, is what actually
+    # records that in the JSON-LD/RDF itself.
+    "name": {"@id": "schema:name", "@language": "en"},
+    "label": {"@id": "rdfs:label", "@language": "en"},
+    "comment": {"@id": "rdfs:comment", "@language": "en"},
+    "title": {"@id": "dcterms:title", "@language": "en"},
+    "description": {"@id": "dcterms:description", "@language": "en"},
     "domain": {"@id": "rdfs:domain", _TYPE: "@id"},
     "range": {"@id": "rdfs:range", _TYPE: "@id"},
+    "creator": {"@id": "dcterms:creator", "@container": "@set"},
+    "publisher": "dcterms:publisher",
+    "issued": {"@id": "dcterms:issued", _TYPE: "xsd:date"},
+    "versionInfo": "owl:versionInfo",
+    "source": {"@id": "dcterms:source", _TYPE: "@id"},
     "adqlName": "pdssp:adqlName",
     "ucd": "pdssp:ucd",
     "unit": "pdssp:unit",
@@ -123,13 +141,44 @@ _DATA_PROPERTIES: list[tuple[str, str, str]] = [
 ]
 
 
+#: Front-matter metadata taken directly from the specification's own
+#: title page (version/date/working-group/author list), not invented --
+#: REC-EPNTAP-2.0 states no explicit licence of its own, so none is
+#: asserted here rather than guessing one.
+_SPEC_TITLE = "EPN-TAP: Publishing Solar System Data to the Virtual Observatory"
+_SPEC_VERSION = "2.0"
+_SPEC_ISSUED = "2022-08-22"
+_SPEC_AUTHORS = (
+    "Stéphane Erard",
+    "Baptiste Cecconi",
+    "Pierre Le Sidaner",
+    "Markus Demleitner",
+    "Mark Taylor",
+)
+_SPEC_DESCRIPTION = (
+    "This document defines the EPN-TAP framework, which is using TAP with the EPNCore "
+    "metadata dictionary. The EPNCore metadata dictionary defines the core components "
+    "that are necessary to perform data discovery in the Solar System related science "
+    "fields. It includes parameters to describe data products coverage (temporal, "
+    "spectral, spatial, photometric), origin (instrument, facility), content (target, "
+    "physical parameters), access, references, etc. Its implementation with TAP (Table "
+    "Access Protocol) is presented, including service registration guidelines. Topical "
+    "extension metadata dictionaries are also presented."
+)
+
+
 def _build_ontology_node(scheme_id: str) -> dict[str, Any]:
     return {
         "@id": scheme_id,
         _TYPE: "owl:Ontology",
         "name": "EPN-TAP vocabulary",
-        "dcterms:title": "EPN-TAP vocabulary",
-        "dcterms:source": "https://www.ivoa.net/documents/EPNTAP/20220822/REC-EPNTAP-2.0.html",
+        "title": f"{_SPEC_TITLE} (v{_SPEC_VERSION}) -- PDSSP vocabulary rendering",
+        "description": _SPEC_DESCRIPTION,
+        "versionInfo": _SPEC_VERSION,
+        "issued": _SPEC_ISSUED,
+        "creator": list(_SPEC_AUTHORS),
+        "publisher": "International Virtual Observatory Alliance (IVOA)",
+        "source": SPEC_URL,
     }
 
 

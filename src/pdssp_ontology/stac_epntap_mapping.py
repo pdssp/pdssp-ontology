@@ -202,6 +202,22 @@ def _collect_stac_property_nodes(columns: list[ColumnMapping]) -> dict[str, dict
     return nodes
 
 
+#: Every converter but this one lives in the public, generic
+#: ``converters`` package (one module per function) -- this is
+#: ``epntap2cql2``'s own, service-specific converter (it builds a
+#: DataLink URL for *this* service's own ``/links`` route), so pointing
+#: its ``isDefinedBy`` at ``converters_repo`` like the rest would be a
+#: broken link (verified: that path 404s there). Points at its real
+#: location instead -- privately hosted like the rest of ``epntap2cql2``,
+#: but an accurate, non-broken reference beats a public-looking, dead one.
+_LOCAL_CONVERTER_SOURCE: dict[str, str] = {
+    "get_datalink_url_for_item": (
+        "https://gitlab.cnes.fr/pdssp/stac-planet-platform/epntap2cql2/-/blob/main/"
+        "src/epntap2cql2/converters.py"
+    ),
+}
+
+
 def _collect_converter_nodes(
     columns: list[ColumnMapping], *, converters_repo: str, converters_ref: str
 ) -> dict[str, dict[str, Any]]:
@@ -210,12 +226,15 @@ def _collect_converter_nodes(
         for name in (col.to_stac, col.from_stac):
             if not name or name in nodes:
                 continue
+            source = _LOCAL_CONVERTER_SOURCE.get(
+                name, f"{converters_repo}/blob/{converters_ref}/src/converters/{name}.py"
+            )
             nodes[name] = {
                 "@id": f"pdssp:{_CONVERTER_CLASS}_{name}",
                 _TYPE: f"pdssp:{_CONVERTER_CLASS}",
                 "name": name,
                 "label": name,
-                "isDefinedBy": f"{converters_repo}/blob/{converters_ref}/src/converters/{name}.py",
+                "isDefinedBy": source,
             }
     return nodes
 
