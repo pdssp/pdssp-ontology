@@ -220,6 +220,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "arraysize": "pdssp:arraysize",
     "requirement": "pdssp:requirement",
     "controlledVocabulary": {"@id": "pdssp:controlledVocabulary", _TYPE: "@id"},
+    "facetKind": "pdssp:facetKind",
     "notation": "skos:notation",
     "prefLabel": {"@id": "skos:prefLabel", "@language": "en"},
     "definition": {"@id": "skos:definition", "@language": "en"},
@@ -244,6 +245,16 @@ _DATA_PROPERTIES: list[tuple[str, str, str]] = [
         None,
         "The skos:ConceptScheme enumerating this term's allowed values, for the few "
         "terms whose controlled vocabulary the specification spells out in full.",
+    ),
+    (
+        "facetKind",
+        "xsd:string",
+        "Whether this EpnTapGranule subclass represents a mandatory core theme "
+        '("core") or an optional extension ("extension") -- see module docstring. '
+        "Purely descriptive metadata, not a formal OWL commitment: an "
+        "owl:AnnotationProperty carries no DL semantics, so this never risks the "
+        "punning bug a structural encoding (e.g. an EpnCore superclass) would need "
+        "verifying against.",
     ),
 ]
 
@@ -324,6 +335,7 @@ def _build_extension_subclass_nodes(granule_class: dict[str, Any]) -> dict[str, 
             "label": class_name,
             "comment": comment,
             "subClassOf": granule_class,
+            "facetKind": "extension",
         }
         for key, class_name, comment in _EXTENSIONS
     }
@@ -343,6 +355,7 @@ def _build_category_subclass_nodes(granule_class: dict[str, Any]) -> dict[str, d
             "label": class_name,
             "comment": comment,
             "subClassOf": granule_class,
+            "facetKind": "core",
         }
         for label, class_name, comment in _CORE_CATEGORIES_CLASSES
     }

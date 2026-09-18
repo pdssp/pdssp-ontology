@@ -58,6 +58,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "subClassOf": {"@id": "rdfs:subClassOf", _TYPE: "@id"},
     "creator": "dcterms:creator",
     "language": "dcterms:language",
+    "facetKind": "pdssp:facetKind",
 }
 
 #: ``(local name, comment)`` for every class defined here.
@@ -152,6 +153,12 @@ _ANNOTATION_PROPERTIES: list[tuple[str, str]] = [
     ("valueType", "The declared value type of a STAC term."),
     ("controlledVocabulary", "Where the controlled vocabulary for a term's value is defined."),
     ("note", "Free-text implementation note."),
+    (
+        "facetKind",
+        'Whether an EpnTapGranule subclass represents a mandatory core theme ("core") '
+        'or an optional extension ("extension") -- descriptive metadata only, no OWL '
+        "DL semantics.",
+    ),
 ]
 
 
@@ -188,6 +195,7 @@ def _build_epntap_extension_subclass_nodes(classes: dict[str, dict[str, Any]]) -
             "label": name,
             "comment": comment,
             "subClassOf": granule,
+            "facetKind": "extension",
         }
         for name, comment in _EPNTAP_EXTENSION_SUBCLASSES
     ]
@@ -203,6 +211,7 @@ def _build_epntap_core_category_subclass_nodes(classes: dict[str, dict[str, Any]
             "label": name,
             "comment": comment,
             "subClassOf": granule,
+            "facetKind": "core",
         }
         for name, comment in _EPNTAP_CORE_CATEGORY_SUBCLASSES
     ]
