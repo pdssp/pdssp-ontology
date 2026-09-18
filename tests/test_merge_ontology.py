@@ -8,29 +8,29 @@ _BASE = "https://example.org/test"
 def test_dataset_has_three_named_graphs():
     dataset = build_dataset(_BASE)
     identifiers = {g.identifier for g in dataset.graphs()}
-    assert URIRef(f"{_BASE}/stac/vocabulary") in identifiers
-    assert URIRef(f"{_BASE}/epntap/vocabulary") in identifiers
-    assert URIRef(f"{_BASE}/mappings/stac-epntap") in identifiers
+    assert URIRef(f"{_BASE}/pdssp-stac/vocabulary") in identifiers
+    assert URIRef(f"{_BASE}/epn-tap/vocabulary") in identifiers
+    assert URIRef(f"{_BASE}/mappings/pdssp-stac-epn-tap") in identifiers
 
 
 def test_stac_graph_has_stac_classes():
     dataset = build_dataset(_BASE)
-    stac_graph = dataset.graph(URIRef(f"{_BASE}/stac/vocabulary"))
+    stac_graph = dataset.graph(URIRef(f"{_BASE}/pdssp-stac/vocabulary"))
     subjects = {str(s) for s in stac_graph.subjects()}
     assert any("StacItem" in s for s in subjects)
 
 
 def test_epntap_graph_has_epntap_columns():
     dataset = build_dataset(_BASE)
-    epntap_graph = dataset.graph(URIRef(f"{_BASE}/epntap/vocabulary"))
+    epntap_graph = dataset.graph(URIRef(f"{_BASE}/epn-tap/vocabulary"))
     subjects = {str(s) for s in epntap_graph.subjects()}
     assert any(s.endswith("#time_min") for s in subjects)
 
 
 def test_graphs_do_not_leak_into_each_other():
     dataset = build_dataset(_BASE)
-    stac_graph = dataset.graph(URIRef(f"{_BASE}/stac/vocabulary"))
-    epntap_graph = dataset.graph(URIRef(f"{_BASE}/epntap/vocabulary"))
+    stac_graph = dataset.graph(URIRef(f"{_BASE}/pdssp-stac/vocabulary"))
+    epntap_graph = dataset.graph(URIRef(f"{_BASE}/epn-tap/vocabulary"))
     stac_subjects = {str(s) for s in stac_graph.subjects()}
     assert not any(s.endswith("#time_min") for s in stac_subjects)
     epntap_subjects = {str(s) for s in epntap_graph.subjects()}
@@ -63,10 +63,10 @@ def test_write_per_graph_turtle_writes_one_file_per_named_graph(tmp_path):
     paths = write_per_graph_turtle(dataset, tmp_path, _BASE)
 
     names = {p.name for p in paths}
-    assert names == {"stac.ttl", "epntap.ttl", "mappings-stac-epntap.ttl"}
+    assert names == {"pdssp-stac.ttl", "epn-tap.ttl", "mappings-pdssp-stac-epn-tap.ttl"}
 
-    stac_graph = Graph().parse(tmp_path / "stac.ttl", format="turtle")
-    assert len(stac_graph) == len(dataset.graph(URIRef(f"{_BASE}/stac/vocabulary")))
+    stac_graph = Graph().parse(tmp_path / "pdssp-stac.ttl", format="turtle")
+    assert len(stac_graph) == len(dataset.graph(URIRef(f"{_BASE}/pdssp-stac/vocabulary")))
 
 
 def test_mapping_graph_links_documented_terms_to_the_real_stac_vocabulary(tmp_path):
@@ -75,10 +75,17 @@ def test_mapping_graph_links_documented_terms_to_the_real_stac_vocabulary(tmp_pa
     term IRI, not a mapping-local stand-in -- the whole point of splitting
     vocabulary from mapping."""
     dataset = build_dataset(_BASE)
-    mapping_graph = dataset.graph(URIRef(f"{_BASE}/mappings/stac-epntap"))
-    stac_graph = dataset.graph(URIRef(f"{_BASE}/stac/vocabulary"))
+    mapping_graph = dataset.graph(URIRef(f"{_BASE}/mappings/pdssp-stac-epn-tap"))
+    stac_graph = dataset.graph(URIRef(f"{_BASE}/pdssp-stac/vocabulary"))
 
     stac_term_subjects = {str(s) for s in stac_graph.subjects()}
     mapped_targets = {str(o) for _, p, o in mapping_graph if str(p).endswith("mappedFrom")}
 
     assert mapped_targets & stac_term_subjects, "expected at least one mappedFrom target to be a real STAC term IRI"
+
+
+def test_mapping_ontology_node_links_back_to_both_vocabularies():
+    dataset = build_dataset(_BASE)
+    mapping_graph = dataset.graph(URIRef(f"{_BASE}/mappings/pdssp-stac-epn-tap"))
+    see_also = {str(o) for s, p, o in mapping_graph if str(p).endswith("seeAlso")}
+    assert see_also == {f"{_BASE}/epn-tap/vocabulary", f"{_BASE}/pdssp-stac/vocabulary"}

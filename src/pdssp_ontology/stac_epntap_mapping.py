@@ -50,6 +50,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "label": "rdfs:label",
     "comment": "rdfs:comment",
     "isDefinedBy": {"@id": "rdfs:isDefinedBy", _TYPE: "@id"},
+    "seeAlso": {"@id": "rdfs:seeAlso", _TYPE: "@id", "@container": "@set"},
     "domain": {"@id": "rdfs:domain", _TYPE: "@id"},
     "range": {"@id": "rdfs:range", _TYPE: "@id"},
     "mappedFrom": {"@id": "pdssp:mappedFrom", _TYPE: "@id"},
@@ -86,13 +87,21 @@ def _match_stac_term(path: str) -> str | None:
     return name if name in _DOCUMENTED_STAC_TERMS else None
 
 
-def _build_ontology_node(scheme_id: str) -> dict[str, Any]:
+def _build_ontology_node(scheme_id: str, epntap_base: str, stac_base: str) -> dict[str, Any]:
     return {
         "@id": scheme_id,
         _TYPE: "owl:Ontology",
         "name": "STAC <-> EPN-TAP mapping",
         "dcterms:title": "STAC <-> EPN-TAP mapping",
         "dcterms:source": "https://ivoa.net/documents/EPNTAP/",
+        "comment": (
+            "Bridges the independent EPN-TAP and PDSSP/STAC vocabularies -- see "
+            "seeAlso for each one's own ontology."
+        ),
+        # Lets a reader (and Widoco's own overview section) bounce back to
+        # either vocabulary this mapping bridges, rather than only being
+        # reachable the other way around.
+        "seeAlso": [f"{epntap_base}/vocabulary", f"{stac_base}/vocabulary"],
     }
 
 
@@ -266,11 +275,12 @@ def build_stac_epntap_mapping_jsonld(
     ----------
     mapping_base:
         Base URL for this mapping graph's own ontology node (e.g.
-        ``{DEFAULT_BASE}/mappings/stac-epntap``).
+        ``{DEFAULT_BASE}/mappings/pdssp-stac-epn-tap``).
     epntap_base, stac_base:
-        Base URLs the ``epntap/vocabulary`` and ``stac/vocabulary`` graphs
-        were minted with -- used to point at their real term/column IRIs
-        rather than inventing new ones.
+        Base URLs the ``epn-tap/vocabulary`` and ``pdssp-stac/vocabulary``
+        graphs were minted with -- used to point at their real
+        term/column IRIs rather than inventing new ones, and to link back
+        to each from this mapping's own ontology node (``seeAlso``).
     columns:
         A list of objects satisfying the same structural shape as
         :class:`pdssp_ontology.model.ColumnMapping`.
@@ -280,7 +290,7 @@ def build_stac_epntap_mapping_jsonld(
     classes = _build_class_nodes()
 
     graph: list[dict[str, Any]] = [
-        _build_ontology_node(mapping_base),
+        _build_ontology_node(mapping_base, epntap_base, stac_base),
         *classes.values(),
         *_build_property_nodes(classes),
         *(stac_properties[k] for k in sorted(stac_properties)),

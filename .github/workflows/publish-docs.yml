@@ -1,10 +1,12 @@
 name: Publish ontology documentation
 
-# Regenerates the merged ontology entirely from this repo's own source
-# (src/pdssp_ontology/stac_seed.py + epntap_seed.py -- see
-# merge_ontology.py's own docstring: this package owns the whole ontology,
-# no live third-party service is ever contacted), runs Widoco over it, and
-# publishes the result to GitHub Pages.
+# Regenerates the ontology entirely from this repo's own source (see
+# merge_ontology.py's own docstring: this package owns the whole
+# ontology, no live third-party service is ever contacted), runs Widoco
+# once per data model/mapping, and publishes the result to GitHub Pages.
+# The site root is a plain catalogue page linking to each -- never a
+# merged/flattened ontology of its own, so each data model's ontology
+# stays independently dereferenceable (see the README).
 #
 # One-time setup this workflow can't do for you: in this repo's Settings
 # -> Pages, set "Source" to "GitHub Actions".
@@ -46,13 +48,12 @@ jobs:
       - name: Install Python dependencies
         run: uv sync
 
-      # Writes development/ontology.ttl (combined, for the root overview
-      # site below) plus one development/<name>.ttl per named graph
-      # (stac.ttl/epntap.ttl, see write_per_graph_turtle) -- each gets its
-      # own separate Widoco/WebVOWL run below, so e.g. the epntap named
-      # graph's own IRI can resolve to an EPN-TAP-only WebVOWL instead of
-      # only ever appearing merged into the combined view.
-      - name: Build the ontology (combined + one Turtle file per named graph)
+      # Writes one development/<name>.ttl per named graph (pdssp-stac.ttl,
+      # epn-tap.ttl, mappings-pdssp-stac-epn-tap.ttl -- see
+      # write_per_graph_turtle), each getting its own separate Widoco run
+      # below so every data model's ontology -- and the mapping between
+      # two of them -- is independently dereferenceable.
+      - name: Build the ontology (one Turtle file per named graph)
         run: uv run python -m pdssp_ontology.merge_ontology --base "$BASE"
 
       - name: Set up Java (for Widoco)
@@ -66,24 +67,11 @@ jobs:
           curl -sL -o widoco.jar \
             "https://github.com/dgarijo/Widoco/releases/download/v${WIDOCO_VERSION}/widoco-${WIDOCO_VERSION}-jar-with-dependencies_JDK-17.jar"
 
-      # Three independent Widoco runs: the combined overview at the site
-      # root, and one per vocabulary so each has its own WebVOWL graph
-      # (not mixed with the other vocabulary's classes/properties).
-      - name: Generate documentation with Widoco (combined overview)
+      - name: Generate documentation with Widoco (PDSSP/STAC vocabulary)
         run: |
           java -jar widoco.jar \
-            -ontFile development/ontology.ttl \
-            -outFolder site \
-            -lang en \
-            -getOntologyMetadata \
-            -webVowl \
-            -rewriteAll
-
-      - name: Generate documentation with Widoco (STAC vocabulary)
-        run: |
-          java -jar widoco.jar \
-            -ontFile development/stac.ttl \
-            -outFolder site/stac \
+            -ontFile development/pdssp-stac.ttl \
+            -outFolder site/pdssp-stac \
             -lang en \
             -getOntologyMetadata \
             -webVowl \
@@ -92,8 +80,21 @@ jobs:
       - name: Generate documentation with Widoco (EPN-TAP vocabulary)
         run: |
           java -jar widoco.jar \
-            -ontFile development/epntap.ttl \
-            -outFolder site/epntap \
+            -ontFile development/epn-tap.ttl \
+            -outFolder site/epn-tap \
+            -lang en \
+            -getOntologyMetadata \
+            -webVowl \
+            -rewriteAll
+
+      # This graph's own IRI (mappings/pdssp-stac-epn-tap, no extra
+      # "/vocabulary" segment) already matches its site directory, so
+      # unlike the two vocabularies below it needs no separate redirect.
+      - name: Generate documentation with Widoco (STAC <-> EPN-TAP mapping)
+        run: |
+          java -jar widoco.jar \
+            -ontFile development/mappings-pdssp-stac-epn-tap.ttl \
+            -outFolder site/mappings/pdssp-stac-epn-tap \
             -lang en \
             -getOntologyMetadata \
             -webVowl \
@@ -101,20 +102,22 @@ jobs:
 
       # Widoco only generates index-en.html; GitHub Pages needs index.html
       # as the default document for a bare directory URL to resolve, at
-      # each of the three site roots.
+      # each site.
       - name: Add index.html to each site
         run: |
-          cp site/index-en.html site/index.html
-          cp site/stac/index-en.html site/stac/index.html
-          cp site/epntap/index-en.html site/epntap/index.html
+          cp site/pdssp-stac/index-en.html site/pdssp-stac/index.html
+          cp site/epn-tap/index-en.html site/epn-tap/index.html
+          cp site/mappings/pdssp-stac-epn-tap/index-en.html site/mappings/pdssp-stac-epn-tap/index.html
 
-      # The named graph IRIs merge_ontology.py mints (.../stac/vocabulary,
-      # .../epntap/vocabulary) need to actually resolve to something --
-      # a redirect to that vocabulary's own Widoco/WebVOWL page.
+      # The two vocabulary named-graph IRIs merge_ontology.py mints
+      # (.../pdssp-stac/vocabulary, .../epn-tap/vocabulary) have one path
+      # segment ("vocabulary") beyond their own site directory -- a
+      # redirect to that vocabulary's own Widoco/WebVOWL page resolves
+      # them instead of 404ing.
       - name: Add named-graph IRI redirects
         run: |
-          mkdir -p site/stac/vocabulary site/epntap/vocabulary
-          for name in stac epntap; do
+          mkdir -p site/pdssp-stac/vocabulary site/epn-tap/vocabulary
+          for name in pdssp-stac epn-tap; do
             cat > "site/$name/vocabulary/index.html" <<EOF
           <!DOCTYPE html>
           <html lang="en">
@@ -131,6 +134,31 @@ jobs:
           </html>
           EOF
           done
+
+      # The site root is a plain catalogue of the ontologies this repo
+      # publishes -- never a merged/flattened ontology of its own (each
+      # data model's ontology, and the mapping between two of them, stays
+      # independently dereferenceable; see the README).
+      - name: Add the root catalogue page
+        run: |
+          cat > site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>PDSSP ontologies</title>
+          </head>
+          <body>
+            <h1>PDSSP ontologies</h1>
+            <p>One independent ontology per data model, plus the mapping(s) between them.</p>
+            <ul>
+              <li><a href="pdssp-stac/">PDSSP/STAC vocabulary</a></li>
+              <li><a href="epn-tap/">EPN-TAP vocabulary</a></li>
+              <li><a href="mappings/pdssp-stac-epn-tap/">STAC &lt;-&gt; EPN-TAP mapping</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

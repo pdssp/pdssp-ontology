@@ -22,17 +22,26 @@ separate graph instead of being bundled into either vocabulary (see
 :mod:`.stac_epntap_mapping`'s own docstring, and this package's README,
 for why):
 
-- ``<{base}/stac/vocabulary>``          <- :mod:`.stac_seed`/:mod:`.stac_vocabulary`
-  (the PDS3 <-> STAC vocabulary+mapping -- not yet split the same way;
-  real follow-up work, see the README).
-- ``<{base}/epntap/vocabulary>``        <- :mod:`.epntap_seed`/:mod:`.epntap_vocabulary`
-  (EPN-TAP's own vocabulary, nothing about STAC).
-- ``<{base}/mappings/stac-epntap>``     <- :mod:`.stac_epntap_mapping`
-  (which STAC path/converter feeds each EPN-TAP column).
+- ``<{base}/pdssp-stac/vocabulary>``           <- :mod:`.stac_seed`/:mod:`.stac_vocabulary`
+  (the PDSSP/STAC vocabulary+PDS3 mapping -- not yet split the same way;
+  real follow-up work, see the README). Published at ``{base}/pdssp-stac/``.
+- ``<{base}/epn-tap/vocabulary>``              <- :mod:`.epntap_seed`/:mod:`.epntap_vocabulary`
+  (EPN-TAP's own vocabulary, nothing about STAC). Published at
+  ``{base}/epn-tap/``.
+- ``<{base}/mappings/pdssp-stac-epn-tap>``     <- :mod:`.stac_epntap_mapping`
+  (which STAC path/converter feeds each EPN-TAP column, cross-linking
+  back to both vocabularies above). Published at
+  ``{base}/mappings/pdssp-stac-epn-tap/``.
+
+``{base}/`` itself is a plain catalogue page listing the above -- never a
+fourth, merged ontology; each data model's ontology stays independently
+dereferenceable, per this package's own design principle (see the
+README).
 
 Writes ``development/ontology.trig`` (the named-graph-aware source of
 truth Fuseki loads), a flattened ``development/ontology.ttl`` (single
-default graph, for a combined-overview Widoco run), and one
+default graph -- a combined, single-file download of everything, not
+something Widoco renders as its own site), and one
 ``development/<name>.ttl`` per named graph so each can also get its own,
 separate Widoco/WebVOWL site -- see the GitHub Actions workflow, which
 runs Widoco once per file.
@@ -75,12 +84,13 @@ def build_epntap_graph_jsonld(base: str) -> dict:
 
 def build_stac_epntap_mapping_graph_jsonld(base: str) -> dict:
     """Render the STAC <-> EPN-TAP mapping as its own JSON-LD document,
-    cross-referencing the real ``stac/vocabulary`` and ``epntap/vocabulary``
-    graphs' own IRIs rather than duplicating either."""
+    cross-referencing the real ``pdssp-stac/vocabulary`` and
+    ``epn-tap/vocabulary`` graphs' own IRIs rather than duplicating
+    either."""
     return build_stac_epntap_mapping_jsonld(
-        mapping_base=f"{base}/mappings/stac-epntap",
-        epntap_base=f"{base}/epntap",
-        stac_base=f"{base}/stac",
+        mapping_base=f"{base}/mappings/pdssp-stac-epn-tap",
+        epntap_base=f"{base}/epn-tap",
+        stac_base=f"{base}/pdssp-stac",
         columns=epntap_seed.EPNTAP_COLUMNS,
     )
 
@@ -90,9 +100,9 @@ def build_dataset(base: str = DEFAULT_BASE) -> Dataset:
     vocabulary this package authors, plus one for the mapping between
     them, each named after its own ontology IRI.
     """
-    stac_base = f"{base}/stac"
-    epntap_base = f"{base}/epntap"
-    mapping_iri = f"{base}/mappings/stac-epntap"
+    stac_base = f"{base}/pdssp-stac"
+    epntap_base = f"{base}/epn-tap"
+    mapping_iri = f"{base}/mappings/pdssp-stac-epn-tap"
 
     dataset = Dataset()
     dataset.graph(URIRef(f"{stac_base}/vocabulary")).parse(
@@ -119,8 +129,9 @@ def flatten(dataset: Dataset) -> Graph:
 
 
 def _graph_file_stem(base: str, graph_iri: str) -> str:
-    """``{base}/stac/vocabulary`` -> ``stac``; ``{base}/mappings/stac-epntap``
-    (no ``/vocabulary`` suffix) -> ``mappings-stac-epntap``."""
+    """``{base}/pdssp-stac/vocabulary`` -> ``pdssp-stac``;
+    ``{base}/mappings/pdssp-stac-epn-tap`` (no ``/vocabulary`` suffix) ->
+    ``mappings-pdssp-stac-epn-tap``."""
     relative = graph_iri[len(base) :].strip("/")
     suffix = "/vocabulary"
     if relative.endswith(suffix):
