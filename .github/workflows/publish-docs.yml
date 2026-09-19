@@ -246,28 +246,70 @@ jobs:
           EOF
           done
 
+      # Widoco's own static resource bundle (CSS/JS/icons) is identical
+      # across every build regardless of the ontology it documents -- copy
+      # one real copy (vocab's, arbitrarily) to the site root so the
+      # catalogue page below can use the exact same stylesheets as every
+      # page it links to, rather than looking like a different site.
+      - name: Copy Widoco's shared resources for the root catalogue page
+        run: cp -r site/vocab/resources site/resources
+
       # The site root is a plain catalogue of the ontologies this repo
       # publishes -- never a merged/flattened ontology of its own (each
       # data model's ontology, and the mapping between two of them, stays
-      # independently dereferenceable; see the README).
+      # independently dereferenceable; see the README). Styled with
+      # Widoco's own resources/markup (.container/.head, the same <dl>
+      # metadata-list convention every page below already uses) rather
+      # than bare HTML, so this page reads as part of the same site
+      # instead of a plain directory listing.
       - name: Add the root catalogue page
         run: |
           cat > site/index.html <<'EOF'
           <!DOCTYPE html>
-          <html lang="en">
+          <html>
           <head>
-            <meta charset="utf-8">
-            <title>PDSSP ontologies</title>
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          <link rel="stylesheet" href="resources/primer.css" media="screen"/>
+          <link rel="stylesheet" href="resources/rec.css" media="screen"/>
+          <link rel="stylesheet" href="resources/extra.css" media="screen"/>
+          <link rel="stylesheet" href="resources/owl.css" media="screen"/>
+          <link rel="stylesheet" href="resources/dark.css" media="(prefers-color-scheme: dark)"/>
+          <link rel="stylesheet" href="resources/light.css" media="(prefers-color-scheme: light)"/>
+          <link rel="stylesheet" href="resources/slider.css" media="screen"/>
+          <meta name="color-scheme" content="dark light">
+          <script type="module" src="resources/dark-mode-toggle.mjs"></script><div class="darkmode">
+          	<dark-mode-toggle class="slider"></dark-mode-toggle>
+          </div>
+          <link rel="icon" type="image/png" href="resources/rdf.icon"/>
+          <title>PDSSP ontologies</title>
           </head>
           <body>
-            <h1>PDSSP ontologies</h1>
-            <p>One independent ontology per data model, plus the mapping(s) between them.</p>
-            <ul>
-              <li><a href="pdssp-stac/">PDSSP/STAC vocabulary</a></li>
-              <li><a href="epn-tap/">EPN-TAP vocabulary</a></li>
-              <li><a href="mappings/pdssp-stac-epn-tap/">STAC &lt;-&gt; EPN-TAP mapping</a></li>
-              <li><a href="vocab/">Shared vocabulary (classes/properties common to the above)</a></li>
-            </ul>
+          <div class="container">
+          <div class="head">
+          <h1>PDSSP ontologies</h1>
+          <h2>One independent ontology per data model, plus the mapping(s) between them</h2>
+          <dl>
+          <dt>Publisher:</dt>
+          <dd>PDSSP</dd>
+          <dt>License:</dt>
+          <dd><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank"><img src="https://img.shields.io/badge/License-CC--BY--4.0-blue.svg" alt="CC-BY-4.0" /></a></dd>
+          </dl>
+          </div>
+
+          <div id="overview">
+          <h2>Ontologies</h2>
+          <dl>
+          <dt><a href="pdssp-stac/">PDSSP STAC profile</a></dt>
+          <dd>STAC 1.1.0's own core object model, profiled with the STAC extensions (and PDSSP's own custom namespace) this deployment actually uses.</dd>
+          <dt><a href="epn-tap/">EPN-TAP vocabulary</a></dt>
+          <dd>PDSSP's own RDF/OWL rendering of EPN-TAP2 (IVOA Recommendation REC-EPNTAP-2.0), the TAP-based framework for publishing Solar System science data to the Virtual Observatory.</dd>
+          <dt><a href="mappings/pdssp-stac-epn-tap/">STAC &lt;-&gt; EPN-TAP mapping</a></dt>
+          <dd>For each EPN-TAP column, which STAC (or STAC Collection) path its value comes from, or a fixed constant, and which named converter applies in each direction.</dd>
+          <dt><a href="vocab/">Shared vocabulary</a></dt>
+          <dd>Classes and properties common to the three graphs above, published so the pdssp:-prefixed IRIs they reference by name actually resolve.</dd>
+          </dl>
+          </div>
+          </div>
           </body>
           </html>
           EOF
