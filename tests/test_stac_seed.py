@@ -35,46 +35,50 @@ def test_every_term_carries_scope_and_at_least_one_domain():
         assert node["domain"], f"{node['name']} has no domain"
 
 
-def test_extension_term_is_domained_on_both_category_and_namespace_class():
+def test_extension_term_is_domained_on_both_its_stac_class_and_namespace_class():
     jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
     node = next(n for n in jsonld["@graph"] if n.get("name") == "ssys:target_class")
     domain_ids = {d["@id"] for d in node["domain"]}
-    assert domain_ids == {"pdssp:StacSpatialProperty", "pdssp:StacSsysItem"}
+    assert domain_ids == {"pdssp:StacItem", "pdssp:StacSsysItem"}
 
 
-def test_common_metadata_term_is_domained_on_only_its_category_class():
+def test_common_metadata_term_with_no_namespace_is_domained_on_only_its_stac_class():
     jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
-    node = next(n for n in jsonld["@graph"] if n.get("name") == "title")
+    node = next(n for n in jsonld["@graph"] if n.get("name") == "gsd")
     domain_ids = {d["@id"] for d in node["domain"]}
-    assert domain_ids == {"pdssp:StacIdentification"}
+    assert domain_ids == {"pdssp:StacItem"}
 
 
-def test_file_property_category_and_extension_are_asset_scoped():
+def test_file_extension_class_is_asset_scoped():
     jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
-    stac_file_property = next(n for n in jsonld["@graph"] if n.get("name") == "StacFileProperty")
     stac_file_asset = next(n for n in jsonld["@graph"] if n.get("name") == "StacFileAsset")
-    assert {d["@id"] for d in stac_file_property["subClassOf"]} == {"pdssp:StacAsset"}
     assert stac_file_asset["subClassOf"]["@id"] == "pdssp:StacAsset"
 
 
-def test_identification_category_is_subclass_of_both_item_and_collection():
-    # providers is a real STAC Collection field (confirmed against
-    # collection_mapper.py, not properties_builder.py) categorized
-    # hasIdentification alongside item-scoped members like title -- the
-    # category's own domain must reflect both, computed from the real
-    # per-term scopes, not a single hardcoded one (an earlier version
-    # hardcoded "item" for every hasIdentification member, silently
-    # mis-scoping providers).
+def test_no_category_classes_remain():
+    # The category axis (StacIdentification, StacPhysicalProperty, ...)
+    # was removed at the user's request to stay close to STAC-UML.pdf's
+    # own class structure -- it was PDSSP's own invented taxonomy, not
+    # part of the diagram.
     jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
-    stac_identification = next(n for n in jsonld["@graph"] if n.get("name") == "StacIdentification")
-    assert {d["@id"] for d in stac_identification["subClassOf"]} == {"pdssp:StacItem", "pdssp:StacCollection"}
+    names = {n.get("name") for n in jsonld["@graph"]}
+    removed = {
+        "StacIdentification",
+        "StacPhysicalProperty",
+        "StacProvenanceProperty",
+        "StacResidualProperty",
+        "StacSpatialProperty",
+        "StacTemporalProperty",
+        "StacFileProperty",
+    }
+    assert names.isdisjoint(removed)
 
 
-def test_providers_term_is_collection_scoped():
+def test_providers_term_is_collection_scoped_and_domained_on_collection():
     jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
     providers = next(n for n in jsonld["@graph"] if n.get("name") == "providers")
     domain_ids = {d["@id"] for d in providers["domain"]}
-    assert domain_ids == {"pdssp:StacIdentification"}
+    assert domain_ids == {"pdssp:StacCollection"}
     assert providers["scope"] == ["collection"]
 
 
@@ -129,3 +133,41 @@ def test_standard_asset_role_type_individuals_exist():
     by_id = {n["@id"]: n for n in jsonld["@graph"]}
     thumbnail = by_id["pdssp:thumbnail"]
     assert thumbnail["@type"] == "pdssp:StacAssetRoleType"
+
+
+def test_cardinality_restrictions_are_blank_nodes_not_named_iris():
+    # OWL 2 DL requires a cardinality restriction to be anonymous --
+    # confirmed empirically that OWL API silently drops a restriction's
+    # own owl:onProperty triple when given a real, dereferenceable IRI
+    # instead of a blank-node identifier.
+    jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
+    by_id = {n["@id"]: n for n in jsonld["@graph"]}
+    stac_item = by_id["pdssp:StacItem"]
+    restrictions = [r for r in stac_item["subClassOf"] if r.get("@type") == "owl:Restriction"]
+    assert len(restrictions) == 2
+    for r in restrictions:
+        assert r["@id"].startswith("_:")
+
+
+def test_extent_requires_exactly_one_spatial_and_temporal_component():
+    jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
+    by_id = {n["@id"]: n for n in jsonld["@graph"]}
+    stac_extent = by_id["pdssp:StacExtent"]
+    by_property = {r["onProperty"]["@id"]: r for r in stac_extent["subClassOf"]}
+    assert by_property["pdssp:hasSpatialExtent"]["cardinality"] == 1
+    assert by_property["pdssp:hasTemporalExtent"]["cardinality"] == 1
+
+
+def test_collection_keeps_its_real_superclass_alongside_its_restrictions():
+    # StacCollection rdfs:subClassOf StacCatalog is a real class edge, not
+    # a restriction -- adding hasParent/hasRoot/hasExtent's restrictions
+    # must not clobber it.
+    jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
+    by_id = {n["@id"]: n for n in jsonld["@graph"]}
+    stac_collection = by_id["pdssp:StacCollection"]
+    named = {s["@id"] for s in stac_collection["subClassOf"] if s.get("@type") != "owl:Restriction"}
+    assert named == {"pdssp:StacCatalog"}
+    restricted_props = {
+        r["onProperty"]["@id"] for r in stac_collection["subClassOf"] if r.get("@type") == "owl:Restriction"
+    }
+    assert restricted_props == {"pdssp:hasParent", "pdssp:hasRoot", "pdssp:hasExtent"}

@@ -7,7 +7,7 @@ imports :func:`build_vocabulary_jsonld` from here for its own
 "re-exported for existing importers" shape ``epntap2cql2`` already uses
 for :mod:`.vocabulary` (the EPN-TAP side).
 
-This renders the STAC/PDSSP vocabulary itself (term name, category, type,
+This renders the STAC/PDSSP vocabulary itself (term name, type,
 description, scope, which extension schema defines it) plus the STAC core
 object model it lives inside of (``STAC-UML.pdf``, STAC 1.1.0's own
 Catalog/Collection/Item/Asset/Link/Provider/Extent/Band structure) --
@@ -26,39 +26,32 @@ either way, but embedding means a viewer that does not resolve
 cross-references across a flat ``@graph`` still shows every relation and
 attribute, because they are literally nested in the JSON.
 
-Two STAC-specific axes, both modeled as class hierarchies rather than
-properties/marker-types (see the two points below) -- the same fix this
-session already applied to the EPN-TAP side's own core categories and
-extensions, for the same reason: OWL-punning a resource (typing it as
-more than one "kind of thing", or using ``rdfs:subPropertyOf`` between
-two properties) confirmed, empirically, to make Widoco silently drop that
-resource's own ``rdfs:label``/``rdfs:comment``.
+A term is domained directly on the real STAC class(es) its ``scope``/
+``also_scopes`` name (``StacItem``/``StacAsset``/``StacCollection``), and
+-- if it has one -- its extension/namespace class (``ssys``, ``view``,
+``product``, ..., modeled as a subclass of ``StacItem``/``StacAsset``,
+e.g. ``StacSsysItem``, tagged ``pdssp:facetKind "extension"``, the same
+way EPN-TAP's own optional extensions are). A term with no namespace
+(common metadata) gets no extension domain, exactly parallel to an
+EPN-TAP core parameter having no extension subclass. An earlier version
+also grouped terms into a cross-cutting "category" axis
+(``StacIdentification``, ``StacPhysicalProperty``, ...) -- removed
+outright, at the user's request, to stay close to STAC-UML.pdf's own
+class structure: that axis was PDSSP's own invented taxonomy, not
+anything the diagram itself calls for.
 
-1. *Category* (``hasIdentification``, ``hasTemporalProperty``, ...): every
-   term has exactly one, cutting across namespaces -- modeled as a
-   subclass of ``StacItem``/``StacAsset`` (``StacIdentification``, ...),
-   tagged ``pdssp:facetKind "core"`` (reusing the exact annotation
-   property already defined for EPN-TAP's own core categories). An
-   earlier version used ``rdfs:subPropertyOf`` from a per-term property to
-   a per-category property -- exactly as punning-unsafe as a marker type,
-   confirmed by the same empirical test, so every term's own description
-   was silently missing from the generated docs.
-2. *Namespace* (``ssys``, ``view``, ``product``, ..., or ``None`` for
-   common metadata): which STAC extension (or PDSSP's own custom
-   namespace) defines the term, if any -- modeled the same way EPN-TAP's
-   optional extensions are, as a subclass of ``StacItem``/``StacAsset``
-   (``StacSsysItem``, ...), tagged ``pdssp:facetKind "extension"``. A term
-   with no namespace (common metadata) gets no extension domain, exactly
-   parallel to an EPN-TAP core parameter having no extension subclass.
+A term domained on more than one class (its scope classes, plus its
+extension class if any) gets two-or-more separate ``rdfs:domain``
+triples on the same property, which is ordinary RDFS (entails the
+subject is simultaneously all of them) and exactly the pattern already
+verified safe for EPN-TAP granules simultaneously belonging to more than
+one extension.
 
-A term is therefore domained on *two* classes at once (its category, and
--- if it has one -- its namespace/extension): two separate
-``rdfs:domain`` triples on the same property, which is ordinary RDFS
-(entails the subject is simultaneously both classes) and exactly the
-pattern already verified safe for EPN-TAP granules simultaneously
-belonging to more than one extension.
-
-An earlier version also co-typed every term node
+OWL-punning a resource (typing it as more than one "kind of thing", or
+using ``rdfs:subPropertyOf`` between two properties) is confirmed,
+empirically, to make Widoco silently drop that resource's own
+``rdfs:label``/``rdfs:comment`` -- every class/property here stays
+single-typed for that reason. An earlier version also co-typed every term node
 ``["rdf:Property", "pdssp:StacVocabularyTerm"]`` so ``ode-stac-proxy``'s
 own (never actually built) SPARQL query could select "every documented
 term" without a less direct signal -- the exact same punning bug as
@@ -73,7 +66,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from pdssp_ontology.stac_model import CATEGORIES, VocabularyDocument, VocabularyTerm
+from pdssp_ontology.stac_model import VocabularyDocument, VocabularyTerm
 
 _TYPE = "@type"
 _OWL_CLASS = "owl:Class"
@@ -107,6 +100,9 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "scope": {"@id": "pdssp:scope", "@container": "@set"},
     "note": "pdssp:note",
     "facetKind": "pdssp:facetKind",
+    "onProperty": _id_valued("owl:onProperty"),
+    "cardinality": {"@id": "owl:cardinality", _TYPE: "xsd:nonNegativeInteger"},
+    "maxCardinality": {"@id": "owl:maxCardinality", _TYPE: "xsd:nonNegativeInteger"},
 }
 
 _STAC_CLASSES: dict[str, str] = {
@@ -140,14 +136,12 @@ _STAC_SUBCLASS_OF: list[tuple[str, str]] = [
 ]
 
 #: ``(name, domain classes, range class, label)`` -- domain is a tuple
-#: (usually one class, sometimes more): two ``rdfs:domain`` triples on the
-#: same property is ordinary RDFS, and already the pattern used for every
-#: term with a namespace (domained on both its category and extension
-#: class) and for the ``StacIdentification`` category class itself
-#: (``rdfs:subClassOf`` both ``StacItem`` and ``StacCollection``, because
-#: ``providers`` is collection-scoped) -- ``hasAsset``/``hasBand`` below
-#: reuse that same, already-accepted pattern rather than minting a second
-#: property name per extra domain.
+#: (usually one class, sometimes more): two-or-more ``rdfs:domain``
+#: triples on the same property is ordinary RDFS, already the pattern
+#: used for every term with a namespace (domained on both its natural
+#: STAC class(es) and its extension class) -- ``hasAsset``/``hasBand``
+#: below reuse that same pattern rather than minting a second property
+#: name per extra domain.
 _STAC_STRUCTURAL_PROPERTIES: list[tuple[str, tuple[str, ...], str, str]] = [
     # A Catalog can contain child Catalogs *and* child Collections (both
     # link:rel=child in real STAC); a Collection can too, via its own
@@ -233,19 +227,42 @@ _ASSET_ROLE_TYPES: list[tuple[str, str]] = [
     ("metadata", "An Asset that provides more metadata about the primary data."),
 ]
 
-_SCOPE_TO_STAC_CLASS: dict[str, str] = {"item": "StacItem", "asset": "StacAsset", "collection": "StacCollection"}
+#: ``(domain class, property name, kind, n)`` -- real ``owl:Restriction``
+#: cardinality axioms (``kind`` is ``"max"`` for ``owl:maxCardinality`` or
+#: ``"exact"`` for ``owl:cardinality``), attached as an extra
+#: ``rdfs:subClassOf`` on the domain class. A 0..* property (STAC-UML.pdf's
+#: own plural fields: child links, providers, bands, assets, links,
+#: role lists, ...) gets no restriction at all -- unbounded is the
+#: absence of a max-cardinality axiom, not a separate thing to encode.
+#: Singular-field cardinalities come directly from the user's own
+#: singular ("un name", "une url", ...) vs. plural ("des roles")
+#: wording; ``hasParent``/``hasRoot`` (0..1) and Extent's mandatory,
+#: exactly-one spatial/temporal components are the ones the user gave
+#: explicit numbers for.
+_CARDINALITY_RESTRICTIONS: list[tuple[str, str, str, int]] = [
+    ("StacItem", "hasParent", "max", 1),
+    ("StacItem", "hasRoot", "max", 1),
+    ("StacCollection", "hasParent", "max", 1),
+    ("StacCollection", "hasRoot", "max", 1),
+    ("StacCollection", "hasExtent", "max", 1),
+    ("StacExtent", "hasSpatialExtent", "exact", 1),
+    ("StacExtent", "hasTemporalExtent", "exact", 1),
+    ("StacProvider", "providerName", "max", 1),
+    ("StacProvider", "providerDescription", "max", 1),
+    ("StacProvider", "providerUrl", "max", 1),
+    ("StacBand", "bandName", "max", 1),
+    ("StacBand", "bandDescription", "max", 1),
+    ("StacLink", "linkHref", "max", 1),
+    ("StacLink", "linkRel", "max", 1),
+    ("StacLink", "linkType", "max", 1),
+    ("StacLink", "linkTitle", "max", 1),
+    ("StacAsset", "assetHref", "max", 1),
+    ("StacAsset", "assetTitle", "max", 1),
+    ("StacAsset", "assetDescription", "max", 1),
+    ("StacAsset", "assetType", "max", 1),
+]
 
-#: ``{category key (from stac_model.CATEGORIES) -> class name}`` -- see
-#: module docstring for why a category is a subclass, not a property.
-_CATEGORY_CLASS_NAMES: dict[str, str] = {
-    "hasIdentification": "StacIdentification",
-    "hasTemporalProperty": "StacTemporalProperty",
-    "hasPhysicalProperty": "StacPhysicalProperty",
-    "hasSpatialProperty": "StacSpatialProperty",
-    "hasProvenanceProperty": "StacProvenanceProperty",
-    "hasFileProperty": "StacFileProperty",
-    "hasResidualProperty": "StacResidualProperty",
-}
+_SCOPE_TO_STAC_CLASS: dict[str, str] = {"item": "StacItem", "asset": "StacAsset", "collection": "StacCollection"}
 
 #: ``(namespace prefix, class name, scope, comment)`` for every namespace
 #: a real term uses (from :data:`pdssp_ontology.stac_seed.NAMESPACES`) --
@@ -292,12 +309,12 @@ def term_slug(term: str) -> str:
 def build_vocabulary_jsonld(document: VocabularyDocument, base: str) -> dict[str, Any]:
     """Serialise *document* as a JSON-LD RDFS/OWL model, not a flat term list.
 
-    See this module's own docstring for the category/extension
-    subclassing and the two-domain-triples-per-term convention.
+    See this module's own docstring for the extension subclassing and the
+    multi-domain-triples-per-term convention.
     """
     scheme_id = f"{base}/vocabulary"
     stac_classes = _build_stac_class_nodes()
-    category_classes = _build_category_subclass_nodes(stac_classes, document.terms)
+    _attach_cardinality_restrictions(stac_classes)
     extension_classes = _build_extension_subclass_nodes(stac_classes)
 
     nodes: list[dict[str, Any]] = [
@@ -306,12 +323,8 @@ def build_vocabulary_jsonld(document: VocabularyDocument, base: str) -> dict[str
         *_build_stac_structural_property_nodes(stac_classes),
         *_build_stac_structural_data_property_nodes(stac_classes),
         *_build_asset_role_type_individual_nodes(stac_classes),
-        *(category_classes[key] for key in sorted(category_classes)),
         *(extension_classes[key] for key in sorted(extension_classes)),
-        *(
-            _build_term_node(t, scheme_id, document.namespaces, category_classes, extension_classes)
-            for t in document.terms
-        ),
+        *(_build_term_node(t, scheme_id, document.namespaces, stac_classes, extension_classes) for t in document.terms),
     ]
 
     return {"@context": _JSONLD_CONTEXT, "@graph": nodes}
@@ -338,11 +351,10 @@ _RENDERING_INTRODUCTION = (
     "(SpatioTemporal Asset Catalog) 1.1.0 specification's core object "
     "model, profiled with the specific STAC extensions PDSSP's own "
     "service (ode-stac-proxy) declares on its items and assets. Every "
-    "vocabulary term below is domained on two classes at once: which "
-    "STAC extension namespace defines it (if any, e.g. StacSsysItem for "
-    "the Solar System extension), and which cross-cutting semantic "
-    "category it belongs to (e.g. StacIdentification) -- so both axes "
-    "stay independently queryable. See "
+    "vocabulary term is domained directly on the real STAC class(es) it "
+    "applies to (StacItem/StacAsset/StacCollection), plus its STAC "
+    "extension namespace class if it has one (e.g. StacSsysItem for the "
+    "Solar System extension). See "
     "https://github.com/radiantearth/stac-spec/tree/v1.1.0 for the STAC "
     "specification itself, and dcterms:source below for the PDSSP Data "
     "Model this profile implements."
@@ -385,46 +397,43 @@ def _build_stac_class_nodes() -> dict[str, dict[str, Any]]:
     return nodes
 
 
-def _category_scopes(terms: list[VocabularyTerm]) -> dict[str, set[str]]:
-    """``{category key -> every scope at least one of its member terms
-    actually uses}`` -- computed from real data, not hand-maintained,
-    specifically because a hand-maintained single scope per category
-    already drifted wrong once (see module docstring:
-    ``hasIdentification`` has both item- and collection-scoped members).
-    """
-    scopes: dict[str, set[str]] = {}
-    for term in terms:
-        scopes.setdefault(term.category, set()).update([term.scope, *term.also_scopes])
-    return scopes
+def _attach_cardinality_restrictions(stac_classes: dict[str, dict[str, Any]]) -> None:
+    """Mutate *stac_classes* in place, adding one ``owl:Restriction`` per
+    :data:`_CARDINALITY_RESTRICTIONS` entry to its domain class's own
+    ``rdfs:subClassOf`` set (alongside any real parent class already
+    there, e.g. ``StacCollection``'s own ``StacCatalog``).
 
-
-def _build_category_subclass_nodes(
-    stac_classes: dict[str, dict[str, Any]], terms: list[VocabularyTerm]
-) -> dict[str, dict[str, Any]]:
-    """One ``owl:Class`` per STAC vocabulary category, ``rdfs:subClassOf``
-    every ``StacItem``/``StacAsset``/``StacCollection`` its member terms'
-    own scopes actually touch -- see module docstring and
-    :func:`_category_scopes`. Returns ``{category key: class node}``.
+    Given an explicit JSON-LD blank-node identifier (``_:...``), not a
+    real ``pdssp:`` IRI -- OWL 2 DL requires a cardinality restriction to
+    be *anonymous*; confirmed empirically that OWL API silently drops
+    (logs as "Unparsed triple") the ``owl:onProperty`` triple of a
+    restriction given a real, named IRI instead. A *bare* blank node
+    (``@id`` omitted entirely) has the opposite problem: every class here
+    (see module docstring) is embedded as a full copy wherever it is
+    referenced (e.g. every item-scoped term's own ``domain``), and an
+    unlabelled blank node embedded that many times gets a fresh, distinct
+    identity at each embedding, multiplying one restriction into dozens
+    of duplicate triples (confirmed empirically: 20 restrictions
+    rendered as 340 triples). An explicit ``_:`` label is the one shape
+    that is both anonymous (OWL API accepts it as a real restriction) and
+    stable (JSON-LD unifies every embedding sharing the same label back
+    into a single blank node).
     """
-    scopes_by_category = _category_scopes(terms)
-    return {
-        category: {
-            "@id": f"pdssp:{class_name}",
-            _TYPE: _OWL_CLASS,
-            "name": class_name,
-            "label": class_name,
-            # The "Core category: " prefix makes facetKind visible without
-            # a SPARQL query -- Widoco never renders custom annotation
-            # properties like facetKind itself (confirmed empirically),
-            # only rdfs:comment.
-            "comment": f"Core category: {CATEGORIES[category]}",
-            "subClassOf": [
-                stac_classes[_SCOPE_TO_STAC_CLASS[scope]] for scope in sorted(scopes_by_category[category])
-            ],
-            "facetKind": "core",
+    for domain, prop, kind, n in _CARDINALITY_RESTRICTIONS:
+        restriction = {
+            "@id": f"_:{domain}_{prop}_{kind}{n}",
+            _TYPE: "owl:Restriction",
+            "onProperty": {"@id": f"pdssp:{prop}"},
+            "cardinality" if kind == "exact" else "maxCardinality": n,
         }
-        for category, class_name in _CATEGORY_CLASS_NAMES.items()
-    }
+        node = stac_classes[domain]
+        existing = node.get("subClassOf")
+        if existing is None:
+            node["subClassOf"] = [restriction]
+        elif isinstance(existing, list):
+            existing.append(restriction)
+        else:
+            node["subClassOf"] = [existing, restriction]
 
 
 def _build_extension_subclass_nodes(stac_classes: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -498,10 +507,11 @@ def _build_term_node(
     term: VocabularyTerm,
     scheme_id: str,
     namespaces: list,
-    category_classes: dict[str, dict[str, Any]],
+    stac_classes: dict[str, dict[str, Any]],
     extension_classes: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
-    domain = [category_classes[term.category]]
+    scopes = sorted({term.scope, *term.also_scopes})
+    domain = [stac_classes[_SCOPE_TO_STAC_CLASS[scope]] for scope in scopes]
     if term.namespace in extension_classes:
         domain.append(extension_classes[term.namespace])
     node: dict[str, Any] = {
@@ -511,7 +521,7 @@ def _build_term_node(
         "label": term.term,
         "comment": term.description,
         "domain": domain,
-        "scope": sorted([term.scope, *term.also_scopes]),
+        "scope": scopes,
         "valueType": term.type,
     }
     xsd_range = _XSD_RANGE_BY_TYPE.get(term.type)

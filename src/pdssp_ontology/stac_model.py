@@ -61,14 +61,6 @@ class VocabularyTerm(BaseModel):
             "lookup (see controlled_vocabulary instead)."
         ),
     )
-    category: str = Field(
-        description=(
-            "Semantic category this term belongs to (a key into CATEGORIES), e.g. "
-            "'hasIdentification'/'hasTemporalProperty'/'hasPhysicalProperty' -- what "
-            "*kind* of property this is, on top of rdfs:domain's plainer 'which STAC "
-            "class it applies to'."
-        ),
-    )
 
 
 class VocabularyDocument(BaseModel):
@@ -78,34 +70,6 @@ class VocabularyDocument(BaseModel):
     namespaces: list[VocabularyNamespace]
     terms: list[VocabularyTerm]
 
-
-#: Semantic categories every :data:`~.stac_seed.TERMS` entry's ``category``
-#: key names (``{category: comment}``): *what kind* of property a term is,
-#: independent of *which STAC class* it applies to. Unlike an earlier
-#: version, this carries no hardcoded scope of its own any more: a
-#: category's rdfs:domain is derived in :mod:`.stac_vocabulary` from the
-#: *actual* ``scope`` of its member terms (usually just one -- ``"item"``
-#: for most, ``"asset"`` for ``hasFileProperty`` -- but confirmed not
-#: always: ``hasIdentification`` has both ``"item"`` members and one
-#: ``"collection"`` member, ``providers``, a real STAC Collection field
-#: EPN-TAP's own `publisher`/`producer_name`/`producer_institute` columns
-#: read via ``collection_path``). Hardcoding a single scope per category
-#: here, as before, would have silently mis-scoped that one term's
-#: category-domain entailment -- computing it from real per-term data
-#: instead means this can never drift out of sync the way a hand-maintained
-#: duplicate would.
-CATEGORIES: dict[str, str] = {
-    "hasIdentification": (
-        "Descriptive/identification metadata about the product (title, provenance "
-        "actors, classification, version, ...)."
-    ),
-    "hasTemporalProperty": "A date or time associated with the product.",
-    "hasPhysicalProperty": "A physical/observational measurement (angle, orbit, solar geometry, map scale, ...).",
-    "hasSpatialProperty": "A spatial/geometric property (target body, centroid, coordinate reference system).",
-    "hasProvenanceProperty": "Describes how the product was produced (mapping lineage, software).",
-    "hasFileProperty": "A property of an asset file rather than of the item itself.",
-    "hasResidualProperty": "An unmapped PDS3 field surfaced verbatim, outside the fixed term list.",
-}
 
 
 def get_vocabulary_document(

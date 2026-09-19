@@ -215,7 +215,6 @@ TERMS: list[dict] = [
     # how these are now recognized despite having no "properties." prefix.
     {
         "term": "id",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "string",
         "description": "The Item's own unique identifier.",
@@ -227,7 +226,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "stac_version",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "string",
         "description": "The STAC specification version the Item/Collection conforms to.",
@@ -238,7 +236,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "type",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "string",
         "description": "STAC object type discriminator ('Feature' for an Item, 'Collection' for a Collection).",
@@ -249,7 +246,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "stac_extensions",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "array<string>",
         "description": "URIs of the STAC extension schemas the Item/Collection declares conformance to.",
@@ -260,7 +256,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "bbox",
-        "category": "hasSpatialProperty",
         "namespace": None,
         "type": "array<number>",
         "description": "The Item's bounding box, derived from its geometry.",
@@ -270,7 +265,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "collection",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "string",
         "description": "The id of the STAC Collection this Item belongs to.",
@@ -280,7 +274,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "geometry",
-        "category": "hasSpatialProperty",
         "namespace": None,
         "type": "string",
         "description": "The Item's footprint as GeoJSON.",
@@ -290,7 +283,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "assets",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "string",
         "description": "The Item's own asset dictionary (a converter extracts one specific asset's href/role from it).",
@@ -309,7 +301,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "title",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "string",
         "description": "Product title.",
@@ -321,7 +312,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "description",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "string",
         "description": "Product description.",
@@ -333,7 +323,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "datetime",
-        "category": "hasTemporalProperty",
         "namespace": None,
         "type": _DATE_TIME,
         "description": (
@@ -355,7 +344,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "created",
-        "category": "hasTemporalProperty",
         "namespace": None,
         "type": _DATE_TIME,
         "description": "Product creation date.",
@@ -365,7 +353,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "updated",
-        "category": "hasTemporalProperty",
         "namespace": None,
         "type": _DATE_TIME,
         "description": "Product last-modification date.",
@@ -376,7 +363,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "start_datetime",
-        "category": "hasTemporalProperty",
         "namespace": None,
         "type": _DATE_TIME,
         "description": "Acquisition start.",
@@ -386,7 +372,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "end_datetime",
-        "category": "hasTemporalProperty",
         "namespace": None,
         "type": _DATE_TIME,
         "description": "Acquisition end.",
@@ -396,7 +381,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "gsd",
-        "category": "hasPhysicalProperty",
         "namespace": None,
         "type": "number",
         "description": "Ground sample distance.",
@@ -407,7 +391,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "license",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "string",
         "description": "SPDX licence identifier.",
@@ -419,7 +402,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "bands",
-        "category": "hasPhysicalProperty",
         "namespace": None,
         "type": _ARRAY_STRING,
         "description": "Spectral/data band definitions (STAC 1.1 common metadata; see StacBand).",
@@ -430,7 +412,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "platform",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "string",
         "description": "Platform/mission (long label via taxonomy).",
@@ -441,7 +422,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "instruments",
-        "category": "hasIdentification",
         "namespace": None,
         "type": _ARRAY_STRING,
         "description": "Instrument(s) (long label via taxonomy).",
@@ -452,7 +432,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "mission",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "string",
         "description": "Mission name resolved from the dataset_id.",
@@ -463,7 +442,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "providers",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "array<Provider>",
         "description": "Data producer.",
@@ -480,7 +458,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "keywords",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "array<string>",
         "description": "Free-text search keywords for the Collection.",
@@ -490,7 +467,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "item_assets",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "object",
         "description": "Template asset definitions the Collection's own Items are expected to reuse.",
@@ -508,7 +484,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "summaries",
-        "category": "hasIdentification",
         "namespace": None,
         "type": "object",
         "description": "Per-field value ranges/enumerations summarising the Collection's own Items.",
@@ -519,7 +494,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "version",
-        "category": "hasIdentification",
         "namespace": "version",
         "type": "string",
         "description": "Product version.",
@@ -529,7 +503,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "published",
-        "category": "hasTemporalProperty",
         "namespace": "timestamps",
         "type": _DATE_TIME,
         "description": "Publication date (timestamps extension).",
@@ -539,7 +512,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "ssys:targets",
-        "category": "hasSpatialProperty",
         "namespace": "ssys",
         "type": _ARRAY_STRING,
         "description": "Target body (capitalised; forced to 'Phobos' when pt == PHOBOS).",
@@ -550,7 +522,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "ssys:target_class",
-        "category": "hasSpatialProperty",
         "namespace": "ssys",
         "type": "string",
         "description": "'satellite' for the Moon or Phobos, otherwise 'planet'.",
@@ -561,7 +532,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "product:type",
-        "category": "hasIdentification",
         "namespace": "product",
         "type": "string",
         "description": "Product type resolved from the collection.",
@@ -572,7 +542,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "processing:level",
-        "category": "hasIdentification",
         "namespace": "processing",
         "type": "string",
         "description": "Processing level resolved from the collection.",
@@ -583,7 +552,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "processing:lineage",
-        "category": "hasProvenanceProperty",
         "namespace": "processing",
         "type": "string",
         "description": "Fixed text citing the PDSSP Data Model Spec used for the mapping.",
@@ -594,7 +562,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "processing:software",
-        "category": "hasProvenanceProperty",
         "namespace": "processing",
         "type": "object",
         "description": "Proxy and backend plugin versions.",
@@ -604,7 +571,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "pdssp:solar_longitude",
-        "category": "hasPhysicalProperty",
         "namespace": "pdssp",
         "type": "number",
         "description": "Solar longitude (Ls).",
@@ -614,7 +580,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "pdssp:solar_distance",
-        "category": "hasPhysicalProperty",
         "namespace": "pdssp",
         "type": "number",
         "description": "Distance to the Sun.",
@@ -624,7 +589,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "pdssp:map_resolution",
-        "category": "hasPhysicalProperty",
         "namespace": "pdssp",
         "type": "number",
         "description": "Map resolution.",
@@ -634,7 +598,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "pdssp:map_scale",
-        "category": "hasPhysicalProperty",
         "namespace": "pdssp",
         "type": "number",
         "description": "Map scale.",
@@ -644,7 +607,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "pdssp:measurement_type",
-        "category": "hasIdentification",
         "namespace": "pdssp",
         "type": "string",
         "description": "Type of measurement (UCD1+-controlled), e.g. photometry/spectroscopy.",
@@ -655,7 +617,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "sat:absolute_orbit",
-        "category": "hasPhysicalProperty",
         "namespace": "sat",
         "type": "integer",
         "description": (
@@ -669,7 +630,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "sci:doi",
-        "category": "hasIdentification",
         "namespace": "sci",
         "type": "string",
         "description": "Bibliographic reference (DOI or URI preferred).",
@@ -680,7 +640,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "view:incidence_angle",
-        "category": "hasPhysicalProperty",
         "namespace": "view",
         "type": "number",
         "description": (
@@ -694,7 +653,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "view:off_nadir",
-        "category": "hasPhysicalProperty",
         "namespace": "view",
         "type": "number",
         "description": "Off-nadir angle, derived from the emission angle.",
@@ -705,7 +663,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "view:phase_angle",
-        "category": "hasPhysicalProperty",
         "namespace": "view",
         "type": "number",
         "description": "Phase angle.",
@@ -716,7 +673,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "proj:centroid",
-        "category": "hasSpatialProperty",
         "namespace": "proj",
         "type": "object {lat, lon}",
         "description": "Centroid (latitude, longitude normalised to [-180, 180]).",
@@ -727,7 +683,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "proj:code",
-        "category": "hasSpatialProperty",
         "namespace": "proj",
         "type": "string",
         "description": "CRS code resolved for the target body (omitted when the body is unknown).",
@@ -738,7 +693,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "pdsode:<PDS3FieldName>",
-        "category": "hasResidualProperty",
         "namespace": "pdsode",
         "type": "varies",
         "description": (
@@ -753,7 +707,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "file:size",
-        "category": "hasFileProperty",
         "namespace": "file",
         "scope": "asset",
         "type": "integer",
@@ -764,7 +717,6 @@ TERMS: list[dict] = [
     },
     {
         "term": "vrt:hrefs",
-        "category": "hasFileProperty",
         "namespace": "vrt",
         "scope": "asset",
         "type": "array<{key, href}>",

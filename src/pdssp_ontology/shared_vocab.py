@@ -144,53 +144,6 @@ _EPNTAP_CORE_CATEGORY_SUBCLASSES: list[tuple[str, str]] = [
     ("VerticalScalesOnPlanets", "An EpnTapGranule considered for its above/below-surface altitude parameters."),
 ]
 
-#: ``(local name, domain classes, comment)`` for every STAC vocabulary
-#: category subclass -- see pdssp-stac/vocabulary's own docstring for why
-#: a category is a subclass (facetKind "core"), not a
-#: ``rdfs:subPropertyOf``-linked property as an earlier version had (the
-#: same OWL-punning bug fixed for EPN-TAP's own core categories). Class
-#: names/comments mirror :mod:`pdssp_ontology.stac_vocabulary`'s own
-#: ``_CATEGORY_CLASS_NAMES``/:data:`pdssp_ontology.stac_model.CATEGORIES`;
-#: domain classes mirror that module's own *computed* (not hand-declared)
-#: ``_category_scopes`` -- ``StacIdentification`` has two because
-#: ``providers`` (a real STAC Collection field, confirmed against
-#: collection_mapper.py) is categorized ``hasIdentification`` alongside
-#: item-scoped members like ``title`` -- keep in sync with that
-#: computation by hand if ``stac_seed.TERMS`` ever adds another
-#: category/scope combination stac_vocabulary.py doesn't already cover
-#: here (this file cannot import stac_seed's live data the way that
-#: module does; see this file's own "harmless duplication" note).
-_STAC_CATEGORY_SUBCLASSES: list[tuple[str, tuple[str, ...], str]] = [
-    (
-        "StacIdentification",
-        ("StacItem", "StacCollection"),
-        "Descriptive/identification metadata about the product (title, provenance actors, "
-        "classification, version, ...).",
-    ),
-    ("StacTemporalProperty", ("StacItem",), "A date or time associated with the product."),
-    (
-        "StacPhysicalProperty",
-        ("StacItem",),
-        "A physical/observational measurement (angle, orbit, solar geometry, map scale, ...).",
-    ),
-    (
-        "StacSpatialProperty",
-        ("StacItem",),
-        "A spatial/geometric property (target body, centroid, coordinate reference system).",
-    ),
-    (
-        "StacProvenanceProperty",
-        ("StacItem",),
-        "Describes how the product was produced (mapping lineage, software).",
-    ),
-    ("StacFileProperty", ("StacAsset",), "A property of an asset file rather than of the item itself."),
-    (
-        "StacResidualProperty",
-        ("StacItem",),
-        "An unmapped PDS3 field surfaced verbatim, outside the fixed term list.",
-    ),
-]
-
 #: ``(local name, domain class, comment)`` for every STAC extension (or
 #: PDSSP custom namespace) subclass (facetKind "extension") -- mirrors
 #: :mod:`pdssp_ontology.stac_vocabulary`'s own ``_EXTENSION_CLASSES``.
@@ -405,21 +358,6 @@ def _build_epntap_core_category_subclass_nodes(classes: dict[str, dict[str, Any]
     ]
 
 
-def _build_stac_category_subclass_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
-    return [
-        {
-            "@id": f"pdssp:{name}",
-            _TYPE: _OWL_CLASS,
-            "name": name,
-            "label": name,
-            "comment": f"Core category: {comment}",
-            "subClassOf": [classes[d] for d in domains],
-            "facetKind": "core",
-        }
-        for name, domains, comment in _STAC_CATEGORY_SUBCLASSES
-    ]
-
-
 def _build_stac_extension_subclass_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     return [
         {
@@ -527,7 +465,6 @@ def build_shared_vocab_jsonld(base: str) -> dict[str, Any]:
         *classes.values(),
         *_build_epntap_extension_subclass_nodes(classes),
         *_build_epntap_core_category_subclass_nodes(classes),
-        *_build_stac_category_subclass_nodes(classes),
         *_build_stac_extension_subclass_nodes(classes),
         *_build_structural_property_nodes(classes),
         *_build_stac_structural_data_property_nodes(classes),
