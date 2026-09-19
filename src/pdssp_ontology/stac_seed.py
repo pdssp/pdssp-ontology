@@ -222,6 +222,51 @@ TERMS: list[dict] = [
         "pds3_fields": [],
         "defined_in": "item_mapper.py",
         "scope": "item",
+        "also_scopes": ["collection"],
+        "note": "Also the Collection's own id (collection_mapper.py) -- same field name, both objects.",
+    },
+    {
+        "term": "stac_version",
+        "category": "hasIdentification",
+        "namespace": None,
+        "type": "string",
+        "description": "The STAC specification version the Item/Collection conforms to.",
+        "pds3_fields": [],
+        "defined_in": "item_mapper.py / collection_mapper.py",
+        "scope": "item",
+        "also_scopes": ["collection"],
+    },
+    {
+        "term": "type",
+        "category": "hasIdentification",
+        "namespace": None,
+        "type": "string",
+        "description": "STAC object type discriminator ('Feature' for an Item, 'Collection' for a Collection).",
+        "pds3_fields": [],
+        "defined_in": "item_mapper.py / collection_mapper.py",
+        "scope": "item",
+        "also_scopes": ["collection"],
+    },
+    {
+        "term": "stac_extensions",
+        "category": "hasIdentification",
+        "namespace": None,
+        "type": "array<string>",
+        "description": "URIs of the STAC extension schemas the Item/Collection declares conformance to.",
+        "pds3_fields": [],
+        "defined_in": "item_mapper.py / collection_mapper.py",
+        "scope": "item",
+        "also_scopes": ["collection"],
+    },
+    {
+        "term": "bbox",
+        "category": "hasSpatialProperty",
+        "namespace": None,
+        "type": "array<number>",
+        "description": "The Item's bounding box, derived from its geometry.",
+        "pds3_fields": [],
+        "defined_in": "item_mapper.py",
+        "scope": "item",
     },
     {
         "term": "collection",
@@ -253,12 +298,14 @@ TERMS: list[dict] = [
         "note": (
             "Categorized hasIdentification for lack of a better fit: this is a "
             "structural/containment field (the same relationship the hasAsset "
-            "object property already expresses between StacItem and StacAsset), "
-            "not a property value like the other terms here -- flagged as a "
-            "judgment call, not a confident categorization."
+            "object property already expresses between StacItem/StacCollection and "
+            "StacAsset), not a property value like the other terms here -- flagged as "
+            "a judgment call, not a confident categorization. Also a real Collection "
+            "field (collection_mapper.py emits its own, usually-empty, assets dict)."
         ),
-        "defined_in": "item_mapper.py",
+        "defined_in": "item_mapper.py / collection_mapper.py",
         "scope": "item",
+        "also_scopes": ["collection"],
     },
     {
         "term": "title",
@@ -269,6 +316,8 @@ TERMS: list[dict] = [
         "pds3_fields": ["Product_title", "pdsid"],
         "defined_in": _COMMON_METADATA,
         "scope": "item",
+        "also_scopes": ["collection"],
+        "note": "Also the Collection's own title (collection_mapper.py) -- STAC common metadata, both objects.",
     },
     {
         "term": "description",
@@ -279,6 +328,8 @@ TERMS: list[dict] = [
         "pds3_fields": ["Description"],
         "defined_in": _COMMON_METADATA,
         "scope": "item",
+        "also_scopes": ["collection"],
+        "note": "Also the Collection's own description (collection_mapper.py) -- STAC common metadata, both objects.",
     },
     {
         "term": "datetime",
@@ -361,9 +412,10 @@ TERMS: list[dict] = [
         "type": "string",
         "description": "SPDX licence identifier.",
         "pds3_fields": [],
-        "note": "External parameter (plugin licence), not a PDS3 field.",
+        "note": "External parameter (plugin licence), not a PDS3 field; also the Collection's own license.",
         "defined_in": _COMMON_METADATA,
         "scope": "item",
+        "also_scopes": ["collection"],
     },
     {
         "term": "bands",
@@ -425,6 +477,45 @@ TERMS: list[dict] = [
             "producer_institute columns read it via collection_path (see "
             "epntap_seed.EPNTAP_COLUMNS), not stac_path."
         ),
+    },
+    {
+        "term": "keywords",
+        "category": "hasIdentification",
+        "namespace": None,
+        "type": "array<string>",
+        "description": "Free-text search keywords for the Collection.",
+        "pds3_fields": [],
+        "defined_in": "collection_mapper.py",
+        "scope": "collection",
+    },
+    {
+        "term": "item_assets",
+        "category": "hasIdentification",
+        "namespace": None,
+        "type": "object",
+        "description": "Template asset definitions the Collection's own Items are expected to reuse.",
+        "pds3_fields": [],
+        "note": (
+            "Categorized hasIdentification for lack of a better fit: this is a "
+            "structural/template field describing the shape of each Item's assets "
+            "dictionary, not a property value like the other terms here -- flagged "
+            "as a judgment call, not a confident categorization (see the 'assets' "
+            "term's own note above for the same situation). Not yet resolved by the "
+            "ODE plugin -- collection_mapper.py emits no item_assets today."
+        ),
+        "defined_in": "collection_mapper.py",
+        "scope": "collection",
+    },
+    {
+        "term": "summaries",
+        "category": "hasIdentification",
+        "namespace": None,
+        "type": "object",
+        "description": "Per-field value ranges/enumerations summarising the Collection's own Items.",
+        "pds3_fields": [],
+        "note": "Structural/aggregation field, categorized hasIdentification for lack of a better fit.",
+        "defined_in": "collection_mapper.py",
+        "scope": "collection",
     },
     {
         "term": "version",

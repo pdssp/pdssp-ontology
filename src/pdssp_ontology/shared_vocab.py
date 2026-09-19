@@ -53,7 +53,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "comment": {"@id": "rdfs:comment", "@language": "en"},
     "title": {"@id": "dcterms:title", "@language": "en"},
     "description": {"@id": "dcterms:description", "@language": "en"},
-    "domain": {"@id": "rdfs:domain", _TYPE: "@id"},
+    "domain": {"@id": "rdfs:domain", _TYPE: "@id", "@container": "@set"},
     "range": {"@id": "rdfs:range", _TYPE: "@id"},
     "subClassOf": {"@id": "rdfs:subClassOf", _TYPE: "@id", "@container": "@set"},
     "creator": "dcterms:creator",
@@ -87,7 +87,12 @@ _CLASSES: list[tuple[str, str]] = [
     ("StacExtent", "A Collection's spatial and temporal coverage -- see pdssp-stac/vocabulary."),
     ("StacSpatialExtent", "An Extent's bounding box(es) -- see pdssp-stac/vocabulary."),
     ("StacTemporalExtent", "An Extent's time interval(s) -- see pdssp-stac/vocabulary."),
-    ("StacBand", "A named spectral/data band of an Asset -- see pdssp-stac/vocabulary."),
+    ("StacBand", "A named spectral/data band of an Item, Collection, or Asset -- see pdssp-stac/vocabulary."),
+    (
+        "StacAssetRoleType",
+        "One of the STAC-suggested standard values for an Asset's roles (custom values are also valid) "
+        "-- see pdssp-stac/vocabulary.",
+    ),
     ("EpnTapGranule", "One row (granule) of the EPN-TAP2 epn_core table -- see epn-tap/vocabulary."),
     ("StacProperty", "A STAC (or STAC Collection) path an EpnTapColumn mapping reads -- see mappings/pdssp-stac-epn-tap."),
     ("Converter", "A named value-conversion function a mapping applies in one direction -- see mappings/pdssp-stac-epn-tap."),
@@ -204,18 +209,76 @@ _STAC_EXTENSION_SUBCLASSES: list[tuple[str, str, str]] = [
     ("StacVrtAsset", "StacAsset", "An asset carrying the Virtual Assets extension's parameters."),
 ]
 
-#: ``(local name, domain class, range class, comment)`` for STAC's
-#: structural containment/composition properties.
-_STRUCTURAL_PROPERTIES: list[tuple[str, str, str, str]] = [
-    ("hasCollection", "StacCatalog", "StacCollection", "Catalog contains Collection."),
-    ("hasItem", "StacCollection", "StacItem", "Collection contains Item."),
-    ("hasAsset", "StacItem", "StacAsset", "Item carries Asset."),
-    ("hasProvider", "StacCollection", "StacProvider", "Collection lists Provider."),
-    ("hasExtent", "StacCollection", "StacExtent", "Collection declares its Extent."),
-    ("hasSpatialExtent", "StacExtent", "StacSpatialExtent", "Extent's spatial component."),
-    ("hasTemporalExtent", "StacExtent", "StacTemporalExtent", "Extent's temporal component."),
-    ("hasBand", "StacAsset", "StacBand", "Asset lists Band."),
-    ("hasLink", "StacCatalog", "StacLink", "Catalog/Collection points to a Link."),
+#: ``(local name, domain classes, range class, comment)`` for STAC's
+#: structural containment/composition properties -- domain is a tuple
+#: (see pdssp-stac/vocabulary's own docstring for why multi-domain is an
+#: already-accepted pattern here, mirrored from that module's own
+#: ``_STAC_STRUCTURAL_PROPERTIES``).
+_STRUCTURAL_PROPERTIES: list[tuple[str, tuple[str, ...], str, str]] = [
+    # See pdssp-stac/vocabulary's own docstring: a Catalog can contain
+    # child Catalogs *and* child Collections, and (confirmed against
+    # STAC-UML.pdf) link directly to Items too, not only via Collection --
+    # Collection inherits all three the same way, via its own subClassOf
+    # StacCatalog.
+    ("hasCatalog", ("StacCatalog",), "StacCatalog", "Catalog/Collection contains child Catalog."),
+    ("hasCollection", ("StacCatalog",), "StacCollection", "Catalog/Collection contains child Collection."),
+    ("hasItem", ("StacCatalog",), "StacItem", "Catalog/Collection contains Item."),
+    ("hasAsset", ("StacItem", "StacCollection"), "StacAsset", "Item/Collection carries Asset."),
+    ("hasProvider", ("StacCollection",), "StacProvider", "Collection lists Provider."),
+    ("hasExtent", ("StacCollection",), "StacExtent", "Collection declares its Extent."),
+    ("hasSpatialExtent", ("StacExtent",), "StacSpatialExtent", "Extent's spatial component."),
+    ("hasTemporalExtent", ("StacExtent",), "StacTemporalExtent", "Extent's temporal component."),
+    ("hasBand", ("StacAsset", "StacItem", "StacCollection"), "StacBand", "Item/Collection/Asset lists Band."),
+    ("hasLink", ("StacCatalog",), "StacLink", "Catalog/Collection points to a Link."),
+    (
+        "hasParent",
+        ("StacCollection", "StacItem"),
+        "StacCatalog",
+        "Collection/Item points to its parent Catalog/Collection (0..1).",
+    ),
+    ("hasRoot", ("StacCollection", "StacItem"), "StacCatalog", "Collection/Item points to the root Catalog (0..1)."),
+    (
+        "hasDerivedFromCollection",
+        ("StacCollection",),
+        "StacCollection",
+        "Collection was derived from another Collection (0..*).",
+    ),
+    ("hasDerivedFromItem", ("StacItem",), "StacItem", "Item was derived from another Item (0..*)."),
+]
+
+#: ``(local name, domain class, xsd range, comment)`` -- mirrors
+#: pdssp-stac/vocabulary's own ``_STAC_STRUCTURAL_DATA_PROPERTIES``.
+_STAC_STRUCTURAL_DATA_PROPERTIES: list[tuple[str, str, str, str]] = [
+    ("providerName", "StacProvider", "xsd:string", "Provider's own name."),
+    ("providerDescription", "StacProvider", "xsd:string", "Provider's own description."),
+    ("providerRoles", "StacProvider", "xsd:string", "Provider's role(s) (e.g. producer, licensor, processor, host)."),
+    ("providerUrl", "StacProvider", "xsd:anyURI", "Provider's homepage."),
+    ("bandName", "StacBand", "xsd:string", "Band's own name."),
+    ("bandDescription", "StacBand", "xsd:string", "Band's own description."),
+    ("linkHref", "StacLink", "xsd:anyURI", "Link target URL."),
+    ("linkRel", "StacLink", "xsd:string", "Link relation type (e.g. child, item, parent, root, derived_from)."),
+    ("linkType", "StacLink", "xsd:string", "Link target media type."),
+    ("linkTitle", "StacLink", "xsd:string", "Link's own human-readable title."),
+    ("assetHref", "StacAsset", "xsd:anyURI", "Asset file URL."),
+    ("assetTitle", "StacAsset", "xsd:string", "Asset's own human-readable title."),
+    ("assetDescription", "StacAsset", "xsd:string", "Asset's own description."),
+    ("assetType", "StacAsset", "xsd:string", "Asset media type."),
+    (
+        "assetRoles",
+        "StacAsset",
+        "xsd:string",
+        "Asset's role(s) -- standard values thumbnail/overview/data/metadata (see StacAssetRoleType), "
+        "custom values also valid per the STAC spec.",
+    ),
+]
+
+#: ``(local name, comment)`` -- mirrors pdssp-stac/vocabulary's own
+#: ``_ASSET_ROLE_TYPES``.
+_ASSET_ROLE_TYPES: list[tuple[str, str]] = [
+    ("thumbnail", "An Asset that is a low-resolution preview image."),
+    ("overview", "An Asset that is a full-resolution or high-resolution preview image."),
+    ("data", "An Asset that is the primary data being described (may have multiple)."),
+    ("metadata", "An Asset that provides more metadata about the primary data."),
 ]
 
 #: ``(local name, comment)`` for every other annotation property (from
@@ -380,10 +443,33 @@ def _build_structural_property_nodes(classes: dict[str, dict[str, Any]]) -> list
             "name": name,
             "label": name,
             "comment": comment,
-            "domain": classes[domain],
+            "domain": [classes[d] for d in domains],
             "range": classes[range_],
         }
-        for name, domain, range_, comment in _STRUCTURAL_PROPERTIES
+        for name, domains, range_, comment in _STRUCTURAL_PROPERTIES
+    ]
+
+
+def _build_stac_structural_data_property_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "@id": f"pdssp:{name}",
+            _TYPE: "owl:DatatypeProperty",
+            "name": name,
+            "label": name,
+            "comment": comment,
+            "domain": [classes[domain]],
+            "range": xsd_range,
+        }
+        for name, domain, xsd_range, comment in _STAC_STRUCTURAL_DATA_PROPERTIES
+    ]
+
+
+def _build_asset_role_type_individual_nodes(classes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    role_type = classes["StacAssetRoleType"]
+    return [
+        {"@id": f"pdssp:{name}", _TYPE: role_type["@id"], "name": name, "label": name, "comment": comment}
+        for name, comment in _ASSET_ROLE_TYPES
     ]
 
 
@@ -444,6 +530,8 @@ def build_shared_vocab_jsonld(base: str) -> dict[str, Any]:
         *_build_stac_category_subclass_nodes(classes),
         *_build_stac_extension_subclass_nodes(classes),
         *_build_structural_property_nodes(classes),
+        *_build_stac_structural_data_property_nodes(classes),
+        *_build_asset_role_type_individual_nodes(classes),
         *_build_mapping_structural_property_nodes(classes),
         *_build_annotation_property_nodes(),
     ]

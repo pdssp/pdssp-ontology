@@ -75,4 +75,57 @@ def test_providers_term_is_collection_scoped():
     providers = next(n for n in jsonld["@graph"] if n.get("name") == "providers")
     domain_ids = {d["@id"] for d in providers["domain"]}
     assert domain_ids == {"pdssp:StacIdentification"}
-    assert providers["scope"] == "collection"
+    assert providers["scope"] == ["collection"]
+
+
+def test_dual_scope_term_renders_both_scopes():
+    # title is STAC common metadata shared verbatim by Item and Collection
+    # (also_scopes on the seed entry) -- both must show up, not just the
+    # primary scope.
+    jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
+    title = next(n for n in jsonld["@graph"] if n.get("name") == "title")
+    assert title["scope"] == ["collection", "item"]
+
+
+def test_asset_and_band_containment_properties_have_multiple_domains():
+    jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
+    by_id = {n["@id"]: n for n in jsonld["@graph"]}
+    has_asset = by_id["pdssp:hasAsset"]
+    has_band = by_id["pdssp:hasBand"]
+    assert {d["@id"] for d in has_asset["domain"]} == {"pdssp:StacItem", "pdssp:StacCollection"}
+    assert {d["@id"] for d in has_band["domain"]} == {"pdssp:StacAsset", "pdssp:StacItem", "pdssp:StacCollection"}
+
+
+def test_lineage_properties_exist_with_expected_domain_and_range():
+    jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
+    by_id = {n["@id"]: n for n in jsonld["@graph"]}
+    has_parent = by_id["pdssp:hasParent"]
+    has_root = by_id["pdssp:hasRoot"]
+    has_derived_collection = by_id["pdssp:hasDerivedFromCollection"]
+    has_derived_item = by_id["pdssp:hasDerivedFromItem"]
+
+    assert {d["@id"] for d in has_parent["domain"]} == {"pdssp:StacCollection", "pdssp:StacItem"}
+    assert has_parent["range"]["@id"] == "pdssp:StacCatalog"
+    assert {d["@id"] for d in has_root["domain"]} == {"pdssp:StacCollection", "pdssp:StacItem"}
+    assert has_root["range"]["@id"] == "pdssp:StacCatalog"
+    assert has_derived_collection["domain"][0]["@id"] == "pdssp:StacCollection"
+    assert has_derived_collection["range"]["@id"] == "pdssp:StacCollection"
+    assert has_derived_item["domain"][0]["@id"] == "pdssp:StacItem"
+    assert has_derived_item["range"]["@id"] == "pdssp:StacItem"
+
+
+def test_structural_data_properties_exist_for_sub_object_classes():
+    jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
+    by_id = {n["@id"]: n for n in jsonld["@graph"]}
+    provider_name = by_id["pdssp:providerName"]
+    asset_roles = by_id["pdssp:assetRoles"]
+    assert provider_name["@type"] == "owl:DatatypeProperty"
+    assert provider_name["domain"][0]["@id"] == "pdssp:StacProvider"
+    assert asset_roles["domain"][0]["@id"] == "pdssp:StacAsset"
+
+
+def test_standard_asset_role_type_individuals_exist():
+    jsonld = build_vocabulary_jsonld(_doc(), "https://example.org")
+    by_id = {n["@id"]: n for n in jsonld["@graph"]}
+    thumbnail = by_id["pdssp:thumbnail"]
+    assert thumbnail["@type"] == "pdssp:StacAssetRoleType"

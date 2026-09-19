@@ -35,6 +35,16 @@ class VocabularyTerm(BaseModel):
     term: str
     namespace: str | None = None
     scope: Literal["item", "asset", "collection"] = "item"
+    also_scopes: list[Literal["item", "asset", "collection"]] = Field(
+        default_factory=list,
+        description=(
+            "Additional scopes beyond `scope`, for a STAC common-metadata field the "
+            "spec defines identically on more than one object (e.g. title/description/"
+            "license on both Item and Collection) -- kept separate from `scope` rather "
+            "than duplicating the whole TERMS entry, which would give two nodes the "
+            "same rendered @id."
+        ),
+    )
     type: str
     description: str
     pds3_fields: list[str] = Field(default_factory=list)

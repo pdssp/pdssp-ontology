@@ -104,7 +104,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "isDefinedBy": _id_valued("rdfs:isDefinedBy"),
     "controlledVocabulary": "pdssp:controlledVocabulary",
     "valueType": "pdssp:valueType",
-    "scope": "pdssp:scope",
+    "scope": {"@id": "pdssp:scope", "@container": "@set"},
     "note": "pdssp:note",
     "facetKind": "pdssp:facetKind",
 }
@@ -128,7 +128,8 @@ _STAC_STRUCTURAL_CLASSES: dict[str, str] = {
     "StacExtent": "A Collection's spatial and temporal coverage (STAC-UML.pdf).",
     "StacSpatialExtent": "An Extent's bounding box(es) (STAC-UML.pdf).",
     "StacTemporalExtent": "An Extent's time interval(s) (STAC-UML.pdf).",
-    "StacBand": "A named spectral/data band of an Asset (STAC-UML.pdf).",
+    "StacBand": "A named spectral/data band of an Item, Collection, or Asset (STAC-UML.pdf).",
+    "StacAssetRoleType": "One of the STAC-suggested standard values for an Asset's roles (custom values are also valid).",
 }
 
 #: ``(local name, class this subclasses)`` -- kept apart from
@@ -138,22 +139,98 @@ _STAC_SUBCLASS_OF: list[tuple[str, str]] = [
     ("StacCollection", "StacCatalog"),
 ]
 
-_STAC_STRUCTURAL_PROPERTIES: list[tuple[str, str, str, str]] = [
-    ("hasCollection", "StacCatalog", "StacCollection", "Catalog contains Collection"),
-    ("hasItem", "StacCollection", "StacItem", "Collection contains Item"),
-    ("hasAsset", "StacItem", "StacAsset", "Item carries Asset"),
-    ("hasProvider", "StacCollection", "StacProvider", "Collection lists Provider"),
-    ("hasExtent", "StacCollection", "StacExtent", "Collection declares its Extent"),
-    ("hasSpatialExtent", "StacExtent", "StacSpatialExtent", "Extent's spatial component"),
-    ("hasTemporalExtent", "StacExtent", "StacTemporalExtent", "Extent's temporal component"),
-    ("hasBand", "StacAsset", "StacBand", "Asset lists Band"),
+#: ``(name, domain classes, range class, label)`` -- domain is a tuple
+#: (usually one class, sometimes more): two ``rdfs:domain`` triples on the
+#: same property is ordinary RDFS, and already the pattern used for every
+#: term with a namespace (domained on both its category and extension
+#: class) and for the ``StacIdentification`` category class itself
+#: (``rdfs:subClassOf`` both ``StacItem`` and ``StacCollection``, because
+#: ``providers`` is collection-scoped) -- ``hasAsset``/``hasBand`` below
+#: reuse that same, already-accepted pattern rather than minting a second
+#: property name per extra domain.
+_STAC_STRUCTURAL_PROPERTIES: list[tuple[str, tuple[str, ...], str, str]] = [
+    # A Catalog can contain child Catalogs *and* child Collections (both
+    # link:rel=child in real STAC); a Collection can too, via its own
+    # subClassOf StacCatalog -- confirmed against STAC-UML.pdf, which
+    # shows both link:rel=child edges (to catalog *and* to collection)
+    # leaving catalog itself, not just collection.
+    ("hasCatalog", ("StacCatalog",), "StacCatalog", "Catalog/Collection contains child Catalog"),
+    ("hasCollection", ("StacCatalog",), "StacCollection", "Catalog/Collection contains child Collection"),
+    # Domained on StacCatalog, not StacCollection: STAC-UML.pdf shows
+    # link:rel=item (0..*) leaving *catalog* itself, not only collection
+    # -- a plain Catalog can link directly to Items too, and Collection
+    # inherits this the same way it inherits hasCatalog/hasCollection
+    # above, via its own subClassOf StacCatalog.
+    ("hasItem", ("StacCatalog",), "StacItem", "Catalog/Collection contains Item"),
+    # A Collection can carry assets directly too (e.g. a thumbnail), not
+    # only via its own Items -- confirmed against collection_mapper.py,
+    # which emits its own (usually empty) top-level "assets" dict.
+    ("hasAsset", ("StacItem", "StacCollection"), "StacAsset", "Item/Collection carries Asset"),
+    ("hasProvider", ("StacCollection",), "StacProvider", "Collection lists Provider"),
+    ("hasExtent", ("StacCollection",), "StacExtent", "Collection declares its Extent"),
+    ("hasSpatialExtent", ("StacExtent",), "StacSpatialExtent", "Extent's spatial component"),
+    ("hasTemporalExtent", ("StacExtent",), "StacTemporalExtent", "Extent's temporal component"),
+    # A Band can appear directly on an Item's/Collection's own "bands"
+    # (STAC 1.1 common metadata), not only nested inside an Asset.
+    ("hasBand", ("StacAsset", "StacItem", "StacCollection"), "StacBand", "Item/Collection/Asset lists Band"),
     # Catalog *and* Collection (via subClassOf StacCatalog) both have
     # links in real STAC, and so does Item -- but Item is not a Catalog,
     # and RDFS domain is a single-class annotation, not a union, so this
     # one relation's rdfs:domain names Catalog only; Item's own links
     # exist in practice but are not entailed through this triple. A
     # documented simplification, not an oversight (see module docstring).
-    ("hasLink", "StacCatalog", "StacLink", "Catalog/Collection points to a Link"),
+    ("hasLink", ("StacCatalog",), "StacLink", "Catalog/Collection points to a Link"),
+    # rel=parent/root/derived_from -- STAC-UML.pdf's own link relations
+    # beyond rel=child (already covered by hasCatalog/hasCollection/
+    # hasItem above). range=StacCatalog already covers "parent/root is a
+    # Collection" for free, via StacCollection's own subClassOf StacCatalog.
+    ("hasParent", ("StacCollection", "StacItem"), "StacCatalog", "Collection/Item points to its parent Catalog/Collection (0..1)"),
+    ("hasRoot", ("StacCollection", "StacItem"), "StacCatalog", "Collection/Item points to the root Catalog (0..1)"),
+    ("hasDerivedFromCollection", ("StacCollection",), "StacCollection", "Collection was derived from another Collection (0..*)"),
+    ("hasDerivedFromItem", ("StacItem",), "StacItem", "Item was derived from another Item (0..*)"),
+]
+
+#: ``(name, domain class, xsd range, label)`` for the literal fields of
+#: the sub-object classes (:data:`_STAC_STRUCTURAL_CLASSES`) that carry no
+#: :data:`pdssp_ontology.stac_seed.TERMS` entry of their own -- these are
+#: STAC's own object-model fields (Provider.name, Link.href, ...), never
+#: populated from PDS3 mapping data, so they do not belong in that seed.
+#: Prefixed per class (``providerName``, not bare ``name``) to avoid
+#: colliding with the ``name``/``label``/``comment`` JSON-LD aliases
+#: already reserved for a resource's own identifying label.
+_STAC_STRUCTURAL_DATA_PROPERTIES: list[tuple[str, str, str, str]] = [
+    ("providerName", "StacProvider", "xsd:string", "Provider's own name"),
+    ("providerDescription", "StacProvider", "xsd:string", "Provider's own description"),
+    ("providerRoles", "StacProvider", "xsd:string", "Provider's role(s) (e.g. producer, licensor, processor, host)"),
+    ("providerUrl", "StacProvider", "xsd:anyURI", "Provider's homepage"),
+    ("bandName", "StacBand", "xsd:string", "Band's own name"),
+    ("bandDescription", "StacBand", "xsd:string", "Band's own description"),
+    ("linkHref", "StacLink", "xsd:anyURI", "Link target URL"),
+    ("linkRel", "StacLink", "xsd:string", "Link relation type (e.g. child, item, parent, root, derived_from)"),
+    ("linkType", "StacLink", "xsd:string", "Link target media type"),
+    ("linkTitle", "StacLink", "xsd:string", "Link's own human-readable title"),
+    ("assetHref", "StacAsset", "xsd:anyURI", "Asset file URL"),
+    ("assetTitle", "StacAsset", "xsd:string", "Asset's own human-readable title"),
+    ("assetDescription", "StacAsset", "xsd:string", "Asset's own description"),
+    ("assetType", "StacAsset", "xsd:string", "Asset media type"),
+    (
+        "assetRoles",
+        "StacAsset",
+        "xsd:string",
+        "Asset's role(s) -- standard values thumbnail/overview/data/metadata "
+        "(see StacAssetRoleType), custom values also valid per the STAC spec",
+    ),
+]
+
+#: ``(local name, comment)`` -- STAC's own suggested standard values for
+#: an Asset's ``roles`` (not exhaustive: custom role strings are equally
+#: valid STAC, so this is informational, not ``assetRoles``'s formal
+#: ``rdfs:range``).
+_ASSET_ROLE_TYPES: list[tuple[str, str]] = [
+    ("thumbnail", "An Asset that is a low-resolution preview image."),
+    ("overview", "An Asset that is a full-resolution or high-resolution preview image."),
+    ("data", "An Asset that is the primary data being described (may have multiple)."),
+    ("metadata", "An Asset that provides more metadata about the primary data."),
 ]
 
 _SCOPE_TO_STAC_CLASS: dict[str, str] = {"item": "StacItem", "asset": "StacAsset", "collection": "StacCollection"}
@@ -227,6 +304,8 @@ def build_vocabulary_jsonld(document: VocabularyDocument, base: str) -> dict[str
         _build_ontology_node(document, scheme_id),
         *stac_classes.values(),
         *_build_stac_structural_property_nodes(stac_classes),
+        *_build_stac_structural_data_property_nodes(stac_classes),
+        *_build_asset_role_type_individual_nodes(stac_classes),
         *(category_classes[key] for key in sorted(category_classes)),
         *(extension_classes[key] for key in sorted(extension_classes)),
         *(
@@ -315,7 +394,7 @@ def _category_scopes(terms: list[VocabularyTerm]) -> dict[str, set[str]]:
     """
     scopes: dict[str, set[str]] = {}
     for term in terms:
-        scopes.setdefault(term.category, set()).add(term.scope)
+        scopes.setdefault(term.category, set()).update([term.scope, *term.also_scopes])
     return scopes
 
 
@@ -376,10 +455,42 @@ def _build_stac_structural_property_nodes(
             _TYPE: "owl:ObjectProperty",
             "name": label,
             "label": label,
-            "domain": stac_classes[domain],
+            "domain": [stac_classes[d] for d in domains],
             "range": stac_classes[range_],
         }
-        for name, domain, range_, label in _STAC_STRUCTURAL_PROPERTIES
+        for name, domains, range_, label in _STAC_STRUCTURAL_PROPERTIES
+    ]
+
+
+def _build_stac_structural_data_property_nodes(
+    stac_classes: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "@id": f"pdssp:{name}",
+            _TYPE: "owl:DatatypeProperty",
+            "name": label,
+            "label": label,
+            "domain": [stac_classes[domain]],
+            "range": xsd_range,
+        }
+        for name, domain, xsd_range, label in _STAC_STRUCTURAL_DATA_PROPERTIES
+    ]
+
+
+def _build_asset_role_type_individual_nodes(
+    stac_classes: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    role_type = stac_classes["StacAssetRoleType"]
+    return [
+        {
+            "@id": f"pdssp:{name}",
+            _TYPE: role_type["@id"],
+            "name": name,
+            "label": name,
+            "comment": comment,
+        }
+        for name, comment in _ASSET_ROLE_TYPES
     ]
 
 
@@ -400,7 +511,7 @@ def _build_term_node(
         "label": term.term,
         "comment": term.description,
         "domain": domain,
-        "scope": term.scope,
+        "scope": sorted([term.scope, *term.also_scopes]),
         "valueType": term.type,
     }
     xsd_range = _XSD_RANGE_BY_TYPE.get(term.type)
