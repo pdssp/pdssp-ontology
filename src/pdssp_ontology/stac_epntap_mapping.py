@@ -45,6 +45,7 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "dcterms": "http://purl.org/dc/terms/",
     "schema": "http://schema.org/",
+    "widoco": "https://w3id.org/widoco/vocab#",
     "pdssp": "https://pdssp.github.io/pdssp-ontology/vocab#",
     "name": "schema:name",
     "label": "rdfs:label",
@@ -63,15 +64,57 @@ _JSONLD_CONTEXT: dict[str, Any] = {
     "publisher": "dcterms:publisher",
     "license": {"@id": "dcterms:license", _TYPE: "@id"},
     "created": {"@id": "dcterms:created", _TYPE: "xsd:date"},
+    "versionInfo": "owl:versionInfo",
+    "language": "dcterms:language",
+    "description": {"@id": "dcterms:description", "@language": "en"},
+    "abstract": {"@id": "dcterms:abstract", "@language": "en"},
+    "introduction": {"@id": "widoco:introduction", "@language": "en"},
 }
 
 #: This rendering's own metadata -- see epntap_vocabulary's own docstring
 #: for why creator/publisher/created/license describe *this* RDF file,
-#: consistently across every graph in this ontology suite.
+#: consistently across every graph in this ontology suite. Versioned
+#: separately from either vocabulary it bridges (own "0.1", not tied to
+#: epn-tap/vocabulary's or pdssp-stac/vocabulary's own version number):
+#: this graph changes on its own schedule (see module docstring).
 _RENDERING_CREATOR = "Jean-Christophe Malapert"
 _RENDERING_PUBLISHER = "PDSSP"
 _RENDERING_CREATED = "2026-09-18"
 _RENDERING_LICENSE = "https://creativecommons.org/licenses/by/4.0/"
+_RENDERING_VERSION = "0.1"
+_RENDERING_ABSTRACT = (
+    "PDSSP's own declarative mapping between the EPN-TAP2 vocabulary and "
+    "the PDSSP STAC profile: for each EPN-TAP column, which STAC (or STAC "
+    "Collection) path its value comes from, or a fixed constant, and "
+    "which named converter (if any) applies in each direction."
+)
+_RENDERING_INTRODUCTION = (
+    "This graph is the *volatile* half of the EPN-TAP/STAC relationship "
+    "-- unlike the EPN-TAP2 vocabulary (a fixed IVOA specification) and "
+    "the PDSSP STAC profile (STAC's own core model plus PDSSP's "
+    "extensions), this mapping changes whenever a column is re-pointed "
+    "at a different STAC path, a converter is added, or PDSSP's own STAC "
+    "output evolves -- without ever touching either vocabulary's own, "
+    "stable term list. Each mapping fact is asserted about the *same* "
+    "subject IRI epn-tap/vocabulary mints for that column (e.g. "
+    ".../epn-tap/vocabulary#time_min), in this separate graph -- ordinary "
+    "RDF, since a resource's triples can be split across named graphs. "
+    "See seeAlso below for the two vocabularies this mapping bridges."
+)
+_RENDERING_DESCRIPTION = (
+    "Every EPN-TAP2 column PDSSP's own STAC output can populate is "
+    "declared here exactly once: a stac_path (or collection_path, when "
+    "the value is read from the STAC Collection rather than the Item -- "
+    "see collectionScoped) into the STAC side, or a constantValue for a "
+    "column with no real STAC equivalent; optionally a toStacConverter/ "
+    "fromStacConverter pair naming a value-conversion function applied "
+    "in each direction. A column's stac_path either resolves to a real, "
+    "documented stac/vocabulary term (mappedFrom then points at that "
+    "term's own IRI directly -- the two are genuinely the same resource) "
+    "or, for a STAC core field this vocabulary doesn't separately "
+    "catalogue as a term (e.g. id/geometry/assets), a lightweight, "
+    "mapping-local StacProperty reference node instead."
+)
 
 _NOT_IDENTIFIER = re.compile(r"[^A-Za-z0-9]+")
 
@@ -143,6 +186,11 @@ def _build_ontology_node(scheme_id: str, epntap_base: str, stac_base: str) -> di
             "Bridges the independent EPN-TAP and PDSSP/STAC vocabularies -- see "
             "seeAlso for each one's own ontology."
         ),
+        "abstract": _RENDERING_ABSTRACT,
+        "introduction": _RENDERING_INTRODUCTION,
+        "description": _RENDERING_DESCRIPTION,
+        "versionInfo": _RENDERING_VERSION,
+        "language": "en",
         # Lets a reader (and Widoco's own overview section) bounce back to
         # either vocabulary this mapping bridges, rather than only being
         # reachable the other way around.
