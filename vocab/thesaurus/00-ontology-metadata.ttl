@@ -1,7 +1,7 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix dct: <http://purl.org/dc/terms/> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix vann: <http://purl.org/vocab/vann/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 # Ontology-level metadata for the "thesaurus" named graph
 # (https://pdssp.github.io/pdssp-ontology/thesaurus). Without a resource
@@ -18,8 +18,15 @@
     dct:title "PDSSP Thesaurus"@en ;
     dct:description "A SKOS thesaurus of controlled vocabularies for planetary science data products, published by the Planetary Data and Services System Platform (PDSSP). It defines three concept schemes -- product type, acquisition/processing method, and processing level -- reusing the USGS Thesaurus's own concepts where they already fit, and extending it where they don't (e.g. anaglyph, point cloud, photogrammetry, stereoscopic imaging). It is consumed by PDSSP's own STAC catalogues (via the `stacplanet` STAC extension's `product:type` and `pdssp:method` fields) so that every mission's metadata draws its values from one shared, dereferenceable vocabulary instead of each mission inventing its own labels."@en ;
     dct:abstract "PDSSP's controlled vocabulary for classifying planetary science data products by product type, acquisition/processing method, and processing level."@en ;
-    dct:creator [ a foaf:Agent ; foaf:name "PDSSP" ; foaf:homepage <https://github.com/pdssp> ] ;
+    dct:creator "Jean-Christophe Malapert (CNES)" ;
+    dct:publisher "PDSSP" ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "1.0.0" ;
+    # No owl:versionIRI yet: 1.0.0 has not been released -- a versioned
+    # IRI would wrongly imply a tagged version already exists. Add it
+    # (e.g. ".../thesaurus/1.0.0") the day 1.0.0 actually ships, alongside
+    # bumping owl:versionInfo below.
+    owl:versionInfo "unreleased" ;
+    dct:created "2026-09-29"^^xsd:date ;
+    dct:modified "2026-09-29"^^xsd:date ;
     vann:preferredNamespacePrefix "pdssp" ;
     vann:preferredNamespaceUri "https://pdssp.github.io/pdssp-ontology/vocab#" .
