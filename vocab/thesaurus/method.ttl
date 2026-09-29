@@ -1,0 +1,119 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix usgs: <https://apps.usgs.gov/thesaurus/USGSThesaurus/> .
+
+# PDSSP Acquisition / Processing Method
+# ========================================
+# How a product was acquired or produced (the technique) -- e.g.
+# panchromatic imaging, multispectral imaging, stereo photogrammetry.
+# Reuses the USGS Thesaurus's own "methods" facet, specifically its
+# "remote sensing" branch (the only one relevant to a planetary imaging
+# archive -- the facet's other branches, laboratory/field/management
+# methods, describe terrestrial fieldwork this project has no use for),
+# confirmed by downloading and inspecting the real RDF
+# (https://apps.usgs.gov/thesaurus/download/USGSThesaurus.rdf).
+#
+# One PDSSP addition: USGS only carries "photogrammetry" as a *synonym*
+# (skos:altLabel) of "remote sensing" itself, not as its own narrower,
+# addressable concept -- too coarse for this project, which specifically
+# needs to say a DTM was produced BY photogrammetry, distinct from plain
+# imaging. pdssp:Method-Photogrammetry gives it that.
+
+pdssp:MethodScheme a skos:ConceptScheme ;
+    dct:title "PDSSP Acquisition/Processing Method"@en ;
+    dct:source <https://apps.usgs.gov/thesaurus/USGSThesaurus> ;
+    skos:definition "How a product was acquired or produced, e.g. panchromatic imaging, multispectral imaging, stereo photogrammetry."@en ;
+    skos:hasTopConcept pdssp:Method-RemoteSensing .
+
+pdssp:Method-RemoteSensing a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Remote sensing"@en ;
+    skos:exactMatch usgs:remote%20sensing ;
+    skos:narrower
+        pdssp:Method-PanchromaticImaging ,
+        pdssp:Method-MultispectralImaging ,
+        pdssp:Method-HyperspectralImaging ,
+        pdssp:Method-VisibleLightImaging ,
+        pdssp:Method-InfraredImaging ,
+        pdssp:Method-ThermalImaging ,
+        pdssp:Method-RadarImaging ,
+        pdssp:Method-MicrowaveImaging ,
+        pdssp:Method-Lidar ,
+        pdssp:Method-AerialPhotography ,
+        pdssp:Method-Photogrammetry ,
+        pdssp:Method-StereoscopicImaging .
+
+pdssp:Method-PanchromaticImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Panchromatic imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:panchromatic%20imaging .
+
+pdssp:Method-MultispectralImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Multispectral imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:multispectral%20imaging .
+
+pdssp:Method-HyperspectralImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Hyperspectral imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:hyperspectral%20imaging .
+
+pdssp:Method-VisibleLightImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Visible light imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:visible%20light%20imaging .
+
+pdssp:Method-InfraredImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Infrared imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:infrared%20imaging .
+
+pdssp:Method-ThermalImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Thermal imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:thermal%20imaging .
+
+pdssp:Method-RadarImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Radar imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:radar%20imaging .
+
+pdssp:Method-MicrowaveImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Microwave imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:microwave%20imaging .
+
+pdssp:Method-Lidar a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Lidar"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:lidar .
+
+pdssp:Method-AerialPhotography a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Aerial photography"@en ;
+    skos:altLabel "orthoimagery"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:aerial%20photography .
+
+pdssp:Method-Photogrammetry a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Photogrammetry"@en ;
+    skos:definition "Deriving 3D geometry (e.g. a digital elevation model) by stereo-matching two or more overlapping images. The USGS Thesaurus only carries \"photogrammetry\" as a synonym of \"remote sensing\" itself; this PDSSP addition gives it its own addressable, narrower concept, which planetary DTM production specifically needs in order to be distinguished from plain imaging (see pdssp:ProductType-DigitalElevationModel)."@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:closeMatch usgs:remote%20sensing .
+
+pdssp:Method-StereoscopicImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Stereoscopic imaging"@en ;
+    skos:definition "Acquiring or combining two observations of the same site from different look angles for stereo (3D) viewing or measurement -- e.g. a red-cyan anaglyph. Distinct from pdssp:Method-Photogrammetry: photogrammetry MEASURES 3D geometry (elevation) from a stereo pair, while this concept covers producing a stereo pair/composite for viewing, with no elevation model necessarily derived. Not present in the USGS Thesaurus at all (no \"stereo\"/\"stereoscopic\" label anywhere in its RDF) -- a PDSSP addition."@en ;
+    skos:broader pdssp:Method-RemoteSensing .

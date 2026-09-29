@@ -1,0 +1,15 @@
+services:
+  fuseki:
+    image: stain/jena-fuseki
+    ports:
+      - "3030:3030"
+    environment:
+      - ADMIN_PASSWORD=pdssp
+      - FUSEKI_DATASET_1=pdssp
+      - TDB=2
+    volumes:
+      - fuseki-data:/fuseki
+      - ./development:/staging:ro
+
+volumes:
+  fuseki-data:

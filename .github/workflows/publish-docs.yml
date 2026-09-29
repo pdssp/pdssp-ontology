@@ -1,0 +1,162 @@
+name: Publish ontology documentation
+
+# Regenerates the ontology entirely from this repo's own source (see
+# merge_ontology.py's own docstring: this package owns the whole
+# ontology, no live third-party service is ever contacted), runs Widoco
+# once per named graph, and publishes the result to GitHub Pages. The
+# site root is a plain catalogue page linking to each -- never a
+# merged/flattened ontology of its own, so each data model's ontology
+# stays independently dereferenceable (see the README).
+#
+# One-time setup this workflow can't do for you: in this repo's Settings
+# -> Pages, set "Source" to "GitHub Actions".
+#
+# Only the thesaurus graph exists today -- adding a second named graph
+# (PDSSP/STAC, EPN-TAP, a mapping) means adding one more Widoco step
+# below plus one more entry on the catalogue page, mirroring the
+# thesaurus step exactly.
+#
+# Runs on every push touching the ontology's own source, and on demand.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "vocab/**"
+      - "src/pdssp_ontology/**"
+      - ".github/workflows/publish-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; let an in-flight run finish rather
+# than cancelling it mid-deploy.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+env:
+  BASE: https://pdssp.github.io/pdssp-ontology
+  WIDOCO_VERSION: "1.4.25"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      # Writes one development/<name>.ttl per named graph (thesaurus.ttl
+      # today) -- see write_per_graph_turtle.
+      - name: Build the ontology (one Turtle file per named graph)
+        run: uv run python -m pdssp_ontology.merge_ontology --base "$BASE"
+
+      - name: Set up Java (for Widoco)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Download Widoco
+        run: |
+          curl -sL -o widoco.jar \
+            "https://github.com/dgarijo/Widoco/releases/download/v${WIDOCO_VERSION}/widoco-${WIDOCO_VERSION}-jar-with-dependencies_JDK-17.jar"
+
+      - name: Generate documentation with Widoco (PDSSP thesaurus)
+        run: |
+          java -jar widoco.jar \
+            -ontFile development/thesaurus.ttl \
+            -outFolder site/thesaurus \
+            -lang en \
+            -getOntologyMetadata \
+            -includeAnnotationProperties \
+            -webVowl \
+            -rewriteAll
+
+      # Widoco only generates index-en.html; GitHub Pages needs index.html
+      # as the default document for a bare directory URL to resolve.
+      - name: Add index.html to each site
+        run: cp site/thesaurus/index-en.html site/thesaurus/index.html
+
+      # Widoco's own static resource bundle (CSS/JS/icons) is identical
+      # across every build regardless of the ontology it documents -- copy
+      # one real copy to the site root so the catalogue page below can use
+      # the exact same stylesheets as every page it links to.
+      - name: Copy Widoco's shared resources for the root catalogue page
+        run: cp -r site/thesaurus/resources site/resources
+
+      # The site root is a plain catalogue of the ontologies this repo
+      # publishes -- never a merged/flattened ontology of its own. Styled
+      # with Widoco's own resources/markup rather than bare HTML, so this
+      # page reads as part of the same site instead of a plain directory
+      # listing.
+      - name: Add the root catalogue page
+        run: |
+          cat > site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          <link rel="stylesheet" href="resources/primer.css" media="screen"/>
+          <link rel="stylesheet" href="resources/rec.css" media="screen"/>
+          <link rel="stylesheet" href="resources/extra.css" media="screen"/>
+          <link rel="stylesheet" href="resources/owl.css" media="screen"/>
+          <link rel="stylesheet" href="resources/dark.css" media="(prefers-color-scheme: dark)"/>
+          <link rel="stylesheet" href="resources/light.css" media="(prefers-color-scheme: light)"/>
+          <link rel="stylesheet" href="resources/slider.css" media="screen"/>
+          <meta name="color-scheme" content="dark light">
+          <script type="module" src="resources/dark-mode-toggle.mjs"></script><div class="darkmode">
+          	<dark-mode-toggle class="slider"></dark-mode-toggle>
+          </div>
+          <link rel="icon" type="image/png" href="resources/rdf.icon"/>
+          <title>PDSSP ontologies</title>
+          </head>
+          <body>
+          <div class="container">
+          <div class="head">
+          <h1>PDSSP ontologies</h1>
+          <h2>One independent ontology per data model, plus the mapping(s) between them</h2>
+          <dl>
+          <dt>Publisher:</dt>
+          <dd>PDSSP</dd>
+          <dt>License:</dt>
+          <dd><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank"><img src="https://img.shields.io/badge/License-CC--BY--4.0-blue.svg" alt="CC-BY-4.0" /></a></dd>
+          </dl>
+          </div>
+
+          <div id="overview">
+          <h2>Ontologies</h2>
+          <dl>
+          <dt><a href="thesaurus/">PDSSP Thesaurus</a></dt>
+          <dd>Product type, acquisition/processing method, and processing level -- reusing the USGS Thesaurus's own vocabulary where it fits, extending it where it doesn't (e.g. anaglyph, point cloud, photogrammetry, stereoscopic imaging).</dd>
+          </dl>
+          <p><em>More graphs (a PDSSP/STAC profile, an EPN-TAP vocabulary, and the mapping between them) are planned but not yet published here -- an earlier attempt at all three had known inconsistencies not yet resolved.</em></p>
+          </div>
+          </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

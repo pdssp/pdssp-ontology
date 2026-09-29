@@ -1,0 +1,77 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix usgs: <https://apps.usgs.gov/thesaurus/USGSThesaurus/> .
+
+# PDSSP Product Type
+# ====================
+# What kind of resource this is (the concrete thing being downloaded) --
+# e.g. a digital elevation model, an image mosaic, a point cloud. Extends
+# the USGS Thesaurus's own "product types" facet
+# (https://apps.usgs.gov/thesaurus/, download:
+# https://apps.usgs.gov/thesaurus/download/USGSThesaurus.rdf) with terms a
+# planetary remote-sensing archive needs that facet does not have at all
+# (anaglyph, point cloud) -- USGS's facet is a library/dataset-type
+# taxonomy (reports, maps and atlases, datasets, image collections, ...),
+# not a remote-sensing-product taxonomy, so it only has real matches for
+# "digital elevation model" (exact) and "image"/"image mosaic" (via its
+# "orthoimagery" synonym) -- confirmed by downloading and inspecting the
+# real RDF, not assumed.
+#
+# Every concept reused from USGS keeps its own PDSSP URI (so this scheme's
+# hierarchy is ours to shape, e.g. Anaglyph nested under Image) but
+# declares skos:exactMatch back to the source USGS concept for
+# traceability -- same "always cite the source" convention this project
+# already uses for band_info/raster_info/proj_info citations.
+
+pdssp:ProductTypeScheme a skos:ConceptScheme ;
+    dct:title "PDSSP Product Type"@en ;
+    dct:source <https://apps.usgs.gov/thesaurus/USGSThesaurus> ;
+    skos:definition "What kind of resource this is (the concrete thing being downloaded), e.g. a digital elevation model, an image mosaic, a point cloud."@en ;
+    skos:hasTopConcept
+        pdssp:ProductType-Image ,
+        pdssp:ProductType-DigitalElevationModel ,
+        pdssp:ProductType-PointCloud .
+
+pdssp:ProductType-Image a skos:Concept ;
+    skos:inScheme pdssp:ProductTypeScheme ;
+    skos:prefLabel "Image"@en ;
+    skos:definition "A single raster image (e.g. one EDR/RDR observation), not yet mosaicked, ortho-rectified or elevation-derived."@en ;
+    skos:exactMatch usgs:image%20collections ;
+    skos:narrower
+        pdssp:ProductType-ImageMosaic ,
+        pdssp:ProductType-OrthoImage ,
+        pdssp:ProductType-Anaglyph .
+
+pdssp:ProductType-OrthoImage a skos:Concept ;
+    skos:inScheme pdssp:ProductTypeScheme ;
+    skos:prefLabel "Orthoimage"@en ;
+    skos:altLabel "orthoimagery"@en ;
+    skos:definition "An image that has been geometrically corrected (ortho-rectified) so its scale is uniform, typically by projecting it onto a digital elevation model (see pdssp:ProductType-DigitalElevationModel, pdssp:Method-Photogrammetry). The USGS Thesaurus only carries \"orthoimagery\" as a synonym -- of \"image collections\" (product types facet) and separately of \"aerial photography\" (methods facet) -- not as its own concept; this PDSSP addition gives it one, narrower than plain Image."@en ;
+    skos:broader pdssp:ProductType-Image ;
+    skos:closeMatch usgs:image%20collections .
+
+pdssp:ProductType-ImageMosaic a skos:Concept ;
+    skos:inScheme pdssp:ProductTypeScheme ;
+    skos:prefLabel "Image mosaic"@en ;
+    skos:definition "Two or more images combined into one composite raster covering a larger area."@en ;
+    skos:broader pdssp:ProductType-Image ;
+    skos:exactMatch usgs:image%20mosaics .
+
+pdssp:ProductType-Anaglyph a skos:Concept ;
+    skos:inScheme pdssp:ProductTypeScheme ;
+    skos:prefLabel "Anaglyph"@en ;
+    skos:definition "A red-cyan stereo composite built from two observations of the same site from different look angles, intended for viewing with red-cyan 3D glasses. Not present in the USGS Thesaurus's \"product types\" facet at all -- a PDSSP addition."@en ;
+    skos:broader pdssp:ProductType-Image .
+
+pdssp:ProductType-DigitalElevationModel a skos:Concept ;
+    skos:inScheme pdssp:ProductTypeScheme ;
+    skos:prefLabel "Digital elevation model"@en ;
+    skos:altLabel "DEM"@en, "DTM"@en, "digital terrain model"@en ;
+    skos:definition "A raster of elevation values, typically produced by stereo photogrammetry from two or more overlapping observations (see pdssp:Method-Photogrammetry)."@en ;
+    skos:exactMatch usgs:digital%20elevation%20models .
+
+pdssp:ProductType-PointCloud a skos:Concept ;
+    skos:inScheme pdssp:ProductTypeScheme ;
+    skos:prefLabel "Point cloud"@en ;
+    skos:definition "An unstructured set of 3D points (e.g. a LiDAR return set or a dense stereo-matching point cloud), before being gridded into a digital elevation model. Not present in the USGS Thesaurus's \"product types\" facet at all -- a PDSSP addition."@en .
