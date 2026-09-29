@@ -1,0 +1,12 @@
+<h2 id="intro" class="list">Introduction <span class="backlink"> back to <a href="#toc">ToC</a></span></h2>
+<span class="markdown">
+<p>Planetary science data products (images, digital elevation models, spectra, etc.) are distributed today under a wide range of mission- and archive-specific vocabularies: PDS3 keywords, PDS4 labels, EPN-TAP2's <code>dataproduct_type</code>/<code>processing_level</code>, CODMAC's own data-level scale, and more. Two catalogues describing the same real product commonly disagree on what to call it, purely because each grew its own local vocabulary independently.</p>
+<p>The PDSSP Thesaurus gives the Planetary Data and Services System Platform (PDSSP) one shared, dereferenceable vocabulary for three orthogonal facets of a data product:</p>
+<ul>
+<li><strong>Product type</strong> (e.g. Image, Orthoimage, Digital elevation model, Point cloud, Anaglyph) -- what kind of object the product is;</li>
+<li><strong>Method</strong> (e.g. Panchromatic imaging, Multispectral imaging, Photogrammetry, Lidar, Radar imaging) -- how it was acquired or derived;</li>
+<li><strong>Processing level</strong> (Raw, Calibrated, Derived, Ancillary) -- how far it has been processed from raw telemetry, aligned with PDS4's own four-value scale.</li>
+</ul>
+<p>Each concept carries <code>skos:exactMatch</code>/<code>skos:closeMatch</code> links to the <a href="https://apps.usgs.gov/thesaurus/">USGS Thesaurus</a> where an equivalent concept already exists there, and each Processing Level concept additionally records the corresponding EPN-TAP2, CODMAC, ESA PSA, NASA PDS, PDS3 and PDS4 code, so a consumer speaking any one of those systems can cross-walk to PDSSP's own value.</p>
+<p>The thesaurus is consumed directly by PDSSP's own STAC catalogues: the <a href="https://pdssp.github.io/stacplanet/">stacplanet</a> STAC extension's <code>product:type</code> and <code>pdssp:method</code> fields, attached to every STAC Item and Collection PDSSP publishes, take their values from this vocabulary's <code>skos:prefLabel</code>s.</p>
+</span>

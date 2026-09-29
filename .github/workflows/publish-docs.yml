@@ -81,6 +81,18 @@ jobs:
             -webVowl \
             -rewriteAll
 
+      # Widoco always (re)writes its own placeholder prose for the
+      # hand-authored sections (Abstract/Introduction/References) it has
+      # no way to derive from the ontology's own triples -- `-rewriteAll`
+      # guarantees this every run, so the real text has to be copied in
+      # AFTER Widoco runs, not supplied as input. `widoco-sections/` holds
+      # this repo's own real English text; Overview/Description keep
+      # Widoco's own generated content (class/property/individual listing
+      # + the `[Ontology Name]` substitution Widoco fills in from this
+      # ontology's own `dct:title`, via `-getOntologyMetadata`).
+      - name: Fill in the hand-authored documentation sections
+        run: cp widoco-sections/*.html site/thesaurus/sections/
+
       # Widoco only generates index-en.html; GitHub Pages needs index.html
       # as the default document for a bare directory URL to resolve.
       - name: Add index.html to each site

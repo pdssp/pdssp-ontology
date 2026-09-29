@@ -56,5 +56,5 @@ def test_concept_scheme_counts(thesaurus: Graph):
     assert counts == {
         "https://pdssp.github.io/pdssp-ontology/vocab#ProductTypeScheme": 6,
         "https://pdssp.github.io/pdssp-ontology/vocab#MethodScheme": 13,
-        "https://pdssp.github.io/pdssp-ontology/vocab#ProcessingLevelScheme": 7,
+        "https://pdssp.github.io/pdssp-ontology/vocab#ProcessingLevelScheme": 4,
     }

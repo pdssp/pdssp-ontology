@@ -7,33 +7,30 @@
 
 # PDSSP Processing Level
 # =========================
-# How far a product has been processed from raw telemetry, aligned across
-# EPN-TAP2 (IVOA EPNCore v2.0 processing_level), CODMAC, ESA's Planetary
-# Science Archive (PSA), NASA PDS, PDS3, PDS4 and ObsTAP (IVOA ObsCore
-# calib_level). Crosswalk table supplied by the project owner (2026-09-29),
-# not independently re-verified against each standard's own spec text.
+# How far a product has been processed from raw telemetry -- PDSSP follows
+# PDS4's own recommendation (2026-09-29 decision), which only distinguishes
+# Raw/Calibrated/Derived/Ancillary (matching `stacplanet`'s own real
+# `processing:level` enum exactly). The finer CODMAC/EPN-TAP2 distinctions
+# (Edited, Partially calibrated, Resampled) are deliberately NOT modeled
+# here at all -- PDSSP never assigns them, so they do not exist as PDSSP
+# concepts, not even as unused reference entries.
 #
-# Known quirk, kept rather than "fixed": EPN-TAP2 gives BOTH "Resampled"
-# and "Derived" the same numeric value (5) -- there is no distinct EPN-TAP2
-# level 4. Modeled as two separate PDSSP concepts anyway (matching
-# CODMAC's own 4-vs-5 distinction, and PDS3's own REFDR-vs-DDR distinction)
-# rather than merged into one, so a mission that actually distinguishes
-# them (e.g. PDS3's REFDR "mosaic/composite" vs DDR "derived data") doesn't
-# lose that distinction just because EPN-TAP2's own scale can't represent
-# it.
+# Each of the 4 concepts below still carries the real cross-system code
+# (EPN-TAP2 / CODMAC / ESA's Planetary Science Archive / NASA PDS / PDS3 /
+# PDS4 / ObsTAP) for the crosswalk row PDS4's own label actually
+# corresponds to (crosswalk table supplied by the project owner,
+# 2026-09-29, not independently re-verified against each standard's own
+# spec text) -- see each concept's own comment for the two real quirks
+# this surfaces:
 #
-# PDSSP usage note (2026-09-29 decision): PDSSP follows PDS4's own
-# recommendation, which only distinguishes Raw/Partially calibrated/
-# Calibrated/Derived -- so collections are only ever assigned
-# pdssp:ProcessingLevel-Raw/-Calibrated/-Derived (matching each mission's
-# own existing `processing:level` STAC property value one-to-one, e.g. a
-# collection whose processing:level is "Raw" gets
-# pdssp:ProcessingLevel-Raw in `themes`, never -Edited even where the
-# finer CODMAC/EPN-TAP crosswalk below would say EDR-level data is really
-# "Edited" rather than pipeline-Raw/telemetry-Raw). -Edited/
-# -PartiallyCalibrated/-Resampled/-Ancillary stay defined below, as the
-# complete crosswalk reference, for a future consumer that needs the finer
-# distinction -- just not assigned by this project today.
+# - PDS4 calls "Raw" what CODMAC/EPN-TAP2 call "Edited" (EDR-level: already
+#   decommutated, not truly unprocessed telemetry -- PDS4's own "Telemetry"
+#   level, CODMAC's real "1 (raw)", is something PDSSP never handles at
+#   all).
+# - PDS4 gives BOTH "Resampled" (REFDR, CODMAC "4") and "Derived" (DDR,
+#   CODMAC "5") the same label, "Derived" -- so PDSSP's own
+#   pdssp:ProcessingLevel-Derived covers both; a mission that genuinely
+#   needs to keep them apart would need a finer scheme than PDSSP's own.
 
 #################################################################
 # Cross-system processing-level properties.
@@ -49,7 +46,7 @@
 
 pdssp:epntapLevel a rdf:Property ;
     rdfs:label "EPN-TAP2 processing_level"@en ;
-    rdfs:comment "The EPNCore v2.0 (EPN-TAP) processing_level value, per the IVOA EPN-TAP recommendation. A string, not an integer: at least one concept below (Partially calibrated) only has the ambiguous value \"2?\", and EPN-TAP2's own scale reuses \"5\" for two distinct PDSSP concepts (see this file's own header comment)."@en ;
+    rdfs:comment "The EPNCore v2.0 (EPN-TAP) processing_level value, per the IVOA EPN-TAP recommendation. A string, not an integer: EPN-TAP2's own scale reuses \"5\" for both Resampled and Derived (see this file's own header comment)."@en ;
     rdfs:range xsd:string .
 
 pdssp:codmacLevel a rdf:Property ;
@@ -82,27 +79,14 @@ pdssp:obstapLevel a rdf:Property ;
 
 pdssp:ProcessingLevelScheme a skos:ConceptScheme ;
     dct:title "PDSSP Processing Level"@en ;
-    skos:definition "How far a product has been processed from raw telemetry, aligned across EPN-TAP2, CODMAC, PSA, NASA PDS, PDS3, PDS4 and ObsTAP."@en ;
+    skos:definition "How far a product has been processed from raw telemetry -- PDSSP's own 4-value scale (Raw/Calibrated/Derived/Ancillary), matching PDS4's/stacplanet's own processing:level enum exactly."@en ;
     skos:hasTopConcept pdssp:ProcessingLevel-Raw .
 
 pdssp:ProcessingLevel-Raw a skos:Concept ;
     skos:inScheme pdssp:ProcessingLevelScheme ;
     skos:prefLabel "Raw"@en ;
-    skos:altLabel "Unprocessed Data Record"@en, "UDR"@en ;
-    skos:definition "Unprocessed Data Record: low-level encoding, e.g. telemetry from a spacecraft instrument. Normally available only to the original team."@en ;
-    pdssp:epntapLevel "1" ;
-    pdssp:codmacLevel "1 (raw)" ;
-    pdssp:psaLevel "0?" ;
-    pdssp:pds3Code "UDR" ;
-    pdssp:pds4Code "Telemetry" ;
-    pdssp:obstapLevel "0" ;
-    skos:narrower pdssp:ProcessingLevel-Edited .
-
-pdssp:ProcessingLevel-Edited a skos:Concept ;
-    skos:inScheme pdssp:ProcessingLevelScheme ;
-    skos:prefLabel "Edited"@en ;
     skos:altLabel "Experiment Data Record"@en, "EDR"@en ;
-    skos:definition "Experiment Data Record (often referred to as \"raw data\"): decommutated, but still affected by instrumental effects."@en ;
+    skos:definition "PDS4's own \"Raw\" label. Experiment Data Record: decommutated, but still affected by instrumental effects. Note: this is CODMAC/EPN-TAP2's \"Edited\" level (EPN-TAP2 processing_level 2), not their own \"Raw\"/telemetry level (processing_level 1) -- PDSSP never handles true unprocessed telemetry at all."@en ;
     pdssp:epntapLevel "2" ;
     pdssp:codmacLevel "2 (edited)" ;
     pdssp:psaLevel "1" ;
@@ -110,18 +94,7 @@ pdssp:ProcessingLevel-Edited a skos:Concept ;
     pdssp:pds3Code "EDR" ;
     pdssp:pds4Code "Raw" ;
     pdssp:obstapLevel "1" ;
-    skos:broader pdssp:ProcessingLevel-Raw ;
-    skos:narrower
-        pdssp:ProcessingLevel-PartiallyCalibrated ,
-        pdssp:ProcessingLevel-Calibrated .
-
-pdssp:ProcessingLevel-PartiallyCalibrated a skos:Concept ;
-    skos:inScheme pdssp:ProcessingLevelScheme ;
-    skos:prefLabel "Partially calibrated"@en ;
-    skos:definition "Processed beyond the raw stage, but not yet reached calibrated status. A PDS4-specific intermediate level -- no EPN-TAP2/CODMAC/PSA/NASA/PDS3/ObsTAP equivalent is defined for it."@en ;
-    pdssp:epntapLevel "2?" ;
-    pdssp:pds4Code "Partially calibrated" ;
-    skos:broader pdssp:ProcessingLevel-Edited .
+    skos:narrower pdssp:ProcessingLevel-Calibrated .
 
 pdssp:ProcessingLevel-Calibrated a skos:Concept ;
     skos:inScheme pdssp:ProcessingLevelScheme ;
@@ -135,29 +108,14 @@ pdssp:ProcessingLevel-Calibrated a skos:Concept ;
     pdssp:pds3Code "RDR" ;
     pdssp:pds4Code "Calibrated" ;
     pdssp:obstapLevel "2" ;
-    skos:broader pdssp:ProcessingLevel-Edited ;
-    skos:narrower
-        pdssp:ProcessingLevel-Resampled ,
-        pdssp:ProcessingLevel-Derived .
-
-pdssp:ProcessingLevel-Resampled a skos:Concept ;
-    skos:inScheme pdssp:ProcessingLevelScheme ;
-    skos:prefLabel "Resampled"@en ;
-    skos:altLabel "Reformatted Data Record"@en, "REFDR"@en ;
-    skos:definition "Reformatted Data Record: mosaics or composites of several observing sessions, involving some level of data fusion. Note: EPN-TAP2 gives this concept the SAME numeric value (5) as \"Derived\" below -- see this file's own header comment."@en ;
-    pdssp:epntapLevel "5" ;
-    pdssp:codmacLevel "4 (resampled)" ;
-    pdssp:nasaLevel "1B" ;
-    pdssp:pds3Code "REFDR" ;
-    pdssp:pds4Code "Derived" ;
-    pdssp:obstapLevel "3" ;
-    skos:broader pdssp:ProcessingLevel-Calibrated .
+    skos:broader pdssp:ProcessingLevel-Raw ;
+    skos:narrower pdssp:ProcessingLevel-Derived .
 
 pdssp:ProcessingLevel-Derived a skos:Concept ;
     skos:inScheme pdssp:ProcessingLevelScheme ;
     skos:prefLabel "Derived"@en ;
     skos:altLabel "Derived Data Record"@en, "DDR"@en ;
-    skos:definition "Derived Data Record: result of data analysis, directly usable by other communities with no further processing (e.g. a digital elevation model)."@en ;
+    skos:definition "Derived Data Record: result of data analysis, directly usable by other communities with no further processing (e.g. a digital elevation model). PDS4 gives this SAME label to CODMAC's own \"Resampled\"/REFDR level (mosaics or composites of several observing sessions) -- PDSSP does not distinguish the two; both are this one concept."@en ;
     pdssp:epntapLevel "5" ;
     pdssp:codmacLevel "5 (derived)" ;
     pdssp:psaLevel "3" ;
