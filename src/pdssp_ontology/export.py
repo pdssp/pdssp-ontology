@@ -249,6 +249,14 @@ def build(out: Path) -> None:
     for tsv in (vocab.MAPPINGS_DIR / "stac-epn-tap").glob("*.sssom.tsv"):
         shutil.copy(tsv, mdir / tsv.name)
     (out / "enums.json").write_text(json.dumps(enums(), indent=1), encoding="utf-8")
+    # The four build-time artefacts (see generate.py).
+    from . import generate
+    (out / "enums.schema.json").write_text(json.dumps(generate.enums_schema(), indent=2, ensure_ascii=False))
+    (out / "context.jsonld").write_text(json.dumps(generate.jsonld_context(), indent=2, ensure_ascii=False))
+    (out / "stac-epntap-rules.json").write_text(json.dumps(generate.conversion_rules(), indent=2, ensure_ascii=False))
+    (out / "search").mkdir(exist_ok=True)
+    (out / "search" / "facets.json").write_text(json.dumps(generate.search_config(), indent=2, ensure_ascii=False))
+    (out / "search" / "synonyms.txt").write_text(generate.synonyms_txt(), encoding="utf-8")
     # Whole-vocabulary downloads, the targets of content negotiation (w3id/.htaccess).
     for name, graph_ in (("thesaurus", graph), ("stac", vocab.stac_fields()), ("epn-tap", vocab.epn_columns())):
         graph_.serialize(out / f"{name}.ttl", format="turtle")

@@ -102,3 +102,23 @@ the thesaurus:
                 "title": "Orthoimage"}]
 }]
 ```
+
+## 7. Generated artefacts and who uses them
+
+`uv run python -m pdssp_ontology.export --out site` writes them; CI publishes
+them on GitHub Pages. Never edit them by hand: change the source, rebuild.
+
+| Artefact | Built from | Used by | How |
+|---|---|---|---|
+| `enums.schema.json` | thesaurus | stacplanet profile | In the stacplanet repo CI: `python -m pdssp_ontology.generate sync-profile v1.0.0/schema.json`, then commit. (A remote `$ref` would also work, but not every validator fetches remote refs.) |
+| `context.jsonld` | STAC fields + thesaurus | knowledge base, LLM assistant, Fuseki | Add `"@context": ".../context.jsonld"` to an Item copy and load it as JSON-LD: `product:type: "Orthoimage"` becomes the concept IRI `vocab#ProductType-OrthoImage`. STAC JSON itself is unchanged. |
+| `stac-epntap-rules.json` | STAC/EPN vocabularies + SSSOM | any EPN-TAP exporter (Python or not) | One rule per column (JSON path, transform, default) + value tables (product type → `im`/`ma`/…, processing level → 2/3/5/6). `convert.py` is the reference implementation. |
+| `search/facets.json` | thesaurus (labels, altLabels, hierarchy) | portal, STAC API search layer, LLM assistant | `normalise`: user input → indexed label (`"dtm"` → `"Digital elevation model"`). `expand`: a value + everything narrower (`Image` → Image, Orthoimage, Image mosaic, Anaglyph), sent as a `terms`/`in` filter. `tree`: the facet menu. |
+| `search/synonyms.txt` | thesaurus altLabels | OpenSearch free-text fields | `synonym_graph` filter on title/description analyzers. Controlled fields (`product:type`, keyword type) use `facets.json` expansion at query time instead. Ambiguous altLabels are skipped and listed. |
+
+Why SSSOM is needed: the vocabularies define the terms on each side; the
+thesaurus defines values; only the mapping set says which STAC field becomes
+which EPN-TAP column, with which transform, and which product type becomes
+which EPN code. Without it these correspondences end up in code (invisible,
+untested) or inside a vocabulary (mixing a stable model with a
+fast-changing mapping, which this repo's design forbids).
