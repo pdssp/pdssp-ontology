@@ -1,0 +1,1 @@
+{"note": "Structural copy of https://pdssp.github.io/stacplanet/v1.0.0/schema.json (descriptions dropped). Refresh with: curl -s https://pdssp.github.io/stacplanet/v1.0.0/schema.json > tests/data/stacplanet-1.0.0-schema.json"}

@@ -1,0 +1,32 @@
+# Proposal for https://github.com/perma-id/w3id.org -> directory pdssp/
+# Gives PDSSP permanent IRIs (https://w3id.org/pdssp/...) independent of
+# GitHub Pages, with content negotiation that GitHub Pages cannot do:
+# RDF clients get Turtle/JSON-LD, browsers get the HTML page.
+#
+# Once registered, change the namespaces in vocab/ and mappings/ from
+#   https://pdssp.github.io/pdssp-ontology/...
+# to
+#   https://w3id.org/pdssp/...
+# in one commit, BEFORE the first release (the thesaurus is still
+# "unreleased", so no IRI has been promised yet).
+
+Options +FollowSymLinks
+RewriteEngine on
+
+# Thesaurus (hash namespace https://w3id.org/pdssp/vocab#...)
+RewriteCond %{HTTP_ACCEPT} text/turtle
+RewriteRule ^vocab$ https://pdssp.github.io/pdssp-ontology/thesaurus.ttl [R=303,L]
+RewriteCond %{HTTP_ACCEPT} application/ld\+json
+RewriteRule ^vocab$ https://pdssp.github.io/pdssp-ontology/thesaurus.jsonld [R=303,L]
+RewriteCond %{HTTP_ACCEPT} application/x-desise\+json
+RewriteRule ^vocab/(.+)$ https://pdssp.github.io/pdssp-ontology/vocab/$1.desise.json [R=303,L]
+RewriteRule ^vocab$ https://pdssp.github.io/pdssp-ontology/vocab/ [R=303,L]
+
+# Field / column vocabularies and mappings
+RewriteCond %{HTTP_ACCEPT} text/turtle
+RewriteRule ^(stac|epn-tap)$ https://pdssp.github.io/pdssp-ontology/$1.ttl [R=303,L]
+RewriteRule ^(stac|epn-tap)$ https://pdssp.github.io/pdssp-ontology/$1/ [R=303,L]
+RewriteRule ^mappings/(.*)$ https://pdssp.github.io/pdssp-ontology/mappings/$1 [R=303,L]
+
+# Everything else: the catalogue page
+RewriteRule ^$ https://pdssp.github.io/pdssp-ontology/ [R=303,L]

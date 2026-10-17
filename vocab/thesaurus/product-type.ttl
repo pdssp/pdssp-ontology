@@ -37,7 +37,9 @@ pdssp:ProductType-Image a skos:Concept ;
     skos:inScheme pdssp:ProductTypeScheme ;
     skos:prefLabel "Image"@en ;
     skos:definition "A single raster image (e.g. one EDR/RDR observation), not yet mosaicked, ortho-rectified or elevation-derived."@en ;
-    skos:exactMatch usgs:image%20collections ;
+    # relatedMatch, not exactMatch: USGS "image collections" is a dataset
+    # type (a collection OF images), not a single raster.
+    skos:relatedMatch usgs:image%20collections ;
     skos:narrower
         pdssp:ProductType-ImageMosaic ,
         pdssp:ProductType-OrthoImage ,
@@ -49,7 +51,7 @@ pdssp:ProductType-OrthoImage a skos:Concept ;
     skos:altLabel "orthoimagery"@en ;
     skos:definition "An image that has been geometrically corrected (ortho-rectified) so its scale is uniform, typically by projecting it onto a digital elevation model (see pdssp:ProductType-DigitalElevationModel, pdssp:Method-Photogrammetry). The USGS Thesaurus only carries \"orthoimagery\" as a synonym -- of \"image collections\" (product types facet) and separately of \"aerial photography\" (methods facet) -- not as its own concept; this PDSSP addition gives it one, narrower than plain Image."@en ;
     skos:broader pdssp:ProductType-Image ;
-    skos:closeMatch usgs:image%20collections .
+    skos:relatedMatch usgs:image%20collections .
 
 pdssp:ProductType-ImageMosaic a skos:Concept ;
     skos:inScheme pdssp:ProductTypeScheme ;

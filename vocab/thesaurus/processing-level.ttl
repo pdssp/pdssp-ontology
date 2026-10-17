@@ -80,7 +80,11 @@ pdssp:obstapLevel a rdf:Property ;
 pdssp:ProcessingLevelScheme a skos:ConceptScheme ;
     dct:title "PDSSP Processing Level"@en ;
     skos:definition "How far a product has been processed from raw telemetry -- PDSSP's own 4-value scale (Raw/Calibrated/Derived/Ancillary), matching PDS4's/stacplanet's own processing:level enum exactly."@en ;
-    skos:hasTopConcept pdssp:ProcessingLevel-Raw .
+    skos:hasTopConcept
+        pdssp:ProcessingLevel-Raw ,
+        pdssp:ProcessingLevel-Calibrated ,
+        pdssp:ProcessingLevel-Derived ,
+        pdssp:ProcessingLevel-Ancillary .
 
 pdssp:ProcessingLevel-Raw a skos:Concept ;
     skos:inScheme pdssp:ProcessingLevelScheme ;
@@ -94,7 +98,7 @@ pdssp:ProcessingLevel-Raw a skos:Concept ;
     pdssp:pds3Code "EDR" ;
     pdssp:pds4Code "Raw" ;
     pdssp:obstapLevel "1" ;
-    skos:narrower pdssp:ProcessingLevel-Calibrated .
+    skos:topConceptOf pdssp:ProcessingLevelScheme .
 
 pdssp:ProcessingLevel-Calibrated a skos:Concept ;
     skos:inScheme pdssp:ProcessingLevelScheme ;
@@ -108,8 +112,7 @@ pdssp:ProcessingLevel-Calibrated a skos:Concept ;
     pdssp:pds3Code "RDR" ;
     pdssp:pds4Code "Calibrated" ;
     pdssp:obstapLevel "2" ;
-    skos:broader pdssp:ProcessingLevel-Raw ;
-    skos:narrower pdssp:ProcessingLevel-Derived .
+    skos:topConceptOf pdssp:ProcessingLevelScheme .
 
 pdssp:ProcessingLevel-Derived a skos:Concept ;
     skos:inScheme pdssp:ProcessingLevelScheme ;
@@ -123,8 +126,7 @@ pdssp:ProcessingLevel-Derived a skos:Concept ;
     pdssp:pds3Code "DDR" ;
     pdssp:pds4Code "Derived" ;
     pdssp:obstapLevel "4" ;
-    skos:broader pdssp:ProcessingLevel-Calibrated ;
-    skos:narrower pdssp:ProcessingLevel-Ancillary .
+    skos:topConceptOf pdssp:ProcessingLevelScheme .
 
 pdssp:ProcessingLevel-Ancillary a skos:Concept ;
     skos:inScheme pdssp:ProcessingLevelScheme ;
@@ -135,4 +137,22 @@ pdssp:ProcessingLevel-Ancillary a skos:Concept ;
     pdssp:codmacLevel "6 (ancillary)" ;
     pdssp:pds3Code "ANCDR" ;
     pdssp:pds4Code "Derived" ;
-    skos:broader pdssp:ProcessingLevel-Derived .
+    skos:topConceptOf pdssp:ProcessingLevelScheme .
+
+#################################################################
+# Order of the processing scale.
+#
+# skos:broader/narrower mean "more general / more specific concept"
+# ("Calibrated" is not a kind of "Raw"), so they must not encode the
+# processing sequence. SKOS's own construct for an ordered list is
+# skos:OrderedCollection. Ancillary is not a step on that scale (it is
+# a different kind of product), so it is not a member.
+#################################################################
+
+pdssp:ProcessingLevelSequence a skos:OrderedCollection ;
+    skos:prefLabel "PDSSP processing levels, least to most processed"@en ;
+    skos:memberList (
+        pdssp:ProcessingLevel-Raw
+        pdssp:ProcessingLevel-Calibrated
+        pdssp:ProcessingLevel-Derived
+    ) .

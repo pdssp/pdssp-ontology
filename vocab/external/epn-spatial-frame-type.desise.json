@@ -1,0 +1,60 @@
+{
+ "uri": "http://voparis-ns.obspm.fr/rdf/epn/2.0/spatial-frame-type",
+ "flavour": "SKOS",
+ "_snapshot": {
+  "version": "2024-05-07",
+  "source": "http://voparis-ns.obspm.fr/rdf/epn/2.0/spatial-frame-type/2024-05-07",
+  "note": "Committed snapshot so tests run offline. Refresh with: python -m pdssp_ontology.fetch_external (term list to confirm on refresh)"
+ },
+ "terms": {
+  "body": {
+   "label": "Body-fixed Frame",
+   "description": "Longitude c1 (planetocentric, east, 0-360) and latitude c2.",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "celestial": {
+   "label": "Celestial Frame",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "cartesian": {
+   "label": "Cartesian Frame",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "cylindrical": {
+   "label": "Cylindrical Frame",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "spherical": {
+   "label": "Spherical Frame",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "healpix": {
+   "label": "HEALPix",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "none": {
+   "label": "None",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  }
+ }
+}

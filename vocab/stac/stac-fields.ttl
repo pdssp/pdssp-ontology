@@ -1,0 +1,164 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix ssnext: <http://www.w3.org/ns/ssn/ext/> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix omsa: <https://pdssp.github.io/pdssp-ontology/oms-anchors#> .
+@prefix stacf: <https://pdssp.github.io/pdssp-ontology/stac#> .
+
+# PDSSP STAC field vocabulary
+# ===========================
+# One rdf:Property per STAC field the PDSSP profile (stacplanet) uses or
+# the STAC -> EPN-TAP conversion reads ("RDF property" flavour, as in
+# IVOA Vocabularies in the VO 2.0). It says WHAT a field means and WHERE
+# it lives in a STAC Item; it says nothing about EPN-TAP (that is the
+# mapping set's job, under mappings/).
+#
+# - rdfs:label        the field name exactly as written in STAC JSON
+# - pdssp:jsonPath    where the converter reads it in an Item; " | "
+#                     separates fallbacks, tried left to right
+# - pdssp:omsConcept  the OMS/SOSA concept the field carries -- used by
+#                     the CI consistency check (both sides of a mapping
+#                     row must carry the same concept)
+# - rdfs:isDefinedBy  the JSON Schema that defines the field
+
+<https://pdssp.github.io/pdssp-ontology/stac> a owl:Ontology ;
+    dct:title "PDSSP STAC field vocabulary"@en ;
+    dct:description "RDF properties for the STAC Item fields used by the PDSSP profile (stacplanet) and by the STAC to EPN-TAP conversion."@en ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "unreleased" .
+
+pdssp:jsonPath a rdf:Property ;
+    rdfs:label "JSON path"@en ;
+    rdfs:comment "Dotted path of the field in a STAC Item. ' | ' separates fallbacks. A segment like assets[role=data] selects the first asset having that role."@en .
+
+pdssp:omsConcept a rdf:Property ;
+    rdfs:label "OMS concept"@en ;
+    rdfs:comment "The Observations, Measurements and Samples (ISO 19156) concept a field or column carries, named with a SOSA/SSN IRI when one exists, else with an oms-anchors IRI."@en .
+
+# ---- OMS anchors with no SOSA/SSN term -------------------------------------
+omsa:observationType a rdf:Property ; rdfs:label "OMS observationType (soft typing)"@en .
+omsa:observationCollection a rdf:Property ; rdfs:label "OMS AbstractObservationCollection membership"@en .
+omsa:observationIdentifier a rdf:Property ; rdfs:label "OMS observation identifier"@en .
+omsa:featureOfInterestType a rdf:Property ; rdfs:label "Type of the ultimate feature of interest"@en .
+omsa:spatialReference a rdf:Property ; rdfs:label "Spatial reference system of the proximate feature"@en .
+omsa:observingGeometry a rdf:Property ; rdfs:label "Observing geometry parameter (OMS parameter)"@en .
+omsa:resultAccess a rdf:Property ; rdfs:label "Access to the OMS result"@en .
+omsa:recordLifecycle a rdf:Property ; rdfs:label "Metadata record life cycle date"@en .
+omsa:citation a rdf:Property ; rdfs:label "Citation of the result"@en .
+
+# ---- STAC core / common metadata -------------------------------------------
+stacf:id a rdf:Property ; rdfs:label "id" ;
+    rdfs:comment "Item identifier, unique within its collection."@en ;
+    pdssp:jsonPath "id" ; pdssp:omsConcept omsa:observationIdentifier ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
+
+stacf:collection a rdf:Property ; rdfs:label "collection" ;
+    pdssp:jsonPath "collection" ; pdssp:omsConcept omsa:observationCollection ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
+
+stacf:geometry a rdf:Property ; rdfs:label "geometry" ;
+    rdfs:comment "GeoJSON footprint: the proximate feature of interest (an OMS SpatialSample)."@en ;
+    pdssp:jsonPath "geometry" ; pdssp:omsConcept sosa:hasFeatureOfInterest ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
+
+stacf:bbox a rdf:Property ; rdfs:label "bbox" ;
+    pdssp:jsonPath "bbox" ; pdssp:omsConcept sosa:hasFeatureOfInterest ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
+
+stacf:start_datetime a rdf:Property ; rdfs:label "start_datetime" ;
+    pdssp:jsonPath "properties.start_datetime | properties.datetime" ; pdssp:omsConcept sosa:phenomenonTime ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/datetime.json> .
+
+stacf:end_datetime a rdf:Property ; rdfs:label "end_datetime" ;
+    pdssp:jsonPath "properties.end_datetime | properties.datetime" ; pdssp:omsConcept sosa:phenomenonTime ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/datetime.json> .
+
+stacf:platform a rdf:Property ; rdfs:label "platform" ;
+    pdssp:jsonPath "properties.platform" ; pdssp:omsConcept sosa:isHostedBy ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/instrument.json> .
+
+stacf:instruments a rdf:Property ; rdfs:label "instruments" ;
+    pdssp:jsonPath "properties.instruments" ; pdssp:omsConcept sosa:madeBySensor ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/instrument.json> .
+
+stacf:created a rdf:Property ; rdfs:label "created" ;
+    pdssp:jsonPath "properties.created" ; pdssp:omsConcept omsa:recordLifecycle ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/datetime.json> .
+
+stacf:updated a rdf:Property ; rdfs:label "updated" ;
+    pdssp:jsonPath "properties.updated | properties.created" ; pdssp:omsConcept omsa:recordLifecycle ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/datetime.json> .
+
+stacf:asset_data_href a rdf:Property ; rdfs:label "assets[role=data].href" ;
+    pdssp:jsonPath "assets[role=data].href" ; pdssp:omsConcept omsa:resultAccess ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
+
+stacf:asset_data_type a rdf:Property ; rdfs:label "assets[role=data].type" ;
+    pdssp:jsonPath "assets[role=data].type" ; pdssp:omsConcept omsa:resultAccess ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
+
+stacf:asset_thumbnail_href a rdf:Property ; rdfs:label "assets[role=thumbnail].href" ;
+    pdssp:jsonPath "assets[role=thumbnail].href" ; pdssp:omsConcept omsa:resultAccess ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
+
+# ---- ssys extension --------------------------------------------------------
+stacf:ssys_targets a rdf:Property ; rdfs:label "ssys:targets" ;
+    rdfs:comment "Solar system targets: the ultimate feature of interest."@en ;
+    pdssp:jsonPath "properties.ssys:targets" ; pdssp:omsConcept ssnext:hasUltimateFeatureOfInterest ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.1.1/schema.json> .
+
+stacf:ssys_target_class a rdf:Property ; rdfs:label "ssys:target_class" ;
+    pdssp:jsonPath "properties.ssys:target_class" ; pdssp:omsConcept omsa:featureOfInterestType ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.1.1/schema.json> .
+
+stacf:ssys_incidence_angle a rdf:Property ; rdfs:label "ssys:incidence_angle" ;
+    pdssp:jsonPath "properties.ssys:incidence_angle" ; pdssp:omsConcept omsa:observingGeometry ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.2.0/schema.json> .
+
+stacf:ssys_emission_angle a rdf:Property ; rdfs:label "ssys:emission_angle" ;
+    pdssp:jsonPath "properties.ssys:emission_angle" ; pdssp:omsConcept omsa:observingGeometry ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.2.0/schema.json> .
+
+stacf:ssys_phase_angle a rdf:Property ; rdfs:label "ssys:phase_angle" ;
+    pdssp:jsonPath "properties.ssys:phase_angle" ; pdssp:omsConcept omsa:observingGeometry ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.2.0/schema.json> .
+
+stacf:ssys_solar_longitude a rdf:Property ; rdfs:label "ssys:solar_longitude" ;
+    pdssp:jsonPath "properties.ssys:solar_longitude" ; pdssp:omsConcept omsa:observingGeometry ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.2.0/schema.json> .
+
+# ---- projection / product / processing / scientific ------------------------
+stacf:proj_wkt2 a rdf:Property ; rdfs:label "proj:wkt2" ;
+    pdssp:jsonPath "properties.proj:wkt2" ; pdssp:omsConcept omsa:spatialReference ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/projection/v2.0.0/schema.json> .
+
+stacf:product_type a rdf:Property ; rdfs:label "product:type" ;
+    rdfs:comment "Values from the PDSSP Product Type scheme (prefLabel)."@en ;
+    pdssp:jsonPath "properties.product:type" ; pdssp:omsConcept omsa:observationType ;
+    pdssp:valueScheme pdssp:ProductTypeScheme ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/product/v0.1.0/schema.json> .
+
+stacf:processing_level a rdf:Property ; rdfs:label "processing:level" ;
+    pdssp:jsonPath "properties.processing:level" ; pdssp:omsConcept sosa:usedProcedure ;
+    pdssp:valueScheme pdssp:ProcessingLevelScheme ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/processing/v1.2.0/schema.json> .
+
+stacf:pdssp_method a rdf:Property ; rdfs:label "pdssp:method" ;
+    pdssp:jsonPath "properties.pdssp:method" ; pdssp:omsConcept sosa:usedProcedure ;
+    pdssp:valueScheme pdssp:MethodScheme ;
+    rdfs:isDefinedBy <https://pdssp.github.io/stacplanet/v1.0.0/schema.json> .
+
+stacf:version a rdf:Property ; rdfs:label "version" ;
+    pdssp:jsonPath "properties.version" ; pdssp:omsConcept omsa:observationIdentifier ;
+    rdfs:isDefinedBy <https://pdssp.github.io/stacplanet/v1.0.0/schema.json> .
+
+stacf:sci_doi a rdf:Property ; rdfs:label "sci:doi" ;
+    pdssp:jsonPath "properties.sci:doi" ; pdssp:omsConcept omsa:citation ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/scientific/v1.0.0/schema.json> .
+
+pdssp:valueScheme a rdf:Property ;
+    rdfs:label "value scheme"@en ;
+    rdfs:comment "The SKOS concept scheme the field's values come from."@en .

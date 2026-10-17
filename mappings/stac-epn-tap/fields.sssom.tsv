@@ -1,0 +1,51 @@
+#curie_map:
+#  stacf: https://pdssp.github.io/pdssp-ontology/stac#
+#  epn: https://pdssp.github.io/pdssp-ontology/epn-tap#
+#  pdssp: https://pdssp.github.io/pdssp-ontology/vocab#
+#  epnpt: http://voparis-ns.obspm.fr/rdf/epn/2.0/product-type#
+#  skos: http://www.w3.org/2004/02/skos/core#
+#  semapv: https://w3id.org/semapv/vocab/
+#  sssom: https://w3id.org/sssom/
+#license: https://creativecommons.org/licenses/by/4.0/
+#creator_label:
+#  - Jean-Christophe Malapert (CNES)
+#mapping_set_id: https://pdssp.github.io/pdssp-ontology/mappings/stac-epn-tap/fields
+#mapping_set_version: 0.1.0
+#mapping_set_description: STAC (PDSSP profile) fields to EPN-TAP 2.0 columns. The 'other' column names the transform the converter applies.
+#subject_source: https://pdssp.github.io/pdssp-ontology/stac
+#object_source: https://pdssp.github.io/pdssp-ontology/epn-tap
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	other	comment
+stacf:id	id	skos:exactMatch	epn:granule_uid	granule_uid	semapv:ManualMappingCuration	transform=identity	
+stacf:id	id	skos:closeMatch	epn:obs_id	obs_id	semapv:ManualMappingCuration	transform=identity	One granule per observation today; revisit when several levels of one observation are catalogued.
+stacf:collection	collection	skos:exactMatch	epn:granule_gid	granule_gid	semapv:ManualMappingCuration	transform=identity	
+stacf:ssys_targets	ssys:targets	skos:exactMatch	epn:target_name	target_name	semapv:ManualMappingCuration	transform=join_hash	EPN-TAP multi-values are hash-separated.
+stacf:ssys_target_class	ssys:target_class	skos:exactMatch	epn:target_class	target_class	semapv:ManualMappingCuration	transform=epn_term:target-class	ssys values are EPN target-class term ids; checked against the PADC vocabulary.
+stacf:start_datetime	start_datetime	skos:exactMatch	epn:time_min	time_min	semapv:ManualMappingCuration	transform=iso_to_jd	
+stacf:end_datetime	end_datetime	skos:exactMatch	epn:time_max	time_max	semapv:ManualMappingCuration	transform=iso_to_jd	
+stacf:bbox	bbox	skos:closeMatch	epn:c1min	c1min	semapv:ManualMappingCuration	transform=bbox_lon_min	Body frame: planetocentric east longitude in 0-360.
+stacf:bbox	bbox	skos:closeMatch	epn:c1max	c1max	semapv:ManualMappingCuration	transform=bbox_lon_max	
+stacf:bbox	bbox	skos:closeMatch	epn:c2min	c2min	semapv:ManualMappingCuration	transform=bbox_lat_min	
+stacf:bbox	bbox	skos:closeMatch	epn:c2max	c2max	semapv:ManualMappingCuration	transform=bbox_lat_max	
+stacf:geometry	geometry	skos:closeMatch	epn:s_region	s_region	semapv:ManualMappingCuration	transform=geojson_to_dali_polygon	DALI polygon, east longitudes; check with STILTS taplint.
+stacf:proj_wkt2	proj:wkt2	skos:closeMatch	epn:spatial_frame_type	spatial_frame_type	semapv:ManualMappingCuration	transform=const:body|default=none	A projected planetary footprint is body-fixed; no projection means no footprint.
+stacf:platform	platform	skos:exactMatch	epn:instrument_host_name	instrument_host_name	semapv:ManualMappingCuration	transform=identity	
+stacf:instruments	instruments	skos:exactMatch	epn:instrument_name	instrument_name	semapv:ManualMappingCuration	transform=join_hash	
+stacf:product_type	product:type	skos:closeMatch	epn:dataproduct_type	dataproduct_type	semapv:ManualMappingCuration	transform=value_map:product-type	Value mapping in product-type.sssom.tsv.
+stacf:processing_level	processing:level	skos:closeMatch	epn:processing_level	processing_level	semapv:ManualMappingCuration	transform=thesaurus_property:epntapLevel	PDSSP Raw is CODMAC Edited (2): close, not exact.
+stacf:ssys_incidence_angle	ssys:incidence_angle	skos:exactMatch	epn:incidence_min	incidence_min	semapv:ManualMappingCuration	transform=identity	
+stacf:ssys_incidence_angle	ssys:incidence_angle	skos:exactMatch	epn:incidence_max	incidence_max	semapv:ManualMappingCuration	transform=identity	
+stacf:ssys_emission_angle	ssys:emission_angle	skos:exactMatch	epn:emergence_min	emergence_min	semapv:ManualMappingCuration	transform=identity	
+stacf:ssys_emission_angle	ssys:emission_angle	skos:exactMatch	epn:emergence_max	emergence_max	semapv:ManualMappingCuration	transform=identity	
+stacf:ssys_phase_angle	ssys:phase_angle	skos:exactMatch	epn:phase_min	phase_min	semapv:ManualMappingCuration	transform=identity	
+stacf:ssys_phase_angle	ssys:phase_angle	skos:exactMatch	epn:phase_max	phase_max	semapv:ManualMappingCuration	transform=identity	
+stacf:ssys_solar_longitude	ssys:solar_longitude	skos:exactMatch	epn:solar_longitude_min	solar_longitude_min	semapv:ManualMappingCuration	transform=identity	
+stacf:ssys_solar_longitude	ssys:solar_longitude	skos:exactMatch	epn:solar_longitude_max	solar_longitude_max	semapv:ManualMappingCuration	transform=identity	
+stacf:created	created	skos:closeMatch	epn:creation_date	creation_date	semapv:ManualMappingCuration	transform=identity	STAC created is the metadata record date.
+stacf:updated	updated	skos:closeMatch	epn:modification_date	modification_date	semapv:ManualMappingCuration	transform=identity	
+stacf:created	created	skos:closeMatch	epn:release_date	release_date	semapv:ManualMappingCuration	transform=identity	No release date in STAC: public as soon as catalogued.
+stacf:asset_data_href	assets[role=data].href	skos:exactMatch	epn:access_url	access_url	semapv:ManualMappingCuration	transform=identity	
+stacf:asset_data_type	assets[role=data].type	skos:exactMatch	epn:access_format	access_format	semapv:ManualMappingCuration	transform=identity	
+stacf:asset_thumbnail_href	assets[role=thumbnail].href	skos:exactMatch	epn:thumbnail_url	thumbnail_url	semapv:ManualMappingCuration	transform=identity	
+stacf:sci_doi	sci:doi	skos:closeMatch	epn:bib_reference	bib_reference	semapv:ManualMappingCuration	transform=identity	
+stacf:pdssp_method	pdssp:method	skos:exactMatch	sssom:NoTermFound		semapv:ManualMappingCuration		No EPNcore column for the acquisition technique: lost on export.
+stacf:version	version	skos:exactMatch	sssom:NoTermFound		semapv:ManualMappingCuration		No EPNcore column for the product version: lost on export.

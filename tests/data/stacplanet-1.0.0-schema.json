@@ -1,0 +1,359 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pdssp.github.io/stacplanet/v1.0.0/schema.json",
+  "title": "PDSSP Planetary Data Schema for STACPlanet Items and Collections",
+  "description": "Profile defining PDSSP-specific constraints for planetary data products. Applies to both STAC Items and Collections. Required extensions on an Item depend on whether the product is located: a null geometry relaxes the projection requirement.",
+  "type": "object",
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "const": "Feature"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/item"
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "const": "Collection"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/collection"
+      }
+    }
+  ],
+  "definitions": {
+    "item": {
+      "type": "object",
+      "required": [
+        "stac_extensions",
+        "properties",
+        "geometry"
+      ],
+      "properties": {
+        "stac_extensions": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "type": "string",
+                "pattern": "stac-extensions\\.github\\.io/ssys/"
+              }
+            },
+            {
+              "contains": {
+                "type": "string",
+                "pattern": "stac-extensions\\.github\\.io/product/"
+              }
+            },
+            {
+              "contains": {
+                "type": "string",
+                "pattern": "stac-extensions\\.github\\.io/processing/"
+              }
+            }
+          ]
+        },
+        "properties": {
+          "type": "object",
+          "required": [
+            "ssys:targets",
+            "ssys:target_class",
+            "version",
+            "product:type",
+            "processing:level"
+          ],
+          "properties": {
+            "ssys:targets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "ssys:target_class": {
+              "type": "string",
+              "enum": [
+                "asteroid",
+                "dwarf_planet",
+                "planet",
+                "satellite",
+                "comet",
+                "exoplanet",
+                "interplanetary_medium",
+                "sample",
+                "sky",
+                "spacecraft",
+                "spacejunk",
+                "star",
+                "calibration"
+              ]
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "product:type": {
+              "type": "string",
+              "enum": [
+                "Image",
+                "Image mosaic",
+                "Orthoimage",
+                "Anaglyph",
+                "Digital elevation model",
+                "Point cloud"
+              ]
+            },
+            "processing:level": {
+              "type": "string",
+              "enum": [
+                "Ancillary",
+                "Raw",
+                "Calibrated",
+                "Derived"
+              ]
+            },
+            "pdssp:method": {
+              "type": "string",
+              "enum": [
+                "Panchromatic imaging",
+                "Multispectral imaging",
+                "Hyperspectral imaging",
+                "Visible light imaging",
+                "Infrared imaging",
+                "Thermal imaging",
+                "Radar imaging",
+                "Microwave imaging",
+                "Lidar",
+                "Aerial photography",
+                "Photogrammetry",
+                "Stereoscopic imaging",
+                "Remote sensing"
+              ]
+            }
+          }
+        },
+        "geometry": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "geometry"
+            ],
+            "properties": {
+              "geometry": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "stac_extensions": {
+                "allOf": [
+                  {
+                    "contains": {
+                      "type": "string",
+                      "pattern": "stac-extensions\\.github\\.io/projection/"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "stac_extensions"
+            ],
+            "properties": {
+              "stac_extensions": {
+                "contains": {
+                  "type": "string",
+                  "pattern": "stac-extensions\\.github\\.io/projection/"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "properties": {
+                "required": [
+                  "proj:wkt2"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "collection": {
+      "type": "object",
+      "required": [
+        "stac_extensions",
+        "license",
+        "ssys:targets",
+        "ssys:target_class"
+      ],
+      "properties": {
+        "stac_extensions": {
+          "type": "array",
+          "allOf": [
+            {
+              "contains": {
+                "type": "string",
+                "pattern": "stac-extensions\\.github\\.io/ssys/"
+              }
+            },
+            {
+              "contains": {
+                "type": "string",
+                "pattern": "stac-extensions\\.github\\.io/processing/"
+              }
+            },
+            {
+              "contains": {
+                "type": "string",
+                "pattern": "stac-extensions\\.github\\.io/product/"
+              }
+            }
+          ]
+        },
+        "license": {
+          "type": "string"
+        },
+        "ssys:targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "ssys:target_class": {
+          "type": "string",
+          "enum": [
+            "asteroid",
+            "dwarf_planet",
+            "planet",
+            "satellite",
+            "comet",
+            "exoplanet",
+            "interplanetary_medium",
+            "sample",
+            "sky",
+            "spacecraft",
+            "spacejunk",
+            "star",
+            "calibration"
+          ]
+        },
+        "summaries": {
+          "type": "object",
+          "required": [
+            "product:type",
+            "processing:level"
+          ],
+          "properties": {
+            "product:type": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "Image",
+                  "Image mosaic",
+                  "Orthoimage",
+                  "Anaglyph",
+                  "Digital elevation model",
+                  "Point cloud"
+                ]
+              },
+              "minItems": 1
+            },
+            "processing:level": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "Ancillary",
+                  "Raw",
+                  "Calibrated",
+                  "Derived"
+                ]
+              },
+              "minItems": 1
+            },
+            "pdssp:method": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "Panchromatic imaging",
+                  "Multispectral imaging",
+                  "Hyperspectral imaging",
+                  "Visible light imaging",
+                  "Infrared imaging",
+                  "Thermal imaging",
+                  "Radar imaging",
+                  "Microwave imaging",
+                  "Lidar",
+                  "Aerial photography",
+                  "Photogrammetry",
+                  "Stereoscopic imaging",
+                  "Remote sensing"
+                ]
+              },
+              "minItems": 1
+            }
+          }
+        },
+        "proj:wkt2": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "stac_extensions"
+            ],
+            "properties": {
+              "stac_extensions": {
+                "contains": {
+                  "type": "string",
+                  "pattern": "stac-extensions\\.github\\.io/projection/"
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "proj:wkt2"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

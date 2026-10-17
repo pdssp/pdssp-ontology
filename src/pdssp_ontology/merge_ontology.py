@@ -63,17 +63,39 @@ def build_thesaurus_graph(base: str) -> Graph:
     return graph
 
 
+def build_vocab_graph(base: str, name: str) -> Graph:
+    """``vocab/<name>/*.ttl`` -> named graph ``{base}/<name>``."""
+    graph = Graph(identifier=URIRef(f"{base}/{name}"))
+    for path in sorted((REPO_ROOT / "vocab" / name).glob("*.ttl")):
+        graph.parse(path, format="turtle")
+    return graph
+
+
+def build_mapping_graph(base: str) -> Graph:
+    """``mappings/stac-epn-tap/*.sssom.tsv`` -> named graph
+    ``{base}/mappings/stac-epn-tap`` (direct match triples + one
+    sssom:Mapping node per row, see vocab.mapping_set_to_graph)."""
+    from .vocab import mapping_set, mapping_set_to_graph
+
+    graph = Graph(identifier=URIRef(f"{base}/mappings/stac-epn-tap"))
+    for name in ("fields", "product-type"):
+        for triple in mapping_set_to_graph(mapping_set(name), str(graph.identifier)):
+            graph.add(triple)
+    return graph
+
+
 def build_dataset(base: str = DEFAULT_BASE) -> Dataset:
     """Return the named-graph :class:`~rdflib.Dataset` -- one graph per
-    data model this package currently publishes (just the thesaurus for
-    now; see this module's own docstring for how a second graph is
-    added).
+    data model (thesaurus, STAC fields, EPN-TAP columns) plus one graph for
+    the STAC <-> EPN-TAP mapping, kept separate as the README explains.
     """
     dataset = Dataset()
-    thesaurus = build_thesaurus_graph(base)
-    target = dataset.graph(thesaurus.identifier)
-    for triple in thesaurus:
-        target.add(triple)
+    graphs = [build_thesaurus_graph(base), build_vocab_graph(base, "stac"),
+              build_vocab_graph(base, "epn-tap"), build_mapping_graph(base)]
+    for source in graphs:
+        target = dataset.graph(source.identifier)
+        for triple in source:
+            target.add(triple)
     return dataset
 
 

@@ -1,0 +1,23 @@
+#curie_map:
+#  stacf: https://pdssp.github.io/pdssp-ontology/stac#
+#  epn: https://pdssp.github.io/pdssp-ontology/epn-tap#
+#  pdssp: https://pdssp.github.io/pdssp-ontology/vocab#
+#  epnpt: http://voparis-ns.obspm.fr/rdf/epn/2.0/product-type#
+#  skos: http://www.w3.org/2004/02/skos/core#
+#  semapv: https://w3id.org/semapv/vocab/
+#  sssom: https://w3id.org/sssom/
+#license: https://creativecommons.org/licenses/by/4.0/
+#creator_label:
+#  - Jean-Christophe Malapert (CNES)
+#mapping_set_id: https://pdssp.github.io/pdssp-ontology/mappings/stac-epn-tap/product-type
+#mapping_set_version: 0.1.0
+#mapping_set_description: PDSSP Product Type concepts to EPN-TAP dataproduct_type terms (PADC vocabulary).
+#subject_source: https://pdssp.github.io/pdssp-ontology/vocab#ProductTypeScheme
+#object_source: http://voparis-ns.obspm.fr/rdf/epn/2.0/product-type
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	other	comment
+pdssp:ProductType-Image	Image	skos:closeMatch	epnpt:im	Image	semapv:ManualMappingCuration		
+pdssp:ProductType-ImageMosaic	Image mosaic	skos:closeMatch	epnpt:ma	Map	semapv:ManualMappingCuration		Projected mosaics covering a large area.
+pdssp:ProductType-OrthoImage	Orthoimage	skos:closeMatch	epnpt:ma	Map	semapv:ManualMappingCuration		EPN 'ma' is meant for orthorectified basemaps.
+pdssp:ProductType-Anaglyph	Anaglyph	skos:broadMatch	epnpt:im	Image	semapv:ManualMappingCuration		EPN 'im' includes multi-plane colour images: broader.
+pdssp:ProductType-DigitalElevationModel	Digital elevation model	skos:closeMatch	epnpt:ma	Map	semapv:ManualMappingCuration		Scalar field (elevation) on two spatial axes, projected on the body.
+pdssp:ProductType-PointCloud	Point cloud	skos:closeMatch	epnpt:vo	Volume	semapv:ManualMappingCuration		To validate with PADC: 3D points of a surface, closest to 'vo'.

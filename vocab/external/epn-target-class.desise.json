@@ -1,0 +1,116 @@
+{
+ "uri": "http://voparis-ns.obspm.fr/rdf/epn/2.0/target-class",
+ "flavour": "SKOS",
+ "_snapshot": {
+  "version": "2024-11-04",
+  "source": "http://voparis-ns.obspm.fr/rdf/epn/2.0/target-class/2024-11-04",
+  "note": "Committed snapshot so tests run offline. Refresh with: python -m pdssp_ontology.fetch_external"
+ },
+ "terms": {
+  "asteroid": {
+   "label": "Asteroid",
+   "description": "Asteroid",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "calibration": {
+   "label": "Calibration",
+   "description": "Observations only related to instrument or signal calibration.",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "comet": {
+   "label": "Comet",
+   "description": "Comet",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "dwarf_planet": {
+   "label": "Dwarf Planet",
+   "description": "Dwarf Planet",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "exoplanet": {
+   "label": "Exoplanet",
+   "description": "Extra-solar Planet",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "interplanetary_medium": {
+   "label": "Interplanetary Medium",
+   "description": "Interplanetary dust observed in context (not samples).",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "interstellar-object": {
+   "label": "Interstellar Object",
+   "description": "Interstellar Object",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "planet": {
+   "label": "Planet",
+   "description": "Planet",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "rogue-planet": {
+   "label": "Rogue Planet",
+   "description": "Rogue Planet",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "sample": {
+   "label": "Sample",
+   "description": "Lunar or planetary samples, meteorites, terrestrial samples.",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "satellite": {
+   "label": "Satellite",
+   "description": "Natural satellites only.",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "sky": {
+   "label": "Sky",
+   "description": "Other celestial bodies, referred to by sky coordinates.",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "spacecraft": {
+   "label": "Spacecraft",
+   "description": "Spacecraft",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "spacejunk": {
+   "label": "Spacejunk",
+   "description": "Space junk, spacecraft debris",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "star": {
+   "label": "Star",
+   "description": "Star",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  }
+ }
+}

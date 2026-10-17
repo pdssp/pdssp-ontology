@@ -39,6 +39,21 @@ Each would become its own named graph here (`pdssp-stac`, `epn-tap`,
 correct -- see "Design" below for why they're kept structurally separate
 rather than merged into one graph.
 
+## What's new: STAC <-> EPN-TAP mapping chain
+
+See [`docs/model-management.md`](docs/model-management.md). In short:
+
+- `vocab/stac/` and `vocab/epn-tap/`: one RDF property per STAC field / EPN-TAP column,
+  each tied to an OMS/SOSA concept;
+- `mappings/stac-epn-tap/*.sssom.tsv`: field and value mappings (SSSOM), with the
+  transform named per row;
+- EPN-TAP value lists are **reused** from PADC (Observatoire de Paris), snapshots in
+  `vocab/external/`;
+- `python -m pdssp_ontology.convert item.json`: STAC Item -> EPN-TAP row, driven by the
+  mapping files;
+- `python -m pdssp_ontology.export --out site`: browsable pages where every IRI resolves,
+  desise/JSON-LD/Turtle downloads, the crosswalk with its loss report, `enums.json`.
+
 ## The PDSSP Thesaurus
 
 Three independent SKOS concept schemes under `vocab/thesaurus/`:
@@ -62,15 +77,11 @@ its own).
 
 `processing-level.ttl` is built from a cross-system correspondence table
 (EPN-TAP2 / CODMAC / ESA's Planetary Science Archive / NASA PDS / PDS3 /
-PDS4 / ObsTAP) supplied by the project owner (2026-09-29). PDSSP itself
-only ever assigns the PDS4-aligned top-level concepts
-(`ProcessingLevel-Raw`/`-Calibrated`/`-Derived`) to a collection --
-`-Edited`/`-PartiallyCalibrated`/`-Resampled`/`-Ancillary` stay defined as
-the complete crosswalk reference for a future consumer that needs the
-finer CODMAC/EPN-TAP distinction, not assigned by this project today (see
-that file's own header comment for the reasoning, including a known
-EPN-TAP2 quirk: it gives "Resampled" and "Derived" the same numeric value,
-5).
+PDS4 / ObsTAP) supplied by the project owner (2026-09-29). PDSSP only
+models the four PDS4-aligned levels (Raw, Calibrated, Derived, Ancillary);
+each carries its code in the other systems (`pdssp:epntapLevel`, ...). The
+levels form an ordered scale (`skos:OrderedCollection`
+`pdssp:ProcessingLevelSequence`), not a broader/narrower hierarchy.
 
 ## Design: one graph per data model, mapping kept separate
 

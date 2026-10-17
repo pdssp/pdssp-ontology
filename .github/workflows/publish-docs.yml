@@ -59,6 +59,17 @@ jobs:
       - name: Build the ontology (one Turtle file per named graph)
         run: uv run python -m pdssp_ontology.merge_ontology --base "$BASE"
 
+      # Fails the publication if the thesaurus, the mapping sets and the
+      # stacplanet profile disagree (see tests/).
+      - name: Check SKOS quality, mapping integrity and profile sync
+        run: uv run pytest
+
+      # Makes every IRI resolve: .../vocab#<Concept>, .../stac#<field>,
+      # .../epn-tap#<column>, plus desise/JSON-LD/Turtle downloads, the
+      # crosswalk page with its loss report, and enums.json for the profile.
+      - name: Generate vocabulary pages and exports
+        run: uv run python -m pdssp_ontology.export --out site
+
       - name: Set up Java (for Widoco)
         uses: actions/setup-java@v4
         with:
@@ -147,10 +158,15 @@ jobs:
           <div id="overview">
           <h2>Ontologies</h2>
           <dl>
-          <dt><a href="thesaurus/">PDSSP Thesaurus</a></dt>
+          <dt><a href="vocab/">PDSSP Thesaurus (browse concepts)</a></dt>
+          <dd>Every concept IRI resolves here; desise, JSON-LD and Turtle downloads per scheme.</dd>
+          <dt><a href="stac/">STAC field vocabulary</a> · <a href="epn-tap/">EPN-TAP column vocabulary</a></dt>
+          <dd>One IRI per STAC field and per EPNcore column.</dd>
+          <dt><a href="mappings/stac-epn-tap/">Crosswalk STAC → EPN-TAP</a></dt>
+          <dd>SSSOM mapping sets, transforms and loss report.</dd>
+          <dt><a href="thesaurus/">PDSSP Thesaurus (Widoco documentation)</a></dt>
           <dd>Product type, acquisition/processing method, and processing level -- reusing the USGS Thesaurus's own vocabulary where it fits, extending it where it doesn't (e.g. anaglyph, point cloud, photogrammetry, stereoscopic imaging).</dd>
           </dl>
-          <p><em>More graphs (a PDSSP/STAC profile, an EPN-TAP vocabulary, and the mapping between them) are planned but not yet published here -- an earlier attempt at all three had known inconsistencies not yet resolved.</em></p>
           </div>
           </div>
           </body>

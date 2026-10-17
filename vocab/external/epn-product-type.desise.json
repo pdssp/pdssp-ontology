@@ -1,0 +1,109 @@
+{
+ "uri": "http://voparis-ns.obspm.fr/rdf/epn/2.0/product-type",
+ "flavour": "SKOS",
+ "_snapshot": {
+  "version": "2024-03-28",
+  "source": "http://voparis-ns.obspm.fr/rdf/epn/2.0/product-type/2024-03-28",
+  "note": "Committed snapshot so tests run offline. Refresh with: python -m pdssp_ontology.fetch_external"
+ },
+ "terms": {
+  "ca": {
+   "label": "Catalogue",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "ci": {
+   "label": "Catalogue Item",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "cu": {
+   "label": "Cube",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "ds": {
+   "label": "Dynamic Spectrum",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "ev": {
+   "label": "Event",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "im": {
+   "label": "Image",
+   "description": "Scalar field with two spatial axes, or association of several such fields.",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "ma": {
+   "label": "Map",
+   "description": "Rasters with two spatial axes covering a large area, projected on the sky or a planetary body; mostly calibrated, orthorectified basemaps.",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "mo": {
+   "label": "Movie",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "pr": {
+   "label": "Profile",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "sc": {
+   "label": "Spectral Cube",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "sp": {
+   "label": "Spectrum",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "sv": {
+   "label": "Spatial Vector",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "ts": {
+   "label": "Time Series",
+   "description": "",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  },
+  "vo": {
+   "label": "Volume",
+   "description": "Measurements with 3 spatial dimensions, including shells/shape models (3D surfaces).",
+   "preliminary": "",
+   "wider": [],
+   "narrower": []
+  }
+ }
+}

@@ -1,0 +1,433 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix ssnext: <http://www.w3.org/ns/ssn/ext/> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix omsa: <https://pdssp.github.io/pdssp-ontology/oms-anchors#> .
+@prefix epn: <https://pdssp.github.io/pdssp-ontology/epn-tap#> .
+
+# EPN-TAP 2.0 column vocabulary ("RDF property" flavour)
+# =====================================================
+# One rdf:Property per EPNcore column the PDSSP conversion writes or must
+# know about. Column semantics are defined by the IVOA EPN-TAP 2.0
+# standard; this file only gives each column an IRI so mappings can point
+# at it. The VALUE lists of some columns are NOT re-modelled here: they
+# are the SKOS vocabularies already published by PADC (Observatoire de
+# Paris) in IVOA "Vocabularies in the VO 2" form, referenced with
+# pdssp:valueVocabulary. Units and the mandatory flag are to be checked
+# against the EPN-TAP 2.0 text; STILTS `taplint stages='tme epn'` is the
+# reference checker for a running service.
+#
+# Proposed follow-up: offer this column vocabulary to PADC so it lives
+# next to their EPN value vocabularies instead of in the PDSSP namespace.
+
+<https://pdssp.github.io/pdssp-ontology/epn-tap> a owl:Ontology ;
+    dct:title "EPN-TAP 2.0 column vocabulary (PDSSP)"@en ;
+    dct:source <https://www.ivoa.net/documents/EPNTAP/> ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "unreleased" .
+
+pdssp:epnMandatory a rdf:Property ; rdfs:label "mandatory in EPNcore"@en ; rdfs:range xsd:boolean .
+pdssp:unit a rdf:Property ; rdfs:label "unit (VOUnits)"@en .
+pdssp:valueVocabulary a rdf:Property ; rdfs:label "value vocabulary"@en ;
+    rdfs:comment "Published vocabulary the column's values must come from."@en .
+
+
+epn:granule_uid a rdf:Property ;
+    rdfs:label "granule_uid" ;
+    rdfs:comment "Internal table row identifier, unique in the service."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:observationIdentifier ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:granule_gid a rdf:Property ;
+    rdfs:label "granule_gid" ;
+    rdfs:comment "Group identifier: granules sharing the same kind of content."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:observationCollection ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:obs_id a rdf:Property ;
+    rdfs:label "obs_id" ;
+    rdfs:comment "Associates granules derived from the same data (e.g. calibration levels of one observation)."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:observationIdentifier ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:dataproduct_type a rdf:Property ;
+    rdfs:label "dataproduct_type" ;
+    rdfs:comment "Organisation of the data product, 2-letter codes."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:observationType ;
+    pdssp:valueVocabulary <http://voparis-ns.obspm.fr/rdf/epn/2.0/product-type> ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:target_name a rdf:Property ;
+    rdfs:label "target_name" ;
+    rdfs:comment "Standard IAU name of the target; several values hash-separated."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept ssnext:hasUltimateFeatureOfInterest ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:target_class a rdf:Property ;
+    rdfs:label "target_class" ;
+    rdfs:comment "Type of target."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:featureOfInterestType ;
+    pdssp:valueVocabulary <http://voparis-ns.obspm.fr/rdf/epn/2.0/target-class> ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:time_min a rdf:Property ;
+    rdfs:label "time_min" ;
+    rdfs:comment "Acquisition start time, Julian Day."@en ;
+    rdfs:range xsd:double ;
+    pdssp:unit "d" ;
+    pdssp:omsConcept sosa:phenomenonTime ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:time_max a rdf:Property ;
+    rdfs:label "time_max" ;
+    rdfs:comment "Acquisition stop time, Julian Day."@en ;
+    rdfs:range xsd:double ;
+    pdssp:unit "d" ;
+    pdssp:omsConcept sosa:phenomenonTime ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:time_sampling_step_min a rdf:Property ;
+    rdfs:label "time_sampling_step_min" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "s" ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:time_sampling_step_max a rdf:Property ;
+    rdfs:label "time_sampling_step_max" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "s" ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:time_exp_min a rdf:Property ;
+    rdfs:label "time_exp_min" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "s" ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:time_exp_max a rdf:Property ;
+    rdfs:label "time_exp_max" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "s" ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:spectral_range_min a rdf:Property ;
+    rdfs:label "spectral_range_min" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "Hz" ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:spectral_range_max a rdf:Property ;
+    rdfs:label "spectral_range_max" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "Hz" ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:spectral_sampling_step_min a rdf:Property ;
+    rdfs:label "spectral_sampling_step_min" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "Hz" ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:spectral_sampling_step_max a rdf:Property ;
+    rdfs:label "spectral_sampling_step_max" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "Hz" ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:spectral_resolution_min a rdf:Property ;
+    rdfs:label "spectral_resolution_min" ;
+    rdfs:range xsd:double ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:spectral_resolution_max a rdf:Property ;
+    rdfs:label "spectral_resolution_max" ;
+    rdfs:range xsd:double ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c1min a rdf:Property ;
+    rdfs:label "c1min" ;
+    rdfs:comment "Min of first coordinate (body frame: east longitude, 0-360)."@en ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept sosa:hasFeatureOfInterest ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c1max a rdf:Property ;
+    rdfs:label "c1max" ;
+    rdfs:comment "Max of first coordinate (body frame: east longitude, 0-360)."@en ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept sosa:hasFeatureOfInterest ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c2min a rdf:Property ;
+    rdfs:label "c2min" ;
+    rdfs:comment "Min of second coordinate (body frame: latitude)."@en ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept sosa:hasFeatureOfInterest ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c2max a rdf:Property ;
+    rdfs:label "c2max" ;
+    rdfs:comment "Max of second coordinate (body frame: latitude)."@en ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept sosa:hasFeatureOfInterest ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c3min a rdf:Property ;
+    rdfs:label "c3min" ;
+    rdfs:range xsd:double ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c3max a rdf:Property ;
+    rdfs:label "c3max" ;
+    rdfs:range xsd:double ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:s_region a rdf:Property ;
+    rdfs:label "s_region" ;
+    rdfs:comment "Footprint of the granule."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept sosa:hasFeatureOfInterest ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c1_resol_min a rdf:Property ;
+    rdfs:label "c1_resol_min" ;
+    rdfs:range xsd:double ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c1_resol_max a rdf:Property ;
+    rdfs:label "c1_resol_max" ;
+    rdfs:range xsd:double ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c2_resol_min a rdf:Property ;
+    rdfs:label "c2_resol_min" ;
+    rdfs:range xsd:double ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c2_resol_max a rdf:Property ;
+    rdfs:label "c2_resol_max" ;
+    rdfs:range xsd:double ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c3_resol_min a rdf:Property ;
+    rdfs:label "c3_resol_min" ;
+    rdfs:range xsd:double ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:c3_resol_max a rdf:Property ;
+    rdfs:label "c3_resol_max" ;
+    rdfs:range xsd:double ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:spatial_frame_type a rdf:Property ;
+    rdfs:label "spatial_frame_type" ;
+    rdfs:comment "Flavour of the coordinate system."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:spatialReference ;
+    pdssp:valueVocabulary <http://voparis-ns.obspm.fr/rdf/epn/2.0/spatial-frame-type> ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:incidence_min a rdf:Property ;
+    rdfs:label "incidence_min" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:incidence_max a rdf:Property ;
+    rdfs:label "incidence_max" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:emergence_min a rdf:Property ;
+    rdfs:label "emergence_min" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:emergence_max a rdf:Property ;
+    rdfs:label "emergence_max" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:phase_min a rdf:Property ;
+    rdfs:label "phase_min" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:phase_max a rdf:Property ;
+    rdfs:label "phase_max" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:instrument_host_name a rdf:Property ;
+    rdfs:label "instrument_host_name" ;
+    rdfs:comment "Standard name of the observatory or spacecraft."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept sosa:isHostedBy ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:instrument_name a rdf:Property ;
+    rdfs:label "instrument_name" ;
+    rdfs:comment "Standard name of the instrument."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept sosa:madeBySensor ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:measurement_type a rdf:Property ;
+    rdfs:label "measurement_type" ;
+    rdfs:comment "UCD(s) of the measured quantity."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept sosa:observedProperty ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:processing_level a rdf:Property ;
+    rdfs:label "processing_level" ;
+    rdfs:comment "CODMAC-based level, 1 to 6."@en ;
+    rdfs:range xsd:integer ;
+    pdssp:omsConcept sosa:usedProcedure ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:creation_date a rdf:Property ;
+    rdfs:label "creation_date" ;
+    rdfs:comment "Date of first entry of the granule."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:recordLifecycle ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:modification_date a rdf:Property ;
+    rdfs:label "modification_date" ;
+    rdfs:comment "Date of last modification of the granule."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:recordLifecycle ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:release_date a rdf:Property ;
+    rdfs:label "release_date" ;
+    rdfs:comment "Start of public access."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:recordLifecycle ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:service_title a rdf:Property ;
+    rdfs:label "service_title" ;
+    rdfs:comment "Title of the service."@en ;
+    rdfs:range xsd:string ;
+    pdssp:epnMandatory true ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:access_url a rdf:Property ;
+    rdfs:label "access_url" ;
+    rdfs:comment "URL of the data file."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:resultAccess ;
+    pdssp:epnMandatory false ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:access_format a rdf:Property ;
+    rdfs:label "access_format" ;
+    rdfs:comment "Media type of the data file."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:resultAccess ;
+    pdssp:epnMandatory false ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:thumbnail_url a rdf:Property ;
+    rdfs:label "thumbnail_url" ;
+    rdfs:comment "URL of a preview."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:resultAccess ;
+    pdssp:epnMandatory false ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:bib_reference a rdf:Property ;
+    rdfs:label "bib_reference" ;
+    rdfs:comment "Bibcode, DOI or other bibliographic identifier."@en ;
+    rdfs:range xsd:string ;
+    pdssp:omsConcept omsa:citation ;
+    pdssp:epnMandatory false ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:solar_longitude_min a rdf:Property ;
+    rdfs:label "solar_longitude_min" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:epnMandatory false ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
+
+epn:solar_longitude_max a rdf:Property ;
+    rdfs:label "solar_longitude_max" ;
+    rdfs:range xsd:double ;
+    pdssp:unit "deg" ;
+    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:epnMandatory false ;
+    rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .

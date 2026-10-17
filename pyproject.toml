@@ -21,6 +21,7 @@ packages = ["src/pdssp_ontology"]
 [dependency-groups]
 dev = [
     "pytest>=9.0.1",
+    "jsonschema>=4.23",
 ]
 
 [tool.pytest.ini_options]
