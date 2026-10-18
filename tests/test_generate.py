@@ -92,3 +92,18 @@ def test_synonyms_skip_ambiguous_alt_labels():
     text = generate.synonyms_txt()
     assert "orthoimagery" in generate.ambiguous_alt_labels()
     assert not any("orthoimagery" in line for line in text.splitlines() if not line.startswith("#"))
+
+
+def test_lookups_carry_values_spellings_and_links():
+    data = generate.lookups()
+    assert data["fields"]["ssys:targets"] == "target"
+    by_value = {c["value"]: c for c in data["schemes"]["target"]["concepts"]}
+    phobos = by_value["Phobos"]
+    assert phobos["links"]["targetClass"] == [str(vocab.PDSSP["TargetClass-Satellite"])]
+    assert phobos["links"]["primaryBody"] == [str(vocab.PDSSP["Target-Mars"])]
+    assert phobos["codes"]["naifId"] == 401
+    assert "Jupitr" in by_value["Jupiter"]["hidden"]
+    hirise = {c["value"]: c for c in data["schemes"]["instrument"]["concepts"]}["HiRISE"]
+    assert hirise["links"]["isHostedBy"] == [str(vocab.PDSSP["Platform-MRO"])]
+    assert "interstellar-object" not in data["schemes"]["target-class"]["allowed"]
+    json.dumps(data)  # plain JSON

@@ -7,6 +7,7 @@ thesaurus (SKOS)                     ->  schemas/<scheme>.json  one JSON Schema 
 STAC fields + thesaurus              ->  context.jsonld      JSON-LD 1.1 context: STAC Item -> RDF
 STAC/EPN vocabularies + SSSOM        ->  stac-epntap-rules.json   conversion rules + value tables
 thesaurus (labels, altLabels, tree)  ->  search/facets.json, search/synonyms.txt
+thesaurus (concepts, links, codes)   ->  lookups.json        normalise and derive at ingestion
 
 Each function is pure (no I/O); export.build() writes the files.
 
@@ -19,10 +20,13 @@ from __future__ import annotations
 
 import argparse
 import json
+from decimal import Decimal
 from pathlib import Path
 
 from rdflib import URIRef
-from rdflib.namespace import SKOS
+from rdflib.namespace import RDF, SKOS
+
+RDF_TYPE = RDF.type
 
 from . import vocab
 
@@ -288,6 +292,64 @@ def synonyms_txt() -> str:
             if alts:
                 lines.append(", ".join([vocab.label(graph, c).lower(), *alts]))
     return "\n".join(lines) + "\n"
+
+
+# ------------------------------------------------------------- 5. lookups ----
+
+LOOKUPS_VERSION = 1
+_LABELS = {SKOS.prefLabel, SKOS.altLabel, SKOS.hiddenLabel, SKOS.notation, SKOS.definition, SKOS.scopeNote}
+_STRUCTURE = {SKOS.inScheme, SKOS.topConceptOf}
+_MATCHES = {SKOS.exactMatch, SKOS.closeMatch, SKOS.broadMatch, SKOS.narrowMatch, SKOS.relatedMatch}
+
+
+def _key(predicate) -> str:
+    text = str(predicate)
+    return text.rsplit("#", 1)[-1] if "#" in text else text.rsplit("/", 1)[-1]
+
+
+def lookups() -> dict:
+    """Everything a converter needs to normalise and derive values, as plain
+    JSON (no RDF tooling): per controlled field its scheme, and per concept
+    its data value, accepted spellings, links to other concepts (IRIs:
+    targetClass, primaryBody, isHostedBy, deployedOnPlatform, isSubSystemOf,
+    referenceBody, broader/narrower), codes (naifId, cosparId, wavelengths,
+    epntapLevel...) and external matches."""
+    from rdflib import Literal
+
+    graph = vocab.thesaurus()
+    own = {c for c in graph.subjects(SKOS.inScheme, None)}
+    ontology = URIRef(f"{BASE}/thesaurus")
+    schemes, fields = {}, {}
+    for field, (scheme_name, _, stem) in VALUE_FIELDS.items():
+        scheme = vocab.PDSSP[scheme_name]
+        fields[field] = stem
+        concepts = []
+        for c in vocab.concepts_in_scheme(graph, scheme):
+            entry: dict = {"iri": str(c), "value": vocab.value(graph, c), "label": vocab.label(graph, c),
+                           "alt": sorted(str(a) for a in graph.objects(c, SKOS.altLabel)),
+                           "hidden": sorted(str(a) for a in graph.objects(c, SKOS.hiddenLabel)),
+                           "definition": str(graph.value(c, SKOS.definition) or "")}
+            links, codes, matches = {}, {}, {}
+            for p, o in sorted(graph.predicate_objects(c)):
+                if p in _LABELS or p in _STRUCTURE or p == RDF_TYPE:
+                    continue
+                if p in _MATCHES:
+                    matches.setdefault(_key(p), []).append(str(o))
+                elif isinstance(o, Literal):
+                    value = o.toPython()
+                    codes[_key(p)] = float(value) if isinstance(value, Decimal) else value
+                elif o in own:
+                    links.setdefault(_key(p), []).append(str(o))
+            entry.update(links=links, codes=codes, matches=matches)
+            concepts.append(entry)
+        schemes[stem] = {"iri": str(scheme), "field": field,
+                         "title": str(graph.value(scheme, URIRef("http://purl.org/dc/terms/title")) or scheme_name),
+                         "allowed": field_values(field), "concepts": concepts}
+    return {"lookups_version": LOOKUPS_VERSION,
+            "thesaurus": str(ontology),
+            "thesaurus_version": str(graph.value(ontology, URIRef("http://www.w3.org/2002/07/owl#versionInfo")) or ""),
+            "modified": str(graph.value(ontology, URIRef("http://purl.org/dc/terms/modified")) or ""),
+            "fields": fields, "schemes": schemes}
 
 
 def main() -> None:

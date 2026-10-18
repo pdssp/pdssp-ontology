@@ -290,6 +290,7 @@ def build(out: Path) -> None:
         (out / "schemas" / f"{stem}.json").write_text(json.dumps(schema, indent=2, ensure_ascii=False) + "\n")
     (out / "context.jsonld").write_text(json.dumps(generate.jsonld_context(), indent=2, ensure_ascii=False))
     (out / "stac-epntap-rules.json").write_text(json.dumps(generate.conversion_rules(), indent=2, ensure_ascii=False))
+    (out / "lookups.json").write_text(json.dumps(generate.lookups(), indent=1, ensure_ascii=False) + "\n")
     (out / "search").mkdir(exist_ok=True)
     (out / "search" / "facets.json").write_text(json.dumps(generate.search_config(), indent=2, ensure_ascii=False))
     (out / "search" / "synonyms.txt").write_text(generate.synonyms_txt(), encoding="utf-8")
