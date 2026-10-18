@@ -12,7 +12,7 @@ from pdssp_ontology.convert import convert
 
 DATA = Path(__file__).parent / "data"
 ITEM = json.loads((DATA / "item-hirise.json").read_text())
-PROFILE = json.loads((DATA / "stacplanet-1.0.0-schema.json").read_text())
+PROFILE = json.loads((DATA / "stacplanet-1.1.0-schema.json").read_text())
 STAC = rdflib.Namespace("https://pdssp.github.io/pdssp-ontology/stac#")
 
 

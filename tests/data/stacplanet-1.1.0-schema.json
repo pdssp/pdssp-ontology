@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://pdssp.github.io/stacplanet/v1.0.0/schema.json",
+  "$id": "https://pdssp.github.io/stacplanet/v1.1.0/schema.json",
   "title": "PDSSP Planetary Data Schema for STACPlanet Items and Collections",
   "description": "Profile defining PDSSP-specific constraints for planetary data products. Applies to both STAC Items and Collections. Required extensions on an Item depend on whether the product is located: a null geometry relaxes the projection requirement.",
   "type": "object",

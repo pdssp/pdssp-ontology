@@ -173,7 +173,7 @@ stacf:pdssp_wavelength_type a rdf:Property ; rdfs:label "pdssp:wavelength_type" 
     rdfs:comment "Spectral domains of the observation (IVOA messenger terms), from the PDSSP Wavelength Type scheme (notation). Derivable from the band names."@en ;
     pdssp:jsonPath "properties.pdssp:wavelength_type" ; pdssp:omsConcept sosa:observedProperty ;
     pdssp:valueScheme pdssp:WavelengthTypeScheme ;
-    rdfs:isDefinedBy <https://pdssp.github.io/stacplanet/v1.0.0/schema.json> .
+    rdfs:isDefinedBy <https://pdssp.github.io/stacplanet/v1.1.0/schema.json> .
 
 stacf:pdssp_method a rdf:Property ; rdfs:label "pdssp:method" ;
     pdssp:jsonPath "properties.pdssp:method" ; pdssp:omsConcept sosa:usedProcedure ;

@@ -16,7 +16,7 @@ from referencing import Registry, Resource
 from pdssp_ontology import generate, vocab
 
 DATA = Path(__file__).parent / "data"
-SCHEMA = json.loads((DATA / "stacplanet-1.0.0-schema.json").read_text())
+SCHEMA = json.loads((DATA / "stacplanet-1.1.0-schema.json").read_text())
 
 
 def _registry() -> Registry:

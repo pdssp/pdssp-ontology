@@ -14,7 +14,7 @@ between them are represented, checked, published and changed.
 | Field → column correspondences | SSSOM mapping set, transform named in the `other` slot | `mappings/stac-epn-tap/fields.sssom.tsv` | `{base}/mappings/stac-epn-tap` |
 | Value → value correspondences | SSSOM mapping set | `mappings/stac-epn-tap/product-type.sssom.tsv` | same graph |
 | How to convert a value | Named Python functions | `src/pdssp_ontology/transforms.py` | — |
-| The rules a STAC Item must follow | JSON Schema (the stacplanet profile, separate repo) | `pdssp/stacplanet` | `https://pdssp.github.io/stacplanet/v1.0.0/schema.json` |
+| The rules a STAC Item must follow | JSON Schema (the stacplanet profile, separate repo) | `pdssp/stacplanet` | `https://pdssp.github.io/stacplanet/v1.1.0/schema.json` |
 
 Rule of thumb: a value picked from a list is SKOS; a field or a column is
 an RDF property; a correspondence is an SSSOM row; anything computed is a
