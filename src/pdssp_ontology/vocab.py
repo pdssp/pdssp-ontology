@@ -55,6 +55,12 @@ def external(name: str) -> dict:
     return json.loads((EXTERNAL_DIR / f"epn-{name}.desise.json").read_text())
 
 
+@lru_cache(maxsize=None)
+def ssys_target_classes() -> list[str]:
+    """The ssys v1.1.1 enum of ssys:target_class (snapshot)."""
+    return json.loads((EXTERNAL_DIR / "ssys-target-class.json").read_text())["enum"]
+
+
 # ---------------------------------------------------------------- SSSOM ----
 
 @dataclass

@@ -52,7 +52,8 @@ See [`docs/model-management.md`](docs/model-management.md). In short:
 - `python -m pdssp_ontology.convert item.json`: STAC Item -> EPN-TAP row, driven by the
   mapping files;
 - `python -m pdssp_ontology.export --out site`: browsable pages where every IRI resolves,
-  desise/JSON-LD/Turtle downloads, the crosswalk with its loss report, `enums.json`.
+  desise/JSON-LD/Turtle downloads, the crosswalk with its loss report, `enums.json`,
+  and one JSON Schema per scheme (`schemas/<scheme>.json`) that the stacplanet profile `$ref`s.
 
 ## The PDSSP Thesaurus
 

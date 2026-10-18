@@ -156,7 +156,9 @@ pdssp:Target-3IAtlas a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:to
     skos:altLabel "C/2025 N1 (ATLAS)"@en , "C/2025 N1"@en , "Comet 3I ATLAS"@en ;
     skos:definition "Third interstellar object discovered (July 2025), an active comet, imaged from Mars orbit in October 2025."@en ;
     pdssp:naifId 1004083 ;
-    # PADC has a dedicated class; CTX labels say "comet".
-    pdssp:targetClass pdssp:TargetClass-InterstellarObject ;
+    # PADC has a dedicated class (interstellar-object), but the ssys v1.1.1
+    # STAC extension does not accept it in ssys:target_class: comet, as in
+    # the CTX labels (it is an active comet).
+    pdssp:targetClass pdssp:TargetClass-Comet ;
     skos:exactMatch wd:Q135193382 , <urn:nasa:pds:context:target:comet.3i_atlas> ;
     skos:broadMatch uat:52 .

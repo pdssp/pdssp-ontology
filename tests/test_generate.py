@@ -1,7 +1,6 @@
 """The four generated artefacts: JSON Schema enums, JSON-LD context,
 STAC -> EPN-TAP rules, search facets and synonyms."""
 
-import copy
 import json
 from pathlib import Path
 
@@ -40,16 +39,18 @@ def test_normaliser_resolves_source_variants():
     assert "comet" not in norm["ssys:targets"]                    # ambiguous in CTX labels
 
 
-def test_sync_profile_writes_the_thesaurus_values():
-    patched = generate.sync_profile(copy.deepcopy(PROFILE))
-    item = patched["definitions"]["item"]["properties"]["properties"]["properties"]
-    original = PROFILE["definitions"]["item"]["properties"]["properties"]["properties"]
-    for field in generate.VALUE_FIELDS:
-        before, after = generate.enum_holder(original.get(field)), generate.enum_holder(item.get(field))
-        if before is None:
-            assert after is None, f"{field}: sync must not close a field the profile leaves open"
-        else:
-            assert sorted(after["enum"]) == sorted(before["enum"])  # already in sync today
+def test_one_schema_per_scheme_with_the_field_values():
+    schemas = generate.thesaurus_schemas()
+    assert set(schemas) == {stem for _, _, stem in generate.VALUE_FIELDS.values()}
+    for field, (_, _, stem) in generate.VALUE_FIELDS.items():
+        assert schemas[stem]["$id"] == f"{generate.BASE}/schemas/{stem}.json"
+        assert schemas[stem]["enum"] == generate.field_values(field)
+
+
+def test_target_class_schema_is_restricted_to_ssys():
+    values = generate.thesaurus_schemas()["target-class"]["enum"]
+    assert set(values) == set(vocab.ssys_target_classes())
+    assert "interstellar-object" not in values
 
 
 def test_jsonld_context_turns_values_into_concept_iris():

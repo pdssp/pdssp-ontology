@@ -81,70 +81,47 @@
             "ssys:targets": {
               "type": "array",
               "items": {
-                "type": "string"
+                "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/target.json"
               },
-              "minItems": 1
+              "minItems": 1,
+              "uniqueItems": true,
+              "description": "List of solar system targets covered by the data, each the preferred label of a concept of the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Target scheme (e.g. \"Mars\", \"Phobos\", \"Mars Global Surveyor\", \"C/2013 A1 (Siding Spring)\"). At least one, no duplicates. Source spellings (\"MARS\", \"Mgs\", \"Jupitr\") must be normalised before ingestion (normaliser in search/facets.json of the thesaurus); an unknown target is rejected until it is added to the thesaurus."
             },
             "ssys:target_class": {
-              "type": "string",
-              "enum": [
-                "asteroid",
-                "calibration",
-                "comet",
-                "dwarf_planet",
-                "exoplanet",
-                "interplanetary_medium",
-                "interstellar-object",
-                "planet",
-                "rogue-planet",
-                "sample",
-                "satellite",
-                "sky",
-                "spacejunk",
-                "spacecraft",
-                "star"
+              "description": "Classification of the primary target: a notation of the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Target Class scheme, i.e. a PADC EPN target-class term, restricted to the 13 values the ssys v1.1.1 extension accepts. The class of each target is given by the thesaurus (pdssp:targetClass), so it can be derived from ssys:targets.",
+              "allOf": [
+                {
+                  "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/target-class.json"
+                }
               ]
             },
             "version": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "description": "Version identifier for the data product. Mandatory for items."
             },
             "product:type": {
-              "type": "string",
-              "enum": [
-                "Anaglyph",
-                "Digital elevation model",
-                "Image",
-                "Image mosaic",
-                "Orthoimage",
-                "Point cloud"
+              "description": "Type of the data product: a concept of the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Product Type scheme -- deliberately NOT the EPN-TAP dataproduct_type vocabulary, which is coarser (no orthoimage or anaglyph); the EPN-TAP mapping is in the thesaurus mapping sets. This field is mandatory.",
+              "allOf": [
+                {
+                  "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/product-type.json"
+                }
               ]
             },
             "processing:level": {
-              "type": "string",
-              "enum": [
-                "Ancillary",
-                "Calibrated",
-                "Derived",
-                "Raw"
+              "description": "Processing level of the data product: a concept of the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Processing Level scheme (PDS4 levels). This field is mandatory.",
+              "allOf": [
+                {
+                  "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/processing-level.json"
+                }
               ]
             },
             "pdssp:method": {
-              "type": "string",
-              "enum": [
-                "Aerial photography",
-                "Hyperspectral imaging",
-                "Infrared imaging",
-                "Lidar",
-                "Microwave imaging",
-                "Multispectral imaging",
-                "Panchromatic imaging",
-                "Photogrammetry",
-                "Radar imaging",
-                "Remote sensing",
-                "Stereoscopic imaging",
-                "Thermal imaging",
-                "Visible light imaging"
+              "description": "How the product was acquired or produced (the technique): a concept of the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Method scheme, which reuses the USGS Thesaurus \"methods\" facet and adds Photogrammetry and Stereoscopic imaging.",
+              "allOf": [
+                {
+                  "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/method.json"
+                }
               ]
             }
           }
@@ -244,31 +221,24 @@
           ]
         },
         "license": {
-          "type": "string"
+          "type": "string",
+          "description": "License under which the data is provided."
         },
         "ssys:targets": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/target.json"
           },
-          "minItems": 1
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "List of solar system targets covered by this collection -- a top-level Collection field, a fact about the collection itself like its license, each the preferred label of a concept of the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Target scheme (e.g. \"Mars\", \"Phobos\", \"Mars Global Surveyor\", \"C/2013 A1 (Siding Spring)\"). At least one, no duplicates. Source spellings (\"MARS\", \"Mgs\", \"Jupitr\") must be normalised before ingestion (normaliser in search/facets.json of the thesaurus); an unknown target is rejected until it is added to the thesaurus."
         },
         "ssys:target_class": {
-          "type": "string",
-          "enum": [
-            "asteroid",
-            "dwarf_planet",
-            "planet",
-            "satellite",
-            "comet",
-            "exoplanet",
-            "interplanetary_medium",
-            "sample",
-            "sky",
-            "spacecraft",
-            "spacejunk",
-            "star",
-            "calibration"
+          "description": "Classification of this collection's primary target -- same values as the Item field.",
+          "allOf": [
+            {
+              "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/target-class.json"
+            }
           ]
         },
         "summaries": {
@@ -281,52 +251,26 @@
             "product:type": {
               "type": "array",
               "items": {
-                "type": "string",
-                "enum": [
-                  "Anaglyph",
-                  "Digital elevation model",
-                  "Image",
-                  "Image mosaic",
-                  "Orthoimage",
-                  "Point cloud"
-                ]
+                "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/product-type.json"
               },
-              "minItems": 1
+              "minItems": 1,
+              "description": "Every product:type value this collection's items actually use, from the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Product Type scheme. This field is mandatory."
             },
             "processing:level": {
               "type": "array",
               "items": {
-                "type": "string",
-                "enum": [
-                  "Ancillary",
-                  "Calibrated",
-                  "Derived",
-                  "Raw"
-                ]
+                "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/processing-level.json"
               },
-              "minItems": 1
+              "minItems": 1,
+              "description": "Every processing:level value this collection's items actually use, from the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Processing Level scheme. This field is mandatory."
             },
             "pdssp:method": {
               "type": "array",
               "items": {
-                "type": "string",
-                "enum": [
-                  "Aerial photography",
-                  "Hyperspectral imaging",
-                  "Infrared imaging",
-                  "Lidar",
-                  "Microwave imaging",
-                  "Multispectral imaging",
-                  "Panchromatic imaging",
-                  "Photogrammetry",
-                  "Radar imaging",
-                  "Remote sensing",
-                  "Stereoscopic imaging",
-                  "Thermal imaging",
-                  "Visible light imaging"
-                ]
+                "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/method.json"
               },
-              "minItems": 1
+              "minItems": 1,
+              "description": "Every pdssp:method value this collection's items actually use, from the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Method scheme."
             }
           }
         },

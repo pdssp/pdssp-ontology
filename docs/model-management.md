@@ -44,8 +44,9 @@ line per term and buys:
 2. Add its row in `mappings/stac-epn-tap/product-type.sssom.tsv` (CI fails
    otherwise: every product type must reach an EPN term).
 3. Update the count in `tests/test_thesaurus_consistency.py`.
-4. CI regenerates `site/enums.json`; copy the new enum into the stacplanet
-   schema (CI fails until both agree: `tests/test_profile_sync.py`).
+4. Nothing to do in stacplanet: CI regenerates `schemas/<scheme>.json`,
+   which the profile `$ref`s, so the new value is accepted as soon as the
+   site is published.
 
 **Map a new STAC field**
 1. Declare it in `vocab/stac/stac-fields.ttl` with `pdssp:jsonPath` and
@@ -68,8 +69,11 @@ to it as `transform=<name>[:<arg>]` in the `other` column.
 - mapping: every IRI exists, every STAC field decided, same OMS concept on
   both sides, every transform known, every product type mapped to an
   existing PADC term;
-- profile: stacplanet enums equal the thesaurus; `ssys:target_class` ⊆ PADC
-  target-class; a sample Item validates against the profile;
+- profile: every controlled field of stacplanet `$ref`s its thesaurus
+  schema and carries no inline enum (`generate check-profile`); target
+  classes are the PADC terms, restricted in STAC to the ssys v1.1.1 enum;
+  every target has a class ssys accepts; a sample Item validates against
+  the profile and a raw spelling ("Mgs") is rejected;
 - conversion: a HiRISE-like Item converts to the expected EPN-TAP row.
 
 On a running EPN-TAP service, STILTS `taplint stages='tme epn'` is the
@@ -112,7 +116,8 @@ them on GitHub Pages. Never edit them by hand: change the source, rebuild.
 
 | Artefact | Built from | Used by | How |
 |---|---|---|---|
-| `enums.schema.json` | thesaurus | stacplanet profile | In the stacplanet repo CI: `python -m pdssp_ontology.generate sync-profile v1.0.0/schema.json`, then commit. (A remote `$ref` would also work, but not every validator fetches remote refs.) |
+| `schemas/<scheme>.json` | thesaurus | stacplanet profile | One JSON Schema per scheme (`{"type": "string", "enum": [...]}`), `$ref`'d by the profile for `ssys:targets` (items), `ssys:target_class`, `product:type`, `processing:level`, `pdssp:method`. `stac-node-validator` fetches them over HTTP. `python -m pdssp_ontology.generate check-profile <schema.json>` checks a profile uses them. `ssys:target_class` is restricted to the ssys v1.1.1 enum. |
+| `enums.schema.json` | thesaurus | any consumer | The same values, all schemes in one file (`#/definitions/<name>`). |
 | `context.jsonld` | STAC fields + thesaurus | knowledge base, LLM assistant, Fuseki | Add `"@context": ".../context.jsonld"` to an Item copy and load it as JSON-LD: `product:type: "Orthoimage"` becomes the concept IRI `vocab#ProductType-OrthoImage`. STAC JSON itself is unchanged. |
 | `stac-epntap-rules.json` | STAC/EPN vocabularies + SSSOM | any EPN-TAP exporter (Python or not) | One rule per column (JSON path, transform, default) + value tables (product type → `im`/`ma`/…, processing level → 2/3/5/6). `convert.py` is the reference implementation. |
 | `search/facets.json` | thesaurus (labels, altLabels, hierarchy) | portal, STAC API search layer, LLM assistant | `normalise`: user input → indexed label (`"dtm"` → `"Digital elevation model"`). `expand`: a value + everything narrower (`Image` → Image, Orthoimage, Image mosaic, Anaglyph), sent as a `terms`/`in` filter. `tree`: the facet menu. |

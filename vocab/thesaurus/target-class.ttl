@@ -16,8 +16,14 @@
 #
 # skos:notation is the value written in the data: the PADC term id
 # ("planet", "dwarf_planet", "interstellar-object"), identical in STAC and
-# EPN-TAP. tests/test_skos_quality.py checks that the notations are exactly
+# EPN-TAP. tests/test_profile_sync.py checks that the notations are exactly
 # the PADC terms, so a PADC update fails CI until this file follows.
+#
+# STAC restriction: the ssys v1.1.1 extension closes ssys:target_class with
+# its own 13-value enum (snapshot vocab/external/ssys-target-class.json).
+# "interstellar-object" and "rogue-planet" (added by PADC in 2024) are not
+# in it, so the generated STAC schema (schemas/target-class.json) leaves
+# them out and no PDSSP target may use them until ssys accepts them.
 #
 # Unified Astronomy Thesaurus (UAT 6.0.0, https://astrothesaurus.org/):
 # exactMatch when the UAT concept is the same class, closeMatch when its

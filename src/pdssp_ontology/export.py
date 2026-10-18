@@ -257,9 +257,8 @@ def mapping_html() -> str:
 # ------------------------------------------------------------------ enums ----
 
 def enums() -> dict[str, list[str]]:
-    graph = vocab.thesaurus()
-    return {field: sorted(vocab.value(graph, c) for c in vocab.concepts_in_scheme(graph, vocab.PDSSP[name]))
-            for name, field in SCHEMES.values()}
+    from .generate import VALUE_FIELDS, field_values
+    return {field: sorted(field_values(field)) for field in VALUE_FIELDS}
 
 
 def build(out: Path) -> None:
@@ -286,6 +285,9 @@ def build(out: Path) -> None:
     # The four build-time artefacts (see generate.py).
     from . import generate
     (out / "enums.schema.json").write_text(json.dumps(generate.enums_schema(), indent=2, ensure_ascii=False))
+    (out / "schemas").mkdir(exist_ok=True)
+    for stem, schema in generate.thesaurus_schemas().items():
+        (out / "schemas" / f"{stem}.json").write_text(json.dumps(schema, indent=2, ensure_ascii=False) + "\n")
     (out / "context.jsonld").write_text(json.dumps(generate.jsonld_context(), indent=2, ensure_ascii=False))
     (out / "stac-epntap-rules.json").write_text(json.dumps(generate.conversion_rules(), indent=2, ensure_ascii=False))
     (out / "search").mkdir(exist_ok=True)

@@ -1,0 +1,22 @@
+{
+ "field": "ssys:target_class",
+ "enum": [
+  "asteroid",
+  "dwarf_planet",
+  "planet",
+  "satellite",
+  "comet",
+  "exoplanet",
+  "interplanetary_medium",
+  "sample",
+  "sky",
+  "spacecraft",
+  "spacejunk",
+  "star",
+  "calibration"
+ ],
+ "_snapshot": {
+  "version": "v1.1.1",
+  "source": "https://stac-extensions.github.io/ssys/v1.1.1/schema.json"
+ }
+}

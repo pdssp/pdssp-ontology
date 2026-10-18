@@ -1,40 +1,45 @@
-"""The stacplanet JSON Schema must carry exactly the thesaurus values.
+"""The stacplanet profile takes its controlled values from the thesaurus.
 
-The enums in the profile are a copy of the thesaurus; this test makes the
-copy safe: add a concept here, and CI fails until the profile is
-regenerated from site/enums.json (or the other way round).
+The profile no longer copies enums: each controlled field $refs the JSON
+Schema generated for its scheme (schemas/<stem>.json). These tests check
+that the profile points at the right schemas, carries no hand-written
+enum, and that the sample Item validates once the refs are resolved
+against the schemas generated here (no network).
 """
 
 import json
 from pathlib import Path
 
 import jsonschema
-import pytest
+from referencing import Registry, Resource
 
-from pdssp_ontology import export, generate, vocab
+from pdssp_ontology import generate, vocab
 
 DATA = Path(__file__).parent / "data"
 SCHEMA = json.loads((DATA / "stacplanet-1.0.0-schema.json").read_text())
-ITEM_PROPS = SCHEMA["definitions"]["item"]["properties"]["properties"]["properties"]
-SUMMARIES = SCHEMA["definitions"]["collection"]["properties"]["summaries"]["properties"]
-FIELDS = [field for _, field in export.SCHEMES.values()]
-# The profile decides which fields are closed by an enum; the thesaurus supplies the values.
-CLOSED_ITEM = [f for f in FIELDS if generate.enum_holder(ITEM_PROPS.get(f))]
-CLOSED_SUMMARY = [f for f in FIELDS if generate.enum_holder(SUMMARIES.get(f))]
 
 
-def test_profile_closes_the_expected_fields():
-    assert set(CLOSED_ITEM) == {"product:type", "processing:level", "pdssp:method", "ssys:target_class"}
+def _registry() -> Registry:
+    resources = [(s["$id"], Resource.from_contents(s)) for s in generate.thesaurus_schemas().values()]
+    return Registry().with_resources(resources)
 
 
-@pytest.mark.parametrize("field", CLOSED_ITEM)
-def test_item_enum_equals_thesaurus(field):
-    assert sorted(generate.enum_holder(ITEM_PROPS[field])["enum"]) == export.enums()[field]
+def test_profile_uses_the_thesaurus_schemas():
+    assert generate.check_profile(SCHEMA) == []
+    assert set(generate.profile_refs(SCHEMA)) == {
+        "ssys:targets", "ssys:target_class", "product:type", "processing:level", "pdssp:method"}
 
 
-@pytest.mark.parametrize("field", CLOSED_SUMMARY)
-def test_collection_summary_enum_equals_thesaurus(field):
-    assert sorted(generate.enum_holder(SUMMARIES[field])["enum"]) == export.enums()[field]
+def test_sample_item_validates_against_profile():
+    item = json.loads((DATA / "item-hirise.json").read_text())
+    jsonschema.Draft7Validator(SCHEMA, registry=_registry()).validate(item)
+
+
+def test_profile_rejects_a_raw_target_spelling():
+    item = json.loads((DATA / "item-hirise.json").read_text())
+    item["properties"]["ssys:targets"] = ["Mgs"]
+    errors = list(jsonschema.Draft7Validator(SCHEMA, registry=_registry()).iter_errors(item))
+    assert errors, "a source spelling must be normalised before ingestion"
 
 
 def test_target_class_notations_are_the_padc_terms():
@@ -43,18 +48,10 @@ def test_target_class_notations_are_the_padc_terms():
     assert notations == set(vocab.external("target-class")["terms"])
 
 
-def test_every_target_has_a_class():
+def test_every_target_has_a_class_ssys_accepts():
     graph = vocab.thesaurus()
     classes = set(vocab.concepts_in_scheme(graph, vocab.PDSSP.TargetClassScheme))
     for target in vocab.concepts_in_scheme(graph, vocab.PDSSP.TargetScheme):
-        assert graph.value(target, vocab.PDSSP.targetClass) in classes, target
-
-
-def test_target_class_enum_is_epn_target_class():
-    epn_terms = set(vocab.external("target-class")["terms"])
-    assert set(ITEM_PROPS["ssys:target_class"]["enum"]) <= epn_terms
-
-
-def test_sample_item_validates_against_profile():
-    item = json.loads((DATA / "item-hirise.json").read_text())
-    jsonschema.validate(item, SCHEMA)
+        cls = graph.value(target, vocab.PDSSP.targetClass)
+        assert cls in classes, target
+        assert vocab.value(graph, cls) in vocab.ssys_target_classes(), f"{target}: ssys rejects {cls}"

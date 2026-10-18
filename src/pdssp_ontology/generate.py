@@ -2,16 +2,17 @@
 
 Sources (in git)                         Artefact (generated, never hand-edited)
 --------------------------------------   -----------------------------------------------
-thesaurus (SKOS)                     ->  enums.schema.json   JSON Schema enums for stacplanet
+thesaurus (SKOS)                     ->  schemas/<scheme>.json  one JSON Schema per scheme, $ref'd by stacplanet
+                                         enums.schema.json   the same, all schemes in one file
 STAC fields + thesaurus              ->  context.jsonld      JSON-LD 1.1 context: STAC Item -> RDF
 STAC/EPN vocabularies + SSSOM        ->  stac-epntap-rules.json   conversion rules + value tables
 thesaurus (labels, altLabels, tree)  ->  search/facets.json, search/synonyms.txt
 
 Each function is pure (no I/O); export.build() writes the files.
 
-Usage (also run by export)::
+Usage (the artefacts are written by export; this checks a profile)::
 
-    uv run python -m pdssp_ontology.generate sync-profile ../stacplanet/v1.0.0/schema.json
+    uv run python -m pdssp_ontology.generate check-profile ../stacplanet/json-schema/schema.json
 """
 
 from __future__ import annotations
@@ -26,7 +27,8 @@ from rdflib.namespace import SKOS
 from . import vocab
 
 BASE = "https://pdssp.github.io/pdssp-ontology"
-# STAC field -> (scheme local name, definition name in enums.schema.json, value-table name)
+# STAC field -> (scheme local name, definition name in enums.schema.json,
+#               file stem: value table and schemas/<stem>.json)
 VALUE_FIELDS = {
     "product:type": ("ProductTypeScheme", "productType", "product-type"),
     "processing:level": ("ProcessingLevelScheme", "processingLevel", "processing-level"),
@@ -48,16 +50,47 @@ def _concepts(scheme_name: str):
 
 # ------------------------------------------------------- 1. JSON Schema enums ----
 
+def field_values(field: str) -> list[str]:
+    """The values a STAC field may carry: the data value of every concept of
+    its scheme, minus what the STAC extension defining the field rejects
+    (ssys v1.1.1 closes ssys:target_class with its own enum)."""
+    graph, concepts = _concepts(VALUE_FIELDS[field][0])
+    values = [vocab.value(graph, c) for c in concepts]
+    if field == "ssys:target_class":
+        allowed = set(vocab.ssys_target_classes())
+        values = [v for v in values if v in allowed]
+    return values
+
+
+def thesaurus_schemas() -> dict[str, dict]:
+    """One JSON Schema per scheme (schemas/<stem>.json), for the profile to
+    $ref: a string from the scheme. Array fields wrap it in "items"."""
+    graph = vocab.thesaurus()
+    schemas = {}
+    for field, (scheme, _, stem) in VALUE_FIELDS.items():
+        iri = vocab.PDSSP[scheme]
+        title = str(graph.value(iri, URIRef("http://purl.org/dc/terms/title")) or scheme)
+        schemas[stem] = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "$id": f"{BASE}/schemas/{stem}.json",
+            "title": title,
+            "description": (f"{field}: a value of the {title} concept scheme ({iri}), generated from the "
+                            "PDSSP Thesaurus; notation, else prefLabel. Do not edit."),
+            "type": "string",
+            "enum": field_values(field),
+        }
+    return schemas
+
+
 def enums_schema() -> dict:
-    """A JSON Schema with one definition per controlled field. The profile
-    either $refs it or is patched from it (sync_profile)."""
+    """A JSON Schema with one definition per controlled field (all schemes in
+    one file; schemas/<stem>.json holds the same, one file per scheme)."""
     definitions = {}
     for field, (scheme, name, _) in VALUE_FIELDS.items():
-        graph, concepts = _concepts(scheme)
         definitions[name] = {
             "type": "string",
             "description": f"{field}: value (notation, else prefLabel) of a concept of {vocab.PDSSP[scheme]}",
-            "enum": [vocab.value(graph, c) for c in concepts],
+            "enum": field_values(field),
         }
     return {"$schema": "http://json-schema.org/draft-07/schema#",
             "$id": f"{BASE}/enums.schema.json",
@@ -65,35 +98,54 @@ def enums_schema() -> dict:
             "definitions": definitions}
 
 
-def sync_profile(schema: dict) -> dict:
-    """Overwrite the enum lists of a stacplanet schema with the thesaurus
-    values, at both places the profile uses them (Item properties and
-    Collection summaries). Returns the patched schema.
+def profile_refs(schema: dict) -> dict[str, set[str]]:
+    """Thesaurus schemas a profile points at, per controlled field: every
+    $ref to {BASE}/schemas/<stem>.json found under a property named after a
+    VALUE_FIELDS field (Item properties, Collection fields or summaries)."""
+    prefix, found = f"{BASE}/schemas/", {}
 
-    Only fields the profile already closes with an enum are patched: the
-    profile decides which fields are controlled, the thesaurus supplies the
-    values. Closing a new field (e.g. ssys:targets) is a profile change."""
-    defs = enums_schema()["definitions"]
-    item = schema["definitions"]["item"]["properties"]["properties"]["properties"]
-    summaries = schema["definitions"]["collection"]["properties"]["summaries"]["properties"]
-    for field, (_, name, _) in VALUE_FIELDS.items():
-        values = defs[name]["enum"]
-        for prop in (item.get(field), summaries.get(field)):
-            target = enum_holder(prop)
-            if target is not None:
-                target["enum"] = values
-    return schema
+    def refs(node):
+        if isinstance(node, dict):
+            if isinstance(node.get("$ref"), str) and node["$ref"].startswith(prefix):
+                yield node["$ref"][len(prefix):].removesuffix(".json")
+            for value in node.values():
+                yield from refs(value)
+        elif isinstance(node, list):
+            for value in node:
+                yield from refs(value)
+
+    def walk(node):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == "properties" and isinstance(value, dict):
+                    for name, prop in value.items():
+                        stems = set(refs(prop)) if name in VALUE_FIELDS else set()
+                        if stems:
+                            found.setdefault(name, set()).update(stems)
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(schema)
+    return found
 
 
-def enum_holder(prop: dict | None) -> dict | None:
-    """The sub-schema carrying the enum of a profile property (the property
-    itself, or its items for an array), or None if it has no enum."""
-    if not prop:
-        return None
-    for node in (prop, prop.get("items") or {}):
-        if "enum" in node:
-            return node
-    return None
+def check_profile(schema: dict) -> list[str]:
+    """Errors in a profile's use of the thesaurus: a controlled field that
+    points at the wrong scheme, or still carries a hand-written enum."""
+    errors = []
+    for field, stems in sorted(profile_refs(schema).items()):
+        expected = VALUE_FIELDS[field][2]
+        if stems and stems != {expected}:
+            errors.append(f"{field}: refs {sorted(stems)}, expected schemas/{expected}.json")
+    text = json.dumps(schema)
+    for field in VALUE_FIELDS:
+        for chunk in text.split(f'"{field}": ')[1:]:
+            head = chunk[:chunk.find("}")]
+            if '"enum"' in head:
+                errors.append(f"{field}: inline enum, use {BASE}/schemas/{VALUE_FIELDS[field][2]}.json")
+    return errors
 
 
 # -------------------------------------------------------- 2. JSON-LD context ----
@@ -241,13 +293,18 @@ def synonyms_txt() -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    sync = sub.add_parser("sync-profile", help="rewrite the enum lists of a stacplanet schema.json in place")
-    sync.add_argument("schema", type=Path)
+    check = sub.add_parser("check-profile", help="check a stacplanet schema.json uses the thesaurus schemas")
+    check.add_argument("schema", type=Path)
     args = parser.parse_args()
-    if args.command == "sync-profile":
-        schema = sync_profile(json.loads(args.schema.read_text()))
-        args.schema.write_text(json.dumps(schema, indent=2, ensure_ascii=False) + "\n")
-        print(f"updated {args.schema}")
+    if args.command == "check-profile":
+        schema = json.loads(args.schema.read_text())
+        errors = check_profile(schema)
+        for error in errors:
+            print(f"error: {error}")
+        refs = profile_refs(schema)
+        print(f"{args.schema}: {len(refs)} controlled fields via thesaurus schemas "
+              f"({', '.join(sorted(refs))}); {len(errors)} error(s)")
+        raise SystemExit(1 if errors else 0)
 
 
 if __name__ == "__main__":

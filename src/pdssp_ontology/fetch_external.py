@@ -27,6 +27,7 @@ PINNED = {  # name -> (release date, file stem on the PADC server)
     "product-type": ("2024-03-28", "epn_product_type"),
     "spatial-frame-type": ("2024-05-07", "epn_spatial_frame_type"),
 }
+SSYS_URL = "https://stac-extensions.github.io/ssys/v1.1.1/schema.json"
 UAT_RELEASE = "v6.0.0"
 UAT_URL = f"https://raw.githubusercontent.com/astrothesaurus/UAT/{UAT_RELEASE}/UAT.rdf"
 
@@ -45,6 +46,16 @@ def fetch_uat() -> None:
     print(f"wrote {path} ({len(terms)} terms)")
 
 
+def fetch_ssys() -> None:
+    """The ssys v1.1.1 enum of ssys:target_class: the STAC side accepts only these."""
+    schema = httpx.get(SSYS_URL, timeout=30).raise_for_status().json()
+    enum = schema["definitions"]["fields"]["properties"]["ssys:target_class"]["enum"]
+    data = {"field": "ssys:target_class", "enum": enum, "_snapshot": {"version": "v1.1.1", "source": SSYS_URL}}
+    path = EXTERNAL_DIR / "ssys-target-class.json"
+    path.write_text(json.dumps(data, indent=1), encoding="utf-8")
+    print(f"wrote {path} ({len(enum)} values)")
+
+
 def main() -> None:
     for name, (date, stem) in PINNED.items():
         url = f"{BASE}/{name}/{date}/{stem}.desise"
@@ -54,6 +65,7 @@ def main() -> None:
         path.write_text(json.dumps(data, indent=1), encoding="utf-8")
         print(f"wrote {path} ({len(data['terms'])} terms)")
     fetch_uat()
+    fetch_ssys()
 
 
 if __name__ == "__main__":
