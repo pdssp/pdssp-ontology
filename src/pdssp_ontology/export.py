@@ -38,8 +38,23 @@ SCHEMES = {  # file stem -> (scheme local name, STAC field it feeds)
     "product-type": ("ProductTypeScheme", "product:type"),
     "method": ("MethodScheme", "pdssp:method"),
     "processing-level": ("ProcessingLevelScheme", "processing:level"),
+    "target": ("TargetScheme", "ssys:targets"),
+    "target-class": ("TargetClassScheme", "ssys:target_class"),
+    "platform": ("PlatformScheme", "platform"),
+    "instrument": ("InstrumentScheme", "instruments"),
+    "mission": ("MissionScheme", "mission"),
+    "crs": ("CrsScheme", "proj:code"),
+    "band": ("BandScheme", "bands[].name"),
 }
 MATCHES = [SKOS.exactMatch, SKOS.closeMatch, SKOS.broadMatch, SKOS.narrowMatch, SKOS.relatedMatch]
+# Links between concepts of different schemes, shown next to Broader.
+RELATIONS = [("class", vocab.PDSSP.targetClass), ("orbits", vocab.PDSSP.primaryBody),
+             ("hosted by", URIRef("http://www.w3.org/ns/sosa/isHostedBy")),
+             ("platform", URIRef("http://www.w3.org/ns/sosa/deployedOnPlatform")),
+             ("channel of", URIRef("http://www.w3.org/ns/sosa/isSubSystemOf")),
+             ("body", vocab.PDSSP.referenceBody)]
+CODES = [("NAIF", vocab.PDSSP.naifId), ("COSPAR", vocab.PDSSP.cosparId),
+         ("centre µm", vocab.PDSSP.centerWavelength), ("FWHM µm", vocab.PDSSP.fullWidthHalfMax)]
 CSS = """
 :root{--bg:#fff;--fg:#1e1e1e;--muted:#5a5a5a;--line:#e3e3e3;--head:#412fb2;--accent:#00b29c;--card:#f5f5f5}
 @media (prefers-color-scheme: dark){:root{--bg:#141414;--fg:#ececec;--muted:#a9a9a9;--line:#333;--head:#a99cff;--accent:#3fd6c2;--card:#1e1e1e}}
@@ -66,10 +81,19 @@ def local(iri) -> str:
 
 
 SOURCES = {"https://apps.usgs.gov/thesaurus/": "USGS", "http://voparis-ns.obspm.fr/rdf/epn/": "EPN",
-           "http://www.w3.org/ns/sosa/": "sosa", "http://www.w3.org/ns/ssn/ext/": "ssn-ext"}
+           "http://www.w3.org/ns/sosa/": "sosa", "http://www.w3.org/ns/ssn/ext/": "ssn-ext",
+           "http://www.wikidata.org/entity/": "wd", "urn:nasa:pds:context:": "pds",
+           "http://www.ivoa.net/rdf/messenger": "messenger", "http://www.opengis.net/def/crs/IAU/2015/": "IAU_2015",
+           "http://astrothesaurus.org/uat/": "UAT"}
+
+
+PDS_REGISTRY = "https://pds.mcp.nasa.gov/api/search/1/products/"
 
 
 def link(iri) -> str:
+    if str(iri).startswith("urn:nasa:pds:context:"):  # a LID: link to the PDS registry
+        lid = str(iri)
+        return f"<a href='{html.escape(PDS_REGISTRY + lid)}'>pds:{html.escape(lid.split(':', 4)[-1])}</a>"
     text = unquote(local(iri))
     prefix = next((p for base, p in SOURCES.items() if str(iri).startswith(base)), None)
     shown = f"{prefix}:{text}" if prefix else text
@@ -117,19 +141,29 @@ def thesaurus_html(graph: Graph) -> str:
                                for p in MATCHES for o in graph.objects(c, p))
             matches = " ".join([matches, *extra.get(str(c), [])])
             alt = ", ".join(sorted(str(a) for a in graph.objects(c, SKOS.altLabel)))
-            parents = ", ".join(f"<a href='#{local(b)}'>{html.escape(vocab.label(graph, b))}</a>"
-                                for b in graph.objects(c, SKOS.broader))
+            parents = ", ".join([f"<a href='#{local(b)}'>{html.escape(vocab.label(graph, b))}</a>"
+                                 for b in graph.objects(c, SKOS.broader)]
+                                + [f"{name}: <a href='#{local(o)}'>{html.escape(vocab.label(graph, o))}</a>"
+                                   for name, p in RELATIONS for o in graph.objects(c, p)])
+            codes = [f"{name} {html.escape(str(o))}" for name, p in CODES for o in graph.objects(c, p)]
+            value = vocab.value(graph, c)
+            if value != vocab.label(graph, c):
+                codes.insert(0, f"value <code>{html.escape(value)}</code>")
             rows.append(f"<tr id='{local(c)}'><td><b>{html.escape(vocab.label(graph, c))}</b><br>"
-                        f"<code class='muted'>{local(c)}</code></td><td>{html.escape(alt)}</td>"
+                        f"<code class='muted'>{local(c)}</code>"
+                        f"{''.join(f'<br><span class=muted>{x}</span>' for x in codes)}</td><td>{html.escape(alt)}</td>"
                         f"<td>{html.escape(str(graph.value(c, SKOS.definition) or ''))}</td>"
                         f"<td>{parents}</td><td>{matches}</td></tr>")
         title = graph.value(scheme, URIRef("http://purl.org/dc/terms/title")) or scheme_name
+        sources = " · ".join(f"<a href='{html.escape(str(s))}'>{html.escape(str(s).split('://', 1)[-1].rstrip('/'))}</a>"
+                             for s in sorted(graph.objects(scheme, URIRef("http://purl.org/dc/terms/source"))))
         parts.append(
             f"<h2 id='{scheme_name}'>{html.escape(str(title))}</h2>"
             f"<p>{html.escape(str(graph.value(scheme, SKOS.definition) or ''))}<br>"
             f"<span class='muted'>Used by STAC field <code>{field}</code>. Downloads: "
             f"<a href='{stem}.ttl'>Turtle</a> · <a href='{stem}.jsonld'>JSON-LD</a> · "
-            f"<a href='{stem}.desise.json'>desise</a></span></p>"
+            f"<a href='{stem}.desise.json'>desise</a>"
+            f"{'<br>Sources: ' + sources if sources else ''}</span></p>"
             "<div class='wrap'><table><tr><th>Concept</th><th>Also accepted</th><th>Definition</th>"
             f"<th>Broader</th><th>Matches</th></tr>{''.join(rows)}</table></div>")
     return page("PDSSP Thesaurus", "Controlled vocabularies for PDSSP STAC catalogues. Every concept IRI "
@@ -224,7 +258,7 @@ def mapping_html() -> str:
 
 def enums() -> dict[str, list[str]]:
     graph = vocab.thesaurus()
-    return {field: [vocab.label(graph, c) for c in vocab.concepts_in_scheme(graph, vocab.PDSSP[name])]
+    return {field: sorted(vocab.value(graph, c) for c in vocab.concepts_in_scheme(graph, vocab.PDSSP[name]))
             for name, field in SCHEMES.values()}
 
 

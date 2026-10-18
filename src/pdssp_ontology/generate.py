@@ -31,6 +31,13 @@ VALUE_FIELDS = {
     "product:type": ("ProductTypeScheme", "productType", "product-type"),
     "processing:level": ("ProcessingLevelScheme", "processingLevel", "processing-level"),
     "pdssp:method": ("MethodScheme", "method", "method"),
+    "ssys:targets": ("TargetScheme", "target", "target"),
+    "ssys:target_class": ("TargetClassScheme", "targetClass", "target-class"),
+    "platform": ("PlatformScheme", "platform", "platform"),
+    "instruments": ("InstrumentScheme", "instrument", "instrument"),
+    "mission": ("MissionScheme", "mission", "mission"),
+    "proj:code": ("CrsScheme", "crs", "crs"),
+    "bands": ("BandScheme", "band", "band"),
 }
 
 
@@ -49,8 +56,8 @@ def enums_schema() -> dict:
         graph, concepts = _concepts(scheme)
         definitions[name] = {
             "type": "string",
-            "description": f"{field}: prefLabel of a concept of {vocab.PDSSP[scheme]}",
-            "enum": [vocab.label(graph, c) for c in concepts],
+            "description": f"{field}: value (notation, else prefLabel) of a concept of {vocab.PDSSP[scheme]}",
+            "enum": [vocab.value(graph, c) for c in concepts],
         }
     return {"$schema": "http://json-schema.org/draft-07/schema#",
             "$id": f"{BASE}/enums.schema.json",
@@ -61,17 +68,32 @@ def enums_schema() -> dict:
 def sync_profile(schema: dict) -> dict:
     """Overwrite the enum lists of a stacplanet schema with the thesaurus
     values, at both places the profile uses them (Item properties and
-    Collection summaries). Returns the patched schema."""
+    Collection summaries). Returns the patched schema.
+
+    Only fields the profile already closes with an enum are patched: the
+    profile decides which fields are controlled, the thesaurus supplies the
+    values. Closing a new field (e.g. ssys:targets) is a profile change."""
     defs = enums_schema()["definitions"]
     item = schema["definitions"]["item"]["properties"]["properties"]["properties"]
     summaries = schema["definitions"]["collection"]["properties"]["summaries"]["properties"]
     for field, (_, name, _) in VALUE_FIELDS.items():
         values = defs[name]["enum"]
-        if field in item:
-            item[field]["enum"] = values
-        if field in summaries:
-            summaries[field]["items"]["enum"] = values
+        for prop in (item.get(field), summaries.get(field)):
+            target = enum_holder(prop)
+            if target is not None:
+                target["enum"] = values
     return schema
+
+
+def enum_holder(prop: dict | None) -> dict | None:
+    """The sub-schema carrying the enum of a profile property (the property
+    itself, or its items for an array), or None if it has no enum."""
+    if not prop:
+        return None
+    for node in (prop, prop.get("items") or {}):
+        if "enum" in node:
+            return node
+    return None
 
 
 # -------------------------------------------------------- 2. JSON-LD context ----
@@ -97,7 +119,7 @@ def jsonld_context() -> dict:
         if name in VALUE_FIELDS:
             graph, concepts = _concepts(VALUE_FIELDS[name][0])
             term["@type"] = "@vocab"
-            term["@context"] = {vocab.label(graph, c): str(c) for c in concepts}
+            term["@context"] = {vocab.value(graph, c): str(c) for c in concepts}
         ctx[name] = term
     ctx["datetime"] = {"@id": "http://www.w3.org/ns/sosa/phenomenonTime",
                        "@type": "http://www.w3.org/2001/XMLSchema#dateTime"}
@@ -155,27 +177,37 @@ def _narrower_transitive(graph, concept) -> list:
     return out
 
 
+def _search_path(field: str, scheme: str) -> str:
+    """Where the values sit in an Item: the jsonPath of the STAC field taking
+    its values from the scheme (bands live on the data asset)."""
+    fields_graph = vocab.stac_fields()
+    for f in fields_graph.subjects(vocab.PDSSP.valueScheme, vocab.PDSSP[scheme]):
+        path = str(fields_graph.value(f, vocab.PDSSP.jsonPath)).split("|")[0].strip()
+        return f"{path}.name" if field == "bands" else path
+    return f"properties.{field}"
+
+
 def search_config() -> dict:
     """Per controlled field: a facet tree (labels, IRIs), the query
     expansion (a value plus everything narrower), and a normaliser
-    (any accepted spelling -> the indexed prefLabel)."""
+    (any accepted spelling -> the indexed value: notation, else prefLabel)."""
     facets, normalise = {}, {}
     for field, (scheme, _, _) in VALUE_FIELDS.items():
         graph, concepts = _concepts(scheme)
 
         def node(c):
-            return {"value": vocab.label(graph, c), "iri": str(c),
+            return {"value": vocab.value(graph, c), "label": vocab.label(graph, c), "iri": str(c),
                     "children": [node(n) for n in sorted(graph.objects(c, SKOS.narrower),
                                                          key=lambda n: vocab.label(graph, n))]}
 
         tops = sorted(graph.objects(vocab.PDSSP[scheme], SKOS.hasTopConcept), key=lambda c: vocab.label(graph, c))
         expand, field_norm = {}, {}
         for c in concepts:
-            label = vocab.label(graph, c)
-            expand[label] = [label] + sorted({vocab.label(graph, n) for n in _narrower_transitive(graph, c)})
-            for alt in [label, *graph.objects(c, SKOS.altLabel)]:
-                field_norm[str(alt).casefold()] = label
-        facets[field] = {"field": f"properties.{field}", "scheme": str(vocab.PDSSP[scheme]),
+            value = vocab.value(graph, c)
+            expand[value] = [value] + sorted({vocab.value(graph, n) for n in _narrower_transitive(graph, c)})
+            for alt in vocab.accepted_labels(graph, c):
+                field_norm[str(alt).casefold()] = vocab.value(graph, c)
+        facets[field] = {"field": _search_path(field, scheme), "scheme": str(vocab.PDSSP[scheme]),
                          "tree": [node(t) for t in tops], "expand": expand}
         normalise[field] = field_norm
     return {"facets": facets, "normalise": normalise}

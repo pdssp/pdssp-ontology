@@ -28,6 +28,8 @@ stacf:bbox	bbox	skos:closeMatch	epn:c2min	c2min	semapv:ManualMappingCuration	tra
 stacf:bbox	bbox	skos:closeMatch	epn:c2max	c2max	semapv:ManualMappingCuration	transform=bbox_lat_max	
 stacf:geometry	geometry	skos:closeMatch	epn:s_region	s_region	semapv:ManualMappingCuration	transform=geojson_to_dali_polygon	DALI polygon, east longitudes; check with STILTS taplint.
 stacf:proj_wkt2	proj:wkt2	skos:closeMatch	epn:spatial_frame_type	spatial_frame_type	semapv:ManualMappingCuration	transform=const:body|default=none	A projected planetary footprint is body-fixed; no projection means no footprint.
+stacf:mission	mission	skos:exactMatch	sssom:NoTermFound		semapv:ManualMappingCuration		No EPNcore column for the mission: instrument_host_name carries the platform.
+stacf:proj_code	proj:code	skos:closeMatch	epn:spatial_frame_type	spatial_frame_type	semapv:ManualMappingCuration	transform=const:body	An IAU planetary CRS is body-fixed.
 stacf:platform	platform	skos:exactMatch	epn:instrument_host_name	instrument_host_name	semapv:ManualMappingCuration	transform=identity	
 stacf:instruments	instruments	skos:exactMatch	epn:instrument_name	instrument_name	semapv:ManualMappingCuration	transform=join_hash	
 stacf:product_type	product:type	skos:closeMatch	epn:dataproduct_type	dataproduct_type	semapv:ManualMappingCuration	transform=value_map:product-type	Value mapping in product-type.sssom.tsv.
@@ -48,4 +50,5 @@ stacf:asset_data_type	assets[role=data].type	skos:exactMatch	epn:access_format	a
 stacf:asset_thumbnail_href	assets[role=thumbnail].href	skos:exactMatch	epn:thumbnail_url	thumbnail_url	semapv:ManualMappingCuration	transform=identity	
 stacf:sci_doi	sci:doi	skos:closeMatch	epn:bib_reference	bib_reference	semapv:ManualMappingCuration	transform=identity	
 stacf:pdssp_method	pdssp:method	skos:exactMatch	sssom:NoTermFound		semapv:ManualMappingCuration		No EPNcore column for the acquisition technique: lost on export.
+stacf:asset_data_bands	assets[role=data].bands	skos:exactMatch	sssom:NoTermFound		semapv:ManualMappingCuration		Band names have no EPNcore column; spectral_range_* is to be computed from eo:center_wavelength and eo:full_width_half_max (not done yet).
 stacf:version	version	skos:exactMatch	sssom:NoTermFound		semapv:ManualMappingCuration		No EPNcore column for the product version: lost on export.

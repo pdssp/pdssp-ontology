@@ -89,18 +89,20 @@
               "type": "string",
               "enum": [
                 "asteroid",
-                "dwarf_planet",
-                "planet",
-                "satellite",
+                "calibration",
                 "comet",
+                "dwarf_planet",
                 "exoplanet",
                 "interplanetary_medium",
+                "interstellar-object",
+                "planet",
+                "rogue-planet",
                 "sample",
+                "satellite",
                 "sky",
-                "spacecraft",
                 "spacejunk",
-                "star",
-                "calibration"
+                "spacecraft",
+                "star"
               ]
             },
             "version": {
@@ -110,11 +112,11 @@
             "product:type": {
               "type": "string",
               "enum": [
+                "Anaglyph",
+                "Digital elevation model",
                 "Image",
                 "Image mosaic",
                 "Orthoimage",
-                "Anaglyph",
-                "Digital elevation model",
                 "Point cloud"
               ]
             },
@@ -122,27 +124,27 @@
               "type": "string",
               "enum": [
                 "Ancillary",
-                "Raw",
                 "Calibrated",
-                "Derived"
+                "Derived",
+                "Raw"
               ]
             },
             "pdssp:method": {
               "type": "string",
               "enum": [
-                "Panchromatic imaging",
-                "Multispectral imaging",
-                "Hyperspectral imaging",
-                "Visible light imaging",
-                "Infrared imaging",
-                "Thermal imaging",
-                "Radar imaging",
-                "Microwave imaging",
-                "Lidar",
                 "Aerial photography",
+                "Hyperspectral imaging",
+                "Infrared imaging",
+                "Lidar",
+                "Microwave imaging",
+                "Multispectral imaging",
+                "Panchromatic imaging",
                 "Photogrammetry",
+                "Radar imaging",
+                "Remote sensing",
                 "Stereoscopic imaging",
-                "Remote sensing"
+                "Thermal imaging",
+                "Visible light imaging"
               ]
             }
           }
@@ -281,11 +283,11 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "Anaglyph",
+                  "Digital elevation model",
                   "Image",
                   "Image mosaic",
                   "Orthoimage",
-                  "Anaglyph",
-                  "Digital elevation model",
                   "Point cloud"
                 ]
               },
@@ -297,9 +299,9 @@
                 "type": "string",
                 "enum": [
                   "Ancillary",
-                  "Raw",
                   "Calibrated",
-                  "Derived"
+                  "Derived",
+                  "Raw"
                 ]
               },
               "minItems": 1
@@ -309,19 +311,19 @@
               "items": {
                 "type": "string",
                 "enum": [
-                  "Panchromatic imaging",
-                  "Multispectral imaging",
-                  "Hyperspectral imaging",
-                  "Visible light imaging",
-                  "Infrared imaging",
-                  "Thermal imaging",
-                  "Radar imaging",
-                  "Microwave imaging",
-                  "Lidar",
                   "Aerial photography",
+                  "Hyperspectral imaging",
+                  "Infrared imaging",
+                  "Lidar",
+                  "Microwave imaging",
+                  "Multispectral imaging",
+                  "Panchromatic imaging",
                   "Photogrammetry",
+                  "Radar imaging",
+                  "Remote sensing",
                   "Stereoscopic imaging",
-                  "Remote sensing"
+                  "Thermal imaging",
+                  "Visible light imaging"
                 ]
               },
               "minItems": 1

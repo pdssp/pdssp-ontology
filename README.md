@@ -56,13 +56,35 @@ See [`docs/model-management.md`](docs/model-management.md). In short:
 
 ## The PDSSP Thesaurus
 
-Three independent SKOS concept schemes under `vocab/thesaurus/`:
+Ten independent SKOS concept schemes under `vocab/thesaurus/`:
 
 | Dimension | Question | File | Example values |
 |---|---|---|---|
 | Product type | What am I downloading? | `product-type.ttl` | Digital elevation model, Orthoimage, Anaglyph, Point cloud |
 | Method | How was it produced? | `method.ttl` | Panchromatic imaging, Multispectral imaging, Photogrammetry, Stereoscopic imaging |
-| Processing level | How far has it been processed? | `processing-level.ttl` | Raw, Edited, Calibrated, Resampled, Derived, Ancillary |
+| Processing level | How far has it been processed? | `processing-level.ttl` | Raw, Calibrated, Derived, Ancillary |
+| Target | What was observed? (`ssys:targets`) | `target.ttl` | Mars, Phobos, Moon, Mars Global Surveyor, C/2013 A1 (Siding Spring) |
+| Target class | What kind of body? (`ssys:target_class`) | `target-class.ttl` | planet, satellite, comet, spacecraft (the PADC EPN terms) |
+| Platform | Which spacecraft? (`platform`) | `platform.ttl` | Mars Reconnaissance Orbiter |
+| Instrument | Which instrument? (`instruments`) | `instrument.ttl` | HiRISE, Context Camera |
+| Mission | For which mission? (`mission`) | `mission.ttl` | Mars Reconnaissance Orbiter |
+| Spectral band | Which channel? (`bands[].name`) | `band.ttl` | HiRISE RED, HiRISE NEAR-INFRARED, CTX broadband |
+| CRS | In which reference system? (`proj:code`) | `crs.ttl` | IAU_2015:49901, IAU_2015:49902 |
+
+Targets, platforms and instruments carry their NAIF ID (`pdssp:naifId`) and
+`skos:exactMatch` to Wikidata and to the PDS4 context product (LID); a target points at its class
+(`pdssp:targetClass`) and a satellite at the body it orbits
+(`pdssp:primaryBody`, not `skos:broader`, so searching Mars does not return
+Phobos). Target classes are the PADC EPN target-class terms one to one; their
+`skos:notation` is the value written in the data. Source variants
+("MARS RECONNAISSANCE ORBITER (MRO)", "HIRISE", the CTX misspelling "Jupitr")
+are alt/hidden labels, resolved by the generated `search/facets.json`
+normaliser. Every value's origin is listed in
+[`docs/sources.md`](docs/sources.md) (and as `dct:source` on each scheme).
+Bands are instrument channels (notation = `bands[].name`,
+`skos:broadMatch` to the IVOA messenger vocabulary); CRS concepts are the IAU
+2015 CRS of the OGC registry (notation = `proj:code`). The seven new schemes were seeded from the ODE STAC collections
+(MRO HiRISE and CTX, 2026-10-18).
 
 Reuses the [USGS Thesaurus](https://apps.usgs.gov/thesaurus/) where it
 genuinely fits (`skos:exactMatch`/`skos:closeMatch` back to the source

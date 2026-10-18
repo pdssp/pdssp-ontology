@@ -7,7 +7,7 @@ between them are represented, checked, published and changed.
 
 | What | Representation | File(s) | Named graph / published at |
 |---|---|---|---|
-| Values (product type, method, processing level) | SKOS concept schemes | `vocab/thesaurus/*.ttl` | `{base}/thesaurus`, browsable at `{base}/vocab/` |
+| Values (product type, method, processing level, target, target class, platform, instrument, mission, band, CRS) | SKOS concept schemes | `vocab/thesaurus/*.ttl` | `{base}/thesaurus`, browsable at `{base}/vocab/` |
 | STAC fields used by the profile | RDF properties (`rdf:Property`), with `pdssp:jsonPath` and `pdssp:omsConcept` | `vocab/stac/stac-fields.ttl` | `{base}/stac`, page `{base}/stac/` |
 | EPN-TAP 2.0 columns | RDF properties, with unit, mandatory flag, value vocabulary | `vocab/epn-tap/epn-tap-columns.ttl` | `{base}/epn-tap`, page `{base}/epn-tap/` |
 | EPN-TAP value lists (dataproduct_type, target_class, spatial_frame_type) | **Not re-modelled**: PADC SKOS vocabularies (Observatoire de Paris, IVOA "Vocabularies in the VO 2" form) | snapshots in `vocab/external/*.desise.json` | `http://voparis-ns.obspm.fr/rdf/epn/2.0/...` |
@@ -19,6 +19,8 @@ between them are represented, checked, published and changed.
 Rule of thumb: a value picked from a list is SKOS; a field or a column is
 an RDF property; a correspondence is an SSSOM row; anything computed is a
 named transform.
+
+Where every value comes from: [sources.md](sources.md).
 
 ## 2. Why OMS appears everywhere
 

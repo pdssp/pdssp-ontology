@@ -2,8 +2,9 @@
 mappings point at (vocab/external/*.desise.json).
 
 They are PADC (Observatoire de Paris) vocabularies for EPNcore, published
-in IVOA "Vocabularies in the VO 2" form, CC-0. Pinned by release date so a
-refresh is a reviewed change, never a silent one.
+in IVOA "Vocabularies in the VO 2" form, CC-0, and the label table of the
+Unified Astronomy Thesaurus (UAT), which the thesaurus links to. Pinned by
+release so a refresh is a reviewed change, never a silent one.
 
 Usage::
 
@@ -15,6 +16,8 @@ from __future__ import annotations
 import json
 
 import httpx
+from rdflib import Graph, URIRef
+from rdflib.namespace import OWL, SKOS
 
 from .vocab import EXTERNAL_DIR
 
@@ -24,6 +27,22 @@ PINNED = {  # name -> (release date, file stem on the PADC server)
     "product-type": ("2024-03-28", "epn_product_type"),
     "spatial-frame-type": ("2024-05-07", "epn_spatial_frame_type"),
 }
+UAT_RELEASE = "v6.0.0"
+UAT_URL = f"https://raw.githubusercontent.com/astrothesaurus/UAT/{UAT_RELEASE}/UAT.rdf"
+
+
+def fetch_uat() -> None:
+    """Keep only what the checks need: every UAT concept id, its prefLabel
+    and whether it is deprecated (the full RDF is 3 MB)."""
+    graph = Graph().parse(data=httpx.get(UAT_URL, timeout=60).raise_for_status().text, format="xml")
+    terms = {str(c).rsplit("/", 1)[-1]: {"label": str(label), "deprecated": (c, OWL.deprecated, None) in graph}
+             for c, label in graph.subject_objects(SKOS.prefLabel)
+             if isinstance(c, URIRef) and str(c).startswith("http://astrothesaurus.org/uat/")}
+    data = {"uri": "http://astrothesaurus.org/uat/", "terms": dict(sorted(terms.items(), key=lambda kv: int(kv[0]))),
+            "_snapshot": {"version": UAT_RELEASE, "source": UAT_URL}}
+    path = EXTERNAL_DIR / "uat-labels.json"
+    path.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
+    print(f"wrote {path} ({len(terms)} terms)")
 
 
 def main() -> None:
@@ -34,6 +53,7 @@ def main() -> None:
         path = EXTERNAL_DIR / f"epn-{name}.desise.json"
         path.write_text(json.dumps(data, indent=1), encoding="utf-8")
         print(f"wrote {path} ({len(data['terms'])} terms)")
+    fetch_uat()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,34 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix wd: <http://www.wikidata.org/entity/> .
+
+# PDSSP Mission
+# =============
+# The mission (PDS "investigation") an observation belongs to: STAC
+# `mission`, filled from PDS3 MISSION_NAME (pds:mission_name). OMS reading:
+# a mission is a Deployment of platforms and instruments for a purpose,
+# hence sosa:deployedOnPlatform to the PDSSP Platform concept. A mission is
+# not its spacecraft (Rosetta = orbiter + Philae lander), so it is a scheme
+# of its own even when, as for MRO, both share a name.
+#
+# - prefLabel: the PDS4 investigation context product title.
+# - skos:exactMatch: the PDS4 context product (LID, resolvable through the
+#   PDS registry API https://pds.mcp.nasa.gov/api/search/1/products/{lid}).
+# - skos:closeMatch: Wikidata, whose item describes the spacecraft rather
+#   than the mission.
+
+pdssp:MissionScheme a skos:ConceptScheme ;
+    dct:title "PDSSP Mission"@en ;
+    dct:source <https://pds.mcp.nasa.gov/api/search/1/products> , <https://www.wikidata.org/> , <https://odestac.staging.stacplanet.pdssp.eu/collections> ;
+    skos:definition "The mission (PDS investigation) an observation was made for."@en ;
+    skos:hasTopConcept pdssp:Mission-MRO .
+
+pdssp:Mission-MRO a skos:Concept ; skos:inScheme pdssp:MissionScheme ; skos:topConceptOf pdssp:MissionScheme ;
+    skos:prefLabel "Mars Reconnaissance Orbiter"@en ;
+    skos:altLabel "MRO"@en , "MARS RECONNAISSANCE ORBITER (MRO)" ;
+    skos:definition "NASA Mars mission (launch 2005): high-resolution imaging, spectroscopy and sounding of Mars, and telecommunications relay for landers."@en ;
+    sosa:deployedOnPlatform pdssp:Platform-MRO ;
+    skos:exactMatch <urn:nasa:pds:context:investigation:mission.mars_reconnaissance_orbiter> ;
+    skos:closeMatch wd:Q183160 .

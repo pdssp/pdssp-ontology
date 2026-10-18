@@ -150,5 +150,20 @@ def label(graph: Graph, node) -> str:
     return str(node).rsplit("#", 1)[-1]
 
 
+def value(graph: Graph, concept) -> str:
+    """The string written in the data for a concept: its skos:notation when
+    it has one (target class: "planet"), else its prefLabel."""
+    notation = graph.value(concept, SKOS.notation)
+    return str(notation) if notation is not None else label(graph, concept)
+
+
+def accepted_labels(graph: Graph, concept) -> list[str]:
+    """Every spelling accepted on input: value, prefLabel, altLabels, hiddenLabels."""
+    labels = [value(graph, concept), label(graph, concept)]
+    for pred in (SKOS.altLabel, SKOS.hiddenLabel):
+        labels += [str(a) for a in graph.objects(concept, pred)]
+    return labels
+
+
 def concepts_in_scheme(graph: Graph, scheme: URIRef) -> list[URIRef]:
     return sorted(set(graph.subjects(SKOS.inScheme, scheme)), key=lambda c: label(graph, c))

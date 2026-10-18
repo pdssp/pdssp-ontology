@@ -1,0 +1,73 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix msg: <http://www.ivoa.net/rdf/messenger#> .
+
+# PDSSP Spectral Band
+# ===================
+# The spectral channels of an instrument: STAC `bands[].name` on the data
+# asset (and the Collection `bands` summary). Seeded from the ODE STAC
+# collections (2026-10-18).
+#
+# A band name is only meaningful with its instrument ("RED" exists on many
+# cameras), so each concept is one instrument channel:
+# - prefLabel: instrument + channel ("HiRISE RED"), unique in the scheme;
+# - skos:notation: the name written in bands[].name ("RED");
+# - sosa:isSubSystemOf: the PDSSP Instrument concept;
+# - pdssp:centerWavelength / pdssp:fullWidthHalfMax: micrometres, as
+#   eo:center_wavelength / eo:full_width_half_max (values from the ODE
+#   items; CTX from Bell et al. 2013, doi:10.1555/mars.2013.0001);
+# - skos:broadMatch: the IVOA messenger term (the spectral domain), reused
+#   instead of re-modelled: http://www.ivoa.net/rdf/messenger.
+#
+# Not bands, so no concept: "DTM" and "ORTHOIMAGE" (HiRISE DTM collection
+# summary: these are products, see Product Type) and "COLOR" (HiRISE RDR:
+# a colour composite of IRB or RGB channels).
+
+pdssp:centerWavelength a rdf:Property ;
+    rdfs:label "center wavelength (µm)"@en ;
+    rdfs:range xsd:decimal .
+
+pdssp:fullWidthHalfMax a rdf:Property ;
+    rdfs:label "full width at half maximum (µm)"@en ;
+    rdfs:range xsd:decimal .
+
+pdssp:BandScheme a skos:ConceptScheme ;
+    dct:title "PDSSP Spectral Band"@en ;
+    dct:source <http://www.ivoa.net/rdf/messenger> , <https://doi.org/10.1555/mars.2013.0001> , <https://odestac.staging.stacplanet.pdssp.eu/collections> ;
+    skos:definition "Spectral channels of the instruments. The notation is the value written in STAC bands[].name; the concept identifies the channel of one instrument."@en ;
+    skos:hasTopConcept pdssp:Band-HiRISE-BG , pdssp:Band-HiRISE-RED , pdssp:Band-HiRISE-NIR , pdssp:Band-CTX-BroadBand .
+
+pdssp:Band-HiRISE-BG a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
+    skos:prefLabel "HiRISE BLUE-GREEN"@en ; skos:notation "BLUE-GREEN" ;
+    skos:altLabel "BG"@en ;
+    skos:definition "HiRISE blue-green channel (CCDs BG12, BG13)."@en ;
+    pdssp:centerWavelength 0.5 ; pdssp:fullWidthHalfMax 0.2 ;
+    sosa:isSubSystemOf pdssp:Instrument-HiRISE ;
+    skos:broadMatch msg:Optical .
+
+pdssp:Band-HiRISE-RED a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
+    skos:prefLabel "HiRISE RED"@en ; skos:notation "RED" ;
+    skos:definition "HiRISE broad red channel (CCDs RED0 to RED9), the full-swath panchromatic image."@en ;
+    pdssp:centerWavelength 0.7 ; pdssp:fullWidthHalfMax 0.3 ;
+    sosa:isSubSystemOf pdssp:Instrument-HiRISE ;
+    skos:broadMatch msg:Optical .
+
+pdssp:Band-HiRISE-NIR a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
+    skos:prefLabel "HiRISE NEAR-INFRARED"@en ; skos:notation "NEAR-INFRARED" ;
+    skos:altLabel "IR"@en , "NIR"@en ;
+    skos:definition "HiRISE near-infrared channel (CCDs IR10, IR11)."@en ;
+    pdssp:centerWavelength 0.9 ; pdssp:fullWidthHalfMax 0.3 ;
+    sosa:isSubSystemOf pdssp:Instrument-HiRISE ;
+    skos:broadMatch msg:Optical .
+
+pdssp:Band-CTX-BroadBand a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
+    skos:prefLabel "CTX broadband"@en ; skos:notation "BroadBand" ;
+    skos:definition "CTX single panchromatic channel, effective band centre 611 ± 189 nm."@en ;
+    pdssp:centerWavelength 0.611 ; pdssp:fullWidthHalfMax 0.189 ;
+    sosa:isSubSystemOf pdssp:Instrument-CTX ;
+    skos:broadMatch msg:Optical .

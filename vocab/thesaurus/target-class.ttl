@@ -1,0 +1,127 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix uat: <http://astrothesaurus.org/uat/> .
+@prefix epntc: <http://voparis-ns.obspm.fr/rdf/epn/2.0/target-class#> .
+
+# PDSSP Target Class
+# ==================
+# What kind of body an observation is about (ssys:target_class in STAC,
+# target_class in EPN-TAP). Not re-modelled: one PDSSP concept per term of
+# the PADC EPN target-class vocabulary (Observatoire de Paris, snapshot
+# 2024-11-04 in vocab/external/epn-target-class.desise.json), each with
+# skos:exactMatch back to it. The PDSSP concept exists so the targets
+# scheme can point at a class (pdssp:targetClass) and so the class shows
+# up in the same thesaurus, facets and enums as every other value.
+#
+# skos:notation is the value written in the data: the PADC term id
+# ("planet", "dwarf_planet", "interstellar-object"), identical in STAC and
+# EPN-TAP. tests/test_skos_quality.py checks that the notations are exactly
+# the PADC terms, so a PADC update fails CI until this file follows.
+#
+# Unified Astronomy Thesaurus (UAT 6.0.0, https://astrothesaurus.org/):
+# exactMatch when the UAT concept is the same class, closeMatch when its
+# scope differs (UAT "Solar system planets" vs PADC "planet"),
+# narrowMatch when UAT is more specific (Meteorites vs sample). No UAT
+# concept for "sky".
+
+pdssp:TargetClassScheme a skos:ConceptScheme ;
+    dct:title "PDSSP Target Class"@en ;
+    dct:source <http://voparis-ns.obspm.fr/rdf/epn/2.0/target-class/2024-11-04> , <https://github.com/astrothesaurus/UAT/releases/tag/v6.0.0> ;
+    skos:definition "What kind of body or object an observation is about. Aligned one to one with the PADC EPN target-class vocabulary; the notation is the value written in ssys:target_class and in EPN-TAP target_class."@en ;
+    skos:hasTopConcept
+        pdssp:TargetClass-Asteroid , pdssp:TargetClass-Calibration , pdssp:TargetClass-Comet ,
+        pdssp:TargetClass-DwarfPlanet , pdssp:TargetClass-Exoplanet , pdssp:TargetClass-InterplanetaryMedium ,
+        pdssp:TargetClass-InterstellarObject , pdssp:TargetClass-Planet , pdssp:TargetClass-RoguePlanet ,
+        pdssp:TargetClass-Sample , pdssp:TargetClass-Satellite , pdssp:TargetClass-Sky ,
+        pdssp:TargetClass-Spacecraft , pdssp:TargetClass-Spacejunk , pdssp:TargetClass-Star .
+
+pdssp:TargetClass-Asteroid a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Asteroid"@en ; skos:notation "asteroid" ;
+    skos:definition "Asteroid."@en ;
+    skos:exactMatch epntc:asteroid ;
+    skos:exactMatch uat:72 .
+
+pdssp:TargetClass-Calibration a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Calibration"@en ; skos:notation "calibration" ;
+    skos:definition "Observations only related to instrument or signal calibration."@en ;
+    skos:exactMatch epntc:calibration ;
+    skos:closeMatch uat:2179 .
+
+pdssp:TargetClass-Comet a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Comet"@en ; skos:notation "comet" ;
+    skos:definition "Comet."@en ;
+    skos:exactMatch epntc:comet ;
+    skos:exactMatch uat:280 .
+
+pdssp:TargetClass-DwarfPlanet a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Dwarf planet"@en ; skos:notation "dwarf_planet" ;
+    skos:definition "Dwarf planet."@en ;
+    skos:exactMatch epntc:dwarf_planet ;
+    skos:exactMatch uat:419 .
+
+pdssp:TargetClass-Exoplanet a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Exoplanet"@en ; skos:notation "exoplanet" ;
+    skos:definition "Extra-solar planet."@en ;
+    skos:exactMatch epntc:exoplanet ;
+    skos:exactMatch uat:498 .
+
+pdssp:TargetClass-InterplanetaryMedium a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Interplanetary medium"@en ; skos:notation "interplanetary_medium" ;
+    skos:definition "Interplanetary dust observed in context (not samples)."@en ;
+    skos:exactMatch epntc:interplanetary_medium ;
+    skos:closeMatch uat:825 .
+
+pdssp:TargetClass-InterstellarObject a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Interstellar object"@en ; skos:notation "interstellar-object" ;
+    skos:definition "Interstellar object passing through the Solar System."@en ;
+    skos:exactMatch epntc:interstellar-object ;
+    skos:exactMatch uat:52 .
+
+pdssp:TargetClass-Planet a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Planet"@en ; skos:notation "planet" ;
+    skos:definition "Planet."@en ;
+    skos:exactMatch epntc:planet ;
+    skos:closeMatch uat:1260 .
+
+pdssp:TargetClass-RoguePlanet a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Rogue planet"@en ; skos:notation "rogue-planet" ;
+    skos:definition "Rogue planet."@en ;
+    skos:exactMatch epntc:rogue-planet ;
+    skos:exactMatch uat:549 .
+
+pdssp:TargetClass-Sample a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Sample"@en ; skos:notation "sample" ;
+    skos:definition "Lunar or planetary samples, meteorites, terrestrial samples."@en ;
+    skos:exactMatch epntc:sample ;
+    skos:narrowMatch uat:1038 .
+
+pdssp:TargetClass-Satellite a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Satellite"@en ; skos:notation "satellite" ;
+    skos:altLabel "natural satellite"@en , "moon"@en ;
+    skos:definition "Natural satellites only."@en ;
+    skos:exactMatch epntc:satellite ;
+    skos:closeMatch uat:1089 .
+
+pdssp:TargetClass-Sky a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Sky"@en ; skos:notation "sky" ;
+    skos:definition "Other celestial bodies, referred to by sky coordinates."@en ;
+    skos:exactMatch epntc:sky .
+
+pdssp:TargetClass-Spacecraft a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Spacecraft"@en ; skos:notation "spacecraft" ;
+    skos:definition "Spacecraft."@en ;
+    skos:exactMatch epntc:spacecraft ;
+    skos:closeMatch uat:1549 .
+
+pdssp:TargetClass-Spacejunk a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Space junk"@en ; skos:notation "spacejunk" ;
+    skos:definition "Space junk, spacecraft debris."@en ;
+    skos:exactMatch epntc:spacejunk ;
+    skos:exactMatch uat:1542 .
+
+pdssp:TargetClass-Star a skos:Concept ; skos:inScheme pdssp:TargetClassScheme ; skos:topConceptOf pdssp:TargetClassScheme ;
+    skos:prefLabel "Star"@en ; skos:notation "star" ;
+    skos:definition "Star."@en ;
+    skos:exactMatch epntc:star ;
+    skos:closeMatch uat:1634 .

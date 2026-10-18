@@ -78,10 +78,18 @@ stacf:end_datetime a rdf:Property ; rdfs:label "end_datetime" ;
 
 stacf:platform a rdf:Property ; rdfs:label "platform" ;
     pdssp:jsonPath "properties.platform" ; pdssp:omsConcept sosa:isHostedBy ;
+    pdssp:valueScheme pdssp:PlatformScheme ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/instrument.json> .
 
 stacf:instruments a rdf:Property ; rdfs:label "instruments" ;
     pdssp:jsonPath "properties.instruments" ; pdssp:omsConcept sosa:madeBySensor ;
+    pdssp:valueScheme pdssp:InstrumentScheme ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/instrument.json> .
+
+stacf:mission a rdf:Property ; rdfs:label "mission" ;
+    rdfs:comment "Mission (PDS investigation) the observation was made for; from PDS3 MISSION_NAME."@en ;
+    pdssp:jsonPath "properties.mission" ; pdssp:omsConcept sosa:Deployment ;
+    pdssp:valueScheme pdssp:MissionScheme ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/instrument.json> .
 
 stacf:created a rdf:Property ; rdfs:label "created" ;
@@ -104,14 +112,23 @@ stacf:asset_thumbnail_href a rdf:Property ; rdfs:label "assets[role=thumbnail].h
     pdssp:jsonPath "assets[role=thumbnail].href" ; pdssp:omsConcept omsa:resultAccess ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
 
+stacf:asset_data_bands a rdf:Property ; rdfs:label "assets[role=data].bands" ;
+    rdfs:comment "Spectral bands of the data asset; bands[].name takes its values from the PDSSP Spectral Band scheme (notation)."@en ;
+    pdssp:jsonPath "assets[role=data].bands" ; pdssp:omsConcept sosa:observedProperty ;
+    pdssp:valueScheme pdssp:BandScheme ;
+    rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/bands.json> .
+
 # ---- ssys extension --------------------------------------------------------
 stacf:ssys_targets a rdf:Property ; rdfs:label "ssys:targets" ;
     rdfs:comment "Solar system targets: the ultimate feature of interest."@en ;
     pdssp:jsonPath "properties.ssys:targets" ; pdssp:omsConcept ssnext:hasUltimateFeatureOfInterest ;
+    pdssp:valueScheme pdssp:TargetScheme ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.1.1/schema.json> .
 
 stacf:ssys_target_class a rdf:Property ; rdfs:label "ssys:target_class" ;
+    rdfs:comment "Values from the PDSSP Target Class scheme (notation = PADC EPN target-class term)."@en ;
     pdssp:jsonPath "properties.ssys:target_class" ; pdssp:omsConcept omsa:featureOfInterestType ;
+    pdssp:valueScheme pdssp:TargetClassScheme ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.1.1/schema.json> .
 
 stacf:ssys_incidence_angle a rdf:Property ; rdfs:label "ssys:incidence_angle" ;
@@ -131,6 +148,12 @@ stacf:ssys_solar_longitude a rdf:Property ; rdfs:label "ssys:solar_longitude" ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.2.0/schema.json> .
 
 # ---- projection / product / processing / scientific ------------------------
+stacf:proj_code a rdf:Property ; rdfs:label "proj:code" ;
+    rdfs:comment "Code of the CRS, from the PDSSP Coordinate Reference System scheme (notation, e.g. IAU_2015:49902)."@en ;
+    pdssp:jsonPath "properties.proj:code" ; pdssp:omsConcept omsa:spatialReference ;
+    pdssp:valueScheme pdssp:CrsScheme ;
+    rdfs:isDefinedBy <https://stac-extensions.github.io/projection/v2.0.0/schema.json> .
+
 stacf:proj_wkt2 a rdf:Property ; rdfs:label "proj:wkt2" ;
     pdssp:jsonPath "properties.proj:wkt2" ; pdssp:omsConcept omsa:spatialReference ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/projection/v2.0.0/schema.json> .

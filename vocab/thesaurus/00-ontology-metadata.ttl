@@ -16,8 +16,8 @@
 # thesaurus as a whole, the unit Widoco documents and WebVOWL visualizes.
 <https://pdssp.github.io/pdssp-ontology/thesaurus> a owl:Ontology ;
     dct:title "PDSSP Thesaurus"@en ;
-    dct:description "A SKOS thesaurus of controlled vocabularies for planetary science data products, published by the Planetary Data and Services System Platform (PDSSP). It defines three concept schemes -- product type, acquisition/processing method, and processing level -- reusing the USGS Thesaurus's own concepts where they already fit, and extending it where they don't (e.g. anaglyph, point cloud, photogrammetry, stereoscopic imaging). It is consumed by PDSSP's own STAC catalogues (via the `stacplanet` STAC extension's `product:type` and `pdssp:method` fields) so that every mission's metadata draws its values from one shared, dereferenceable vocabulary instead of each mission inventing its own labels."@en ;
-    dct:abstract "PDSSP's controlled vocabulary for classifying planetary science data products by product type, acquisition/processing method, and processing level."@en ;
+    dct:description "A SKOS thesaurus of controlled vocabularies for planetary science data products, published by the Planetary Data and Services System Platform (PDSSP). It defines ten concept schemes -- product type, acquisition/processing method and processing level (reusing the USGS Thesaurus where it fits, extending it where it doesn't, e.g. anaglyph, point cloud, photogrammetry, stereoscopic imaging), target and target class (aligned with NAIF, Wikidata and the PADC EPN target-class vocabulary), platform, instrument and mission (aligned with NAIF, Wikidata and PDS4 context products), spectral band (instrument channels, aligned with the IVOA messenger vocabulary) and coordinate reference system (the IAU 2015 CRS of the OGC registry). It is consumed by PDSSP's own STAC catalogues (`product:type`, `processing:level`, `pdssp:method`, `ssys:targets`, `ssys:target_class`, `platform`, `instruments`, `mission`, `bands`, `proj:code`) so that every mission's metadata draws its values from one shared, dereferenceable vocabulary instead of each mission inventing its own labels."@en ;
+    dct:abstract "PDSSP's controlled vocabulary for planetary science data products: product type, acquisition/processing method, processing level, target, target class, platform, instrument, mission, spectral band and coordinate reference system."@en ;
     dct:creator "Jean-Christophe Malapert (CNES)" ;
     dct:publisher "PDSSP" ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> ;
@@ -27,6 +27,6 @@
     # bumping owl:versionInfo below.
     owl:versionInfo "unreleased" ;
     dct:created "2026-09-29"^^xsd:date ;
-    dct:modified "2026-09-29"^^xsd:date ;
+    dct:modified "2026-10-18"^^xsd:date ;
     vann:preferredNamespacePrefix "pdssp" ;
     vann:preferredNamespaceUri "https://pdssp.github.io/pdssp-ontology/vocab#" .

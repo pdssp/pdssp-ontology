@@ -52,3 +52,18 @@ def test_processing_levels_are_ordered_not_nested():
     for concept in G.subjects(SKOS.inScheme, scheme):
         assert (concept, SKOS.broader, None) not in G, "processing levels are a scale, not a hierarchy"
     assert (vocab.PDSSP.ProcessingLevelSequence, SKOS.memberList, None) in G
+
+
+def test_uat_links_exist_and_are_not_deprecated():
+    """Every link to the Unified Astronomy Thesaurus must hit a live concept of
+    the pinned release (snapshot: vocab/external/uat-labels.json)."""
+    import json
+
+    uat = json.loads((vocab.EXTERNAL_DIR / "uat-labels.json").read_text())["terms"]
+    base = "http://astrothesaurus.org/uat/"
+    for prop in (SKOS.exactMatch, SKOS.closeMatch, SKOS.broadMatch, SKOS.narrowMatch, SKOS.relatedMatch):
+        for s, o in G.subject_objects(prop):
+            if str(o).startswith(base):
+                term = uat.get(str(o)[len(base):])
+                assert term is not None, f"{s}: unknown UAT concept {o}"
+                assert not term["deprecated"], f"{s}: deprecated UAT concept {o} ({term['label']})"
