@@ -72,4 +72,5 @@ def test_concept_scheme_counts(thesaurus: Graph):
         "https://pdssp.github.io/pdssp-ontology/vocab#MissionScheme": 1,
         "https://pdssp.github.io/pdssp-ontology/vocab#BandScheme": 4,
         "https://pdssp.github.io/pdssp-ontology/vocab#CrsScheme": 3,
+        "https://pdssp.github.io/pdssp-ontology/vocab#WavelengthTypeScheme": 9,
     }

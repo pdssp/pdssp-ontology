@@ -1,0 +1,97 @@
+{
+ "uri": "http://www.ivoa.net/rdf/messenger",
+ "flavour": "RDF Class",
+ "terms": {
+  "Photon": {
+   "label": "Photon",
+   "description": "          Carrier particles of the electromagnetic interaction",
+   "wider": [],
+   "narrower": [
+    "Radio",
+    "Millimeter",
+    "Infrared",
+    "Optical",
+    "UV",
+    "X-ray",
+    "Gamma-ray",
+    "EUV"
+   ]
+  },
+  "Radio": {
+   "label": "Radio",
+   "description": "           Photon with a wavelength longer than 10 mm (or ν<30 GHz)",
+   "wider": [
+    "Photon"
+   ],
+   "narrower": []
+  },
+  "Millimeter": {
+   "label": "Millimeter",
+   "description": "      Photon with a wavelength between 0.1 mm and 10 mm (or 30 GHz<=ν<300 GHz)",
+   "wider": [
+    "Photon"
+   ],
+   "narrower": []
+  },
+  "Infrared": {
+   "label": "Infrared",
+   "description": "        Photon with a wavelength between 1 µm and 100 µm",
+   "wider": [
+    "Photon"
+   ],
+   "narrower": []
+  },
+  "Optical": {
+   "label": "Optical",
+   "description": "         Photon with a wavelength between 300 nm and 1000 nm",
+   "wider": [
+    "Photon"
+   ],
+   "narrower": []
+  },
+  "UV": {
+   "label": "Ultraviolet",
+   "description": "     Photon with a wavelength between 100 nm and 300 nm",
+   "wider": [
+    "Photon"
+   ],
+   "narrower": [
+    "EUV"
+   ]
+  },
+  "EUV": {
+   "label": "Extreme UV",
+   "description": "      Photon with an energy between 12 eV and 120 eV",
+   "wider": [
+    "UV"
+   ],
+   "narrower": []
+  },
+  "X-ray": {
+   "label": "X-Ray",
+   "description": "           Photon with an energy between 120 eV and 120 keV",
+   "wider": [
+    "Photon"
+   ],
+   "narrower": []
+  },
+  "Gamma-ray": {
+   "label": "Gamma Ray",
+   "description": "       Photon with an energy above 120 keV",
+   "wider": [
+    "Photon"
+   ],
+   "narrower": []
+  },
+  "Neutrino": {
+   "label": "Neutrino",
+   "description": "        This term comprises all generations of neutrinos (electron, µ, τ), and particles as well as antiparticles.",
+   "wider": [],
+   "narrower": []
+  }
+ },
+ "_snapshot": {
+  "version": "2020-08-26",
+  "source": "http://www.ivoa.net/rdf/messenger/2020-08-26/messenger.desise"
+ }
+}

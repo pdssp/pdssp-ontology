@@ -123,6 +123,15 @@
                   "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/method.json"
                 }
               ]
+            },
+            "pdssp:wavelength_type": {
+              "type": "array",
+              "items": {
+                "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/wavelength-type.json"
+              },
+              "minItems": 1,
+              "uniqueItems": true,
+              "description": "Spectral domains of the data: IVOA messenger terms (Optical, Infrared, UV, ...) from the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Wavelength Type scheme. Derivable from the band names: each band of the thesaurus gives the domain of its centre wavelength."
             }
           }
         },
@@ -271,6 +280,15 @@
               },
               "minItems": 1,
               "description": "Every pdssp:method value this collection's items actually use, from the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Method scheme."
+            },
+            "pdssp:wavelength_type": {
+              "type": "array",
+              "items": {
+                "$ref": "https://pdssp.github.io/pdssp-ontology/schemas/wavelength-type.json"
+              },
+              "minItems": 1,
+              "uniqueItems": true,
+              "description": "Every pdssp:wavelength_type value this collection's items actually use, from the PDSSP Thesaurus (https://pdssp.github.io/pdssp-ontology/vocab/) Wavelength Type scheme."
             }
           }
         },

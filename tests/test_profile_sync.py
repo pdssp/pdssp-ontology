@@ -27,7 +27,8 @@ def _registry() -> Registry:
 def test_profile_uses_the_thesaurus_schemas():
     assert generate.check_profile(SCHEMA) == []
     assert set(generate.profile_refs(SCHEMA)) == {
-        "ssys:targets", "ssys:target_class", "product:type", "processing:level", "pdssp:method"}
+        "ssys:targets", "ssys:target_class", "product:type", "processing:level", "pdssp:method",
+        "pdssp:wavelength_type"}
 
 
 def test_sample_item_validates_against_profile():

@@ -44,6 +44,7 @@ VALUE_FIELDS = {
     "mission": ("MissionScheme", "mission", "mission"),
     "proj:code": ("CrsScheme", "crs", "crs"),
     "bands": ("BandScheme", "band", "band"),
+    "pdssp:wavelength_type": ("WavelengthTypeScheme", "wavelengthType", "wavelength-type"),
 }
 
 

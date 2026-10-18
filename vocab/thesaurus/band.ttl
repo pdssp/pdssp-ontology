@@ -21,13 +21,12 @@
 # - pdssp:centerWavelength / pdssp:fullWidthHalfMax: micrometres, as
 #   eo:center_wavelength / eo:full_width_half_max (values from the ODE
 #   items; CTX from Bell et al. 2013, doi:10.1555/mars.2013.0001);
-# - spectral domain: the IVOA messenger vocabulary, reused instead of
-#   re-modelled (http://www.ivoa.net/rdf/messenger: UV 100-300 nm,
-#   Optical 300-1000 nm, Infrared 1-100 µm). skos:broadMatch the domain
-#   holding the centre wavelength; skos:relatedMatch any other domain the
-#   band [centre - FWHM/2, centre + FWHM/2] overlaps. Checked in CI
-#   (tests/test_skos_quality.py). The HiRISE "NEAR-INFRARED" channel is
-#   mostly Optical in IVOA terms (centre 0.9 µm < 1 µm).
+# - pdssp:wavelengthType: the PDSSP Wavelength Type (IVOA messenger domain,
+#   see wavelength-type.ttl) holding the centre wavelength, the value of
+#   STAC pdssp:wavelength_type for this band; skos:relatedMatch any other
+#   messenger domain the band [centre - FWHM/2, centre + FWHM/2] overlaps.
+#   Checked in CI (tests/test_skos_quality.py). The HiRISE "NEAR-INFRARED"
+#   channel is Optical in IVOA terms (centre 0.9 µm < 1 µm).
 #
 # Not bands, so no concept: "DTM" and "ORTHOIMAGE" (HiRISE DTM collection
 # summary: these are products, see Product Type) and "COLOR" (HiRISE RDR:
@@ -43,7 +42,7 @@ pdssp:fullWidthHalfMax a rdf:Property ;
 
 pdssp:BandScheme a skos:ConceptScheme ;
     dct:title "PDSSP Spectral Band"@en ;
-    dct:source <http://www.ivoa.net/rdf/messenger> , <https://doi.org/10.1555/mars.2013.0001> , <https://odestac.staging.stacplanet.pdssp.eu/collections> ;
+    dct:source <http://www.ivoa.net/rdf/messenger/2020-08-26> , <https://doi.org/10.1555/mars.2013.0001> , <https://odestac.staging.stacplanet.pdssp.eu/collections> ;
     skos:definition "Spectral channels of the instruments. The notation is the value written in STAC bands[].name; the concept identifies the channel of one instrument."@en ;
     skos:hasTopConcept pdssp:Band-HiRISE-BG , pdssp:Band-HiRISE-RED , pdssp:Band-HiRISE-NIR , pdssp:Band-CTX-BroadBand .
 
@@ -53,14 +52,14 @@ pdssp:Band-HiRISE-BG a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topC
     skos:definition "HiRISE blue-green channel (CCDs BG12, BG13)."@en ;
     pdssp:centerWavelength 0.5 ; pdssp:fullWidthHalfMax 0.2 ;
     sosa:isSubSystemOf pdssp:Instrument-HiRISE ;
-    skos:broadMatch msg:Optical .
+    pdssp:wavelengthType pdssp:WavelengthType-Optical .
 
 pdssp:Band-HiRISE-RED a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
     skos:prefLabel "HiRISE RED"@en ; skos:notation "RED" ;
     skos:definition "HiRISE broad red channel (CCDs RED0 to RED9), the full-swath panchromatic image."@en ;
     pdssp:centerWavelength 0.7 ; pdssp:fullWidthHalfMax 0.3 ;
     sosa:isSubSystemOf pdssp:Instrument-HiRISE ;
-    skos:broadMatch msg:Optical .
+    pdssp:wavelengthType pdssp:WavelengthType-Optical .
 
 pdssp:Band-HiRISE-NIR a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
     skos:prefLabel "HiRISE NEAR-INFRARED"@en ; skos:notation "NEAR-INFRARED" ;
@@ -68,8 +67,8 @@ pdssp:Band-HiRISE-NIR a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:top
     skos:definition "HiRISE near-infrared channel (CCDs IR10, IR11)."@en ;
     pdssp:centerWavelength 0.9 ; pdssp:fullWidthHalfMax 0.3 ;
     sosa:isSubSystemOf pdssp:Instrument-HiRISE ;
-    # 0.75-1.05 µm: centre in Optical, upper wing in Infrared (> 1 µm).
-    skos:broadMatch msg:Optical ;
+    # 0.75-1.05 µm: centre in Optical, upper wing in Infrared (>= 1 µm).
+    pdssp:wavelengthType pdssp:WavelengthType-Optical ;
     skos:relatedMatch msg:Infrared .
 
 pdssp:Band-CTX-BroadBand a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
@@ -77,4 +76,4 @@ pdssp:Band-CTX-BroadBand a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:
     skos:definition "CTX single panchromatic channel, effective band centre 611 ± 189 nm."@en ;
     pdssp:centerWavelength 0.611 ; pdssp:fullWidthHalfMax 0.189 ;
     sosa:isSubSystemOf pdssp:Instrument-CTX ;
-    skos:broadMatch msg:Optical .
+    pdssp:wavelengthType pdssp:WavelengthType-Optical .

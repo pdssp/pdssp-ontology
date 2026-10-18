@@ -73,7 +73,7 @@ def test_rules_reproduce_the_converter():
     filled = {c for c, v in row.items() if v is not None and c != "service_title"}
     assert filled <= {r["column"] for r in rules["rules"]}
     assert {l["stac_field"] for l in rules["lost_on_export"]} == {"pdssp:method", "version", "mission",
-                                                                  "assets[role=data].bands"}
+                                                                  "assets[role=data].bands", "pdssp:wavelength_type"}
 
 
 def test_search_expansion_follows_the_hierarchy():

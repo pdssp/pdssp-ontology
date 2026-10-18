@@ -57,7 +57,7 @@ See [`docs/model-management.md`](docs/model-management.md). In short:
 
 ## The PDSSP Thesaurus
 
-Ten independent SKOS concept schemes under `vocab/thesaurus/`:
+Eleven independent SKOS concept schemes under `vocab/thesaurus/`:
 
 | Dimension | Question | File | Example values |
 |---|---|---|---|
@@ -71,6 +71,7 @@ Ten independent SKOS concept schemes under `vocab/thesaurus/`:
 | Mission | For which mission? (`mission`) | `mission.ttl` | Mars Reconnaissance Orbiter |
 | Spectral band | Which channel? (`bands[].name`) | `band.ttl` | HiRISE RED, HiRISE NEAR-INFRARED, CTX broadband |
 | CRS | In which reference system? (`proj:code`) | `crs.ttl` | IAU_2015:49901, IAU_2015:49902 |
+| Wavelength type | Which spectral domain? (`pdssp:wavelength_type`) | `wavelength-type.ttl` | Optical, Infrared, UV (the IVOA messenger terms) |
 
 Targets, platforms and instruments carry their NAIF ID (`pdssp:naifId`) and
 `skos:exactMatch` to Wikidata and to the PDS4 context product (LID); a target points at its class

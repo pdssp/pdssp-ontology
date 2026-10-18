@@ -69,20 +69,38 @@ def test_uat_links_exist_and_are_not_deprecated():
                 assert not term["deprecated"], f"{s}: deprecated UAT concept {o} ({term['label']})"
 
 
-# IVOA messenger domains by wavelength in µm (http://www.ivoa.net/rdf/messenger).
-MESSENGER_UM = {"UV": (0.1, 0.3), "Optical": (0.3, 1.0), "Infrared": (1.0, 100.0), "Millimeter": (100.0, 10000.0)}
 MSG = "http://www.ivoa.net/rdf/messenger#"
 
 
+def _range(concept):
+    low, high = G.value(concept, vocab.PDSSP.minWavelength), G.value(concept, vocab.PDSSP.maxWavelength)
+    return (float(low) if low is not None else 0.0, float(high) if high is not None else float("inf"))
+
+
+def test_wavelength_types_are_the_messenger_photon_terms():
+    import json
+
+    terms = json.loads((vocab.EXTERNAL_DIR / "ivoa-messenger.desise.json").read_text())["terms"]
+    photon = {t for t in terms if t != "Neutrino"}
+    types = list(G.subjects(SKOS.inScheme, vocab.PDSSP.WavelengthTypeScheme))
+    assert {vocab.value(G, t) for t in types} == photon
+    for t in types:
+        assert (t, SKOS.exactMatch, URIRef(MSG + vocab.value(G, t))) in G
+
+
 def test_band_domains_follow_the_wavelengths():
-    """broadMatch = the messenger domain holding the centre wavelength;
-    relatedMatch = every other domain the band [centre +- FWHM/2] overlaps."""
+    """wavelengthType = the most specific domain holding the centre wavelength;
+    relatedMatch = every other messenger domain the band [centre +- FWHM/2] overlaps."""
+    domains = {t: _range(t) for t in G.subjects(SKOS.inScheme, vocab.PDSSP.WavelengthTypeScheme)
+               if vocab.value(G, t) != "Photon"}
     for band in G.subjects(SKOS.inScheme, vocab.PDSSP.BandScheme):
         centre = float(G.value(band, vocab.PDSSP.centerWavelength))
         half = float(G.value(band, vocab.PDSSP.fullWidthHalfMax)) / 2
         low, high = centre - half, centre + half
-        home = {d for d, (a, b) in MESSENGER_UM.items() if a <= centre < b}
-        overlap = {d for d, (a, b) in MESSENGER_UM.items() if low < b and high > a} - home
-        broad = {str(o)[len(MSG):] for o in G.objects(band, SKOS.broadMatch) if str(o).startswith(MSG)}
+        holding = [t for t, (a, b) in domains.items() if a <= centre < b]
+        home = min(holding, key=lambda t: _range(t)[1] - _range(t)[0])
+        overlap = {vocab.value(G, t) for t, (a, b) in domains.items() if low < b and high > a} - {vocab.value(G, home)}
+        overlap -= {vocab.value(G, b) for b in G.objects(home, SKOS.broader)}  # EUV in UV is not an overlap
         related = {str(o)[len(MSG):] for o in G.objects(band, SKOS.relatedMatch) if str(o).startswith(MSG)}
-        assert (broad, related) == (home, overlap), f"{band}: {low:.3f}-{high:.3f} µm"
+        assert G.value(band, vocab.PDSSP.wavelengthType) == home, f"{band}: centre {centre} µm"
+        assert related == overlap, f"{band}: {low:.3f}-{high:.3f} µm"

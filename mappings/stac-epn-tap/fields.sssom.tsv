@@ -51,4 +51,5 @@ stacf:asset_thumbnail_href	assets[role=thumbnail].href	skos:exactMatch	epn:thumb
 stacf:sci_doi	sci:doi	skos:closeMatch	epn:bib_reference	bib_reference	semapv:ManualMappingCuration	transform=identity	
 stacf:pdssp_method	pdssp:method	skos:exactMatch	sssom:NoTermFound		semapv:ManualMappingCuration		No EPNcore column for the acquisition technique: lost on export.
 stacf:asset_data_bands	assets[role=data].bands	skos:exactMatch	sssom:NoTermFound		semapv:ManualMappingCuration		Band names have no EPNcore column; spectral_range_* is to be computed from eo:center_wavelength and eo:full_width_half_max (not done yet).
+stacf:pdssp_wavelength_type	pdssp:wavelength_type	skos:exactMatch	sssom:NoTermFound		semapv:ManualMappingCuration		No EPNcore column for the spectral domain; spectral_range_* carries the numbers.
 stacf:version	version	skos:exactMatch	sssom:NoTermFound		semapv:ManualMappingCuration		No EPNcore column for the product version: lost on export.

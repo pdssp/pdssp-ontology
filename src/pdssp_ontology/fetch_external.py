@@ -28,6 +28,7 @@ PINNED = {  # name -> (release date, file stem on the PADC server)
     "spatial-frame-type": ("2024-05-07", "epn_spatial_frame_type"),
 }
 SSYS_URL = "https://stac-extensions.github.io/ssys/v1.1.1/schema.json"
+MESSENGER_URL = "http://www.ivoa.net/rdf/messenger/2020-08-26/messenger.desise"
 UAT_RELEASE = "v6.0.0"
 UAT_URL = f"https://raw.githubusercontent.com/astrothesaurus/UAT/{UAT_RELEASE}/UAT.rdf"
 
@@ -56,6 +57,15 @@ def fetch_ssys() -> None:
     print(f"wrote {path} ({len(enum)} values)")
 
 
+def fetch_messenger() -> None:
+    """The IVOA messenger vocabulary (spectral domains), pinned release."""
+    data = httpx.get(MESSENGER_URL, follow_redirects=True, timeout=30).raise_for_status().json()
+    data["_snapshot"] = {"version": "2020-08-26", "source": MESSENGER_URL}
+    path = EXTERNAL_DIR / "ivoa-messenger.desise.json"
+    path.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
+    print(f"wrote {path} ({len(data['terms'])} terms)")
+
+
 def main() -> None:
     for name, (date, stem) in PINNED.items():
         url = f"{BASE}/{name}/{date}/{stem}.desise"
@@ -66,6 +76,7 @@ def main() -> None:
         print(f"wrote {path} ({len(data['terms'])} terms)")
     fetch_uat()
     fetch_ssys()
+    fetch_messenger()
 
 
 if __name__ == "__main__":

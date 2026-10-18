@@ -45,6 +45,7 @@ SCHEMES = {  # file stem -> (scheme local name, STAC field it feeds)
     "mission": ("MissionScheme", "mission"),
     "crs": ("CrsScheme", "proj:code"),
     "band": ("BandScheme", "bands[].name"),
+    "wavelength-type": ("WavelengthTypeScheme", "pdssp:wavelength_type"),
 }
 MATCHES = [SKOS.exactMatch, SKOS.closeMatch, SKOS.broadMatch, SKOS.narrowMatch, SKOS.relatedMatch]
 # Links between concepts of different schemes, shown next to Broader.
@@ -52,8 +53,9 @@ RELATIONS = [("class", vocab.PDSSP.targetClass), ("orbits", vocab.PDSSP.primaryB
              ("hosted by", URIRef("http://www.w3.org/ns/sosa/isHostedBy")),
              ("platform", URIRef("http://www.w3.org/ns/sosa/deployedOnPlatform")),
              ("channel of", URIRef("http://www.w3.org/ns/sosa/isSubSystemOf")),
-             ("body", vocab.PDSSP.referenceBody)]
+             ("body", vocab.PDSSP.referenceBody), ("wavelength type", vocab.PDSSP.wavelengthType)]
 CODES = [("NAIF", vocab.PDSSP.naifId), ("COSPAR", vocab.PDSSP.cosparId),
+         ("min µm", vocab.PDSSP.minWavelength), ("max µm", vocab.PDSSP.maxWavelength),
          ("centre µm", vocab.PDSSP.centerWavelength), ("FWHM µm", vocab.PDSSP.fullWidthHalfMax)]
 CSS = """
 :root{--bg:#fff;--fg:#1e1e1e;--muted:#5a5a5a;--line:#e3e3e3;--head:#412fb2;--accent:#00b29c;--card:#f5f5f5}
