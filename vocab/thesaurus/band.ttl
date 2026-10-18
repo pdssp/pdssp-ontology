@@ -21,12 +21,13 @@
 # - pdssp:centerWavelength / pdssp:fullWidthHalfMax: micrometres, as
 #   eo:center_wavelength / eo:full_width_half_max (values from the ODE
 #   items; CTX from Bell et al. 2013, doi:10.1555/mars.2013.0001);
-# - pdssp:wavelengthType: the PDSSP Wavelength Type (IVOA messenger domain,
-#   see wavelength-type.ttl) holding the centre wavelength, the value of
-#   STAC pdssp:wavelength_type for this band; skos:relatedMatch any other
-#   messenger domain the band [centre - FWHM/2, centre + FWHM/2] overlaps.
-#   Checked in CI (tests/test_skos_quality.py). The HiRISE "NEAR-INFRARED"
-#   channel is Optical in IVOA terms (centre 0.9 µm < 1 µm).
+# - pdssp:wavelengthType: every PDSSP Wavelength Type (IVOA messenger
+#   domain, see wavelength-type.ttl) the band [centre - FWHM/2,
+#   centre + FWHM/2] covers: the values of STAC pdssp:wavelength_type for
+#   this band. The domain of the centre is the main one; the others are
+#   also given as skos:relatedMatch to IVOA messenger. Checked in CI
+#   (tests/test_skos_quality.py). The HiRISE "NEAR-INFRARED" channel
+#   (0.75-1.05 µm) is Optical, with its upper wing in Infrared.
 #
 # Not bands, so no concept: "DTM" and "ORTHOIMAGE" (HiRISE DTM collection
 # summary: these are products, see Product Type) and "COLOR" (HiRISE RDR:
@@ -68,7 +69,7 @@ pdssp:Band-HiRISE-NIR a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:top
     pdssp:centerWavelength 0.9 ; pdssp:fullWidthHalfMax 0.3 ;
     sosa:isSubSystemOf pdssp:Instrument-HiRISE ;
     # 0.75-1.05 µm: centre in Optical, upper wing in Infrared (>= 1 µm).
-    pdssp:wavelengthType pdssp:WavelengthType-Optical ;
+    pdssp:wavelengthType pdssp:WavelengthType-Optical , pdssp:WavelengthType-Infrared ;
     skos:relatedMatch msg:Infrared .
 
 pdssp:Band-CTX-BroadBand a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;

@@ -22,8 +22,8 @@
 #   [min, max). EUV, X-ray and Gamma-ray are defined by IVOA in energy and
 #   converted with lambda[µm] = 1.23984198 / E[eV].
 #
-# A spectral band points at its type with pdssp:wavelengthType (see
-# band.ttl), so the type can be derived from the band name.
+# A spectral band points at every type it covers with pdssp:wavelengthType
+# (see band.ttl), so the types can be derived from the band name.
 
 pdssp:minWavelength a rdf:Property ;
     rdfs:label "minimum wavelength (µm)"@en ;
@@ -36,7 +36,7 @@ pdssp:maxWavelength a rdf:Property ;
 
 pdssp:wavelengthType a rdf:Property ;
     rdfs:label "wavelength type"@en ;
-    rdfs:comment "Links a spectral band to the PDSSP Wavelength Type of its centre wavelength."@en ;
+    rdfs:comment "Links a spectral band to every PDSSP Wavelength Type its band [centre - FWHM/2, centre + FWHM/2] covers; the domain of the centre wavelength is the main one."@en ;
     rdfs:range skos:Concept .
 
 pdssp:WavelengthTypeScheme a skos:ConceptScheme ;

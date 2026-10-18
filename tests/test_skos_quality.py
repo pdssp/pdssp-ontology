@@ -89,8 +89,9 @@ def test_wavelength_types_are_the_messenger_photon_terms():
 
 
 def test_band_domains_follow_the_wavelengths():
-    """wavelengthType = the most specific domain holding the centre wavelength;
-    relatedMatch = every other messenger domain the band [centre +- FWHM/2] overlaps."""
+    """wavelengthType = every domain the band [centre +- FWHM/2] covers (the most
+    specific one for the centre, plus the overlapped ones); relatedMatch = the
+    overlapped messenger domains other than the centre's."""
     domains = {t: _range(t) for t in G.subjects(SKOS.inScheme, vocab.PDSSP.WavelengthTypeScheme)
                if vocab.value(G, t) != "Photon"}
     for band in G.subjects(SKOS.inScheme, vocab.PDSSP.BandScheme):
@@ -102,5 +103,6 @@ def test_band_domains_follow_the_wavelengths():
         overlap = {vocab.value(G, t) for t, (a, b) in domains.items() if low < b and high > a} - {vocab.value(G, home)}
         overlap -= {vocab.value(G, b) for b in G.objects(home, SKOS.broader)}  # EUV in UV is not an overlap
         related = {str(o)[len(MSG):] for o in G.objects(band, SKOS.relatedMatch) if str(o).startswith(MSG)}
-        assert G.value(band, vocab.PDSSP.wavelengthType) == home, f"{band}: centre {centre} µm"
+        linked = {vocab.value(G, t) for t in G.objects(band, vocab.PDSSP.wavelengthType)}
+        assert linked == {vocab.value(G, home)} | overlap, f"{band}: {low:.3f}-{high:.3f} µm"
         assert related == overlap, f"{band}: {low:.3f}-{high:.3f} µm"
