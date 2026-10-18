@@ -36,6 +36,14 @@ def test_every_concept_declares_in_scheme_and_pref_label(thesaurus: Graph):
     assert not missing_label, f"missing skos:prefLabel: {missing_label}"
 
 
+def test_every_concept_has_a_definition(thesaurus: Graph):
+    """A label alone is not enough to pick the right value: every concept
+    explains what it means (skos:definition)."""
+    missing = sorted(str(c) for c in thesaurus.subjects(RDF.type, SKOS.Concept)
+                     if (c, SKOS.definition, None) not in thesaurus)
+    assert missing == []
+
+
 def test_broader_narrower_is_reciprocal(thesaurus: Graph):
     errors = []
     for concept in thesaurus.subjects(RDF.type, SKOS.Concept):
