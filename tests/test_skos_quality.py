@@ -67,3 +67,22 @@ def test_uat_links_exist_and_are_not_deprecated():
                 term = uat.get(str(o)[len(base):])
                 assert term is not None, f"{s}: unknown UAT concept {o}"
                 assert not term["deprecated"], f"{s}: deprecated UAT concept {o} ({term['label']})"
+
+
+# IVOA messenger domains by wavelength in µm (http://www.ivoa.net/rdf/messenger).
+MESSENGER_UM = {"UV": (0.1, 0.3), "Optical": (0.3, 1.0), "Infrared": (1.0, 100.0), "Millimeter": (100.0, 10000.0)}
+MSG = "http://www.ivoa.net/rdf/messenger#"
+
+
+def test_band_domains_follow_the_wavelengths():
+    """broadMatch = the messenger domain holding the centre wavelength;
+    relatedMatch = every other domain the band [centre +- FWHM/2] overlaps."""
+    for band in G.subjects(SKOS.inScheme, vocab.PDSSP.BandScheme):
+        centre = float(G.value(band, vocab.PDSSP.centerWavelength))
+        half = float(G.value(band, vocab.PDSSP.fullWidthHalfMax)) / 2
+        low, high = centre - half, centre + half
+        home = {d for d, (a, b) in MESSENGER_UM.items() if a <= centre < b}
+        overlap = {d for d, (a, b) in MESSENGER_UM.items() if low < b and high > a} - home
+        broad = {str(o)[len(MSG):] for o in G.objects(band, SKOS.broadMatch) if str(o).startswith(MSG)}
+        related = {str(o)[len(MSG):] for o in G.objects(band, SKOS.relatedMatch) if str(o).startswith(MSG)}
+        assert (broad, related) == (home, overlap), f"{band}: {low:.3f}-{high:.3f} µm"

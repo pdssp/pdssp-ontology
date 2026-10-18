@@ -21,8 +21,13 @@
 # - pdssp:centerWavelength / pdssp:fullWidthHalfMax: micrometres, as
 #   eo:center_wavelength / eo:full_width_half_max (values from the ODE
 #   items; CTX from Bell et al. 2013, doi:10.1555/mars.2013.0001);
-# - skos:broadMatch: the IVOA messenger term (the spectral domain), reused
-#   instead of re-modelled: http://www.ivoa.net/rdf/messenger.
+# - spectral domain: the IVOA messenger vocabulary, reused instead of
+#   re-modelled (http://www.ivoa.net/rdf/messenger: UV 100-300 nm,
+#   Optical 300-1000 nm, Infrared 1-100 µm). skos:broadMatch the domain
+#   holding the centre wavelength; skos:relatedMatch any other domain the
+#   band [centre - FWHM/2, centre + FWHM/2] overlaps. Checked in CI
+#   (tests/test_skos_quality.py). The HiRISE "NEAR-INFRARED" channel is
+#   mostly Optical in IVOA terms (centre 0.9 µm < 1 µm).
 #
 # Not bands, so no concept: "DTM" and "ORTHOIMAGE" (HiRISE DTM collection
 # summary: these are products, see Product Type) and "COLOR" (HiRISE RDR:
@@ -63,7 +68,9 @@ pdssp:Band-HiRISE-NIR a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:top
     skos:definition "HiRISE near-infrared channel (CCDs IR10, IR11)."@en ;
     pdssp:centerWavelength 0.9 ; pdssp:fullWidthHalfMax 0.3 ;
     sosa:isSubSystemOf pdssp:Instrument-HiRISE ;
-    skos:broadMatch msg:Optical .
+    # 0.75-1.05 µm: centre in Optical, upper wing in Infrared (> 1 µm).
+    skos:broadMatch msg:Optical ;
+    skos:relatedMatch msg:Infrared .
 
 pdssp:Band-CTX-BroadBand a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
     skos:prefLabel "CTX broadband"@en ; skos:notation "BroadBand" ;
