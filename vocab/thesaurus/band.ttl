@@ -5,7 +5,6 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sosa: <http://www.w3.org/ns/sosa/> .
 @prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
-@prefix msg: <http://www.ivoa.net/rdf/messenger#> .
 
 # PDSSP Spectral Band
 # ===================
@@ -24,9 +23,9 @@
 # - pdssp:wavelengthType: every PDSSP Wavelength Type (IVOA messenger
 #   domain, see wavelength-type.ttl) the band [centre - FWHM/2,
 #   centre + FWHM/2] covers: the values of STAC pdssp:wavelength_type for
-#   this band. The domain of the centre is the main one; the others are
-#   also given as skos:relatedMatch to IVOA messenger. Checked in CI
-#   (tests/test_skos_quality.py). The HiRISE "NEAR-INFRARED" channel
+#   this band, the domain of the centre being the main one. The link to IVOA
+#   goes through the type (skos:exactMatch there), not from the band.
+#   Checked in CI (tests/test_skos_quality.py). The HiRISE "NEAR-INFRARED" channel
 #   (0.75-1.05 µm) is Optical, with its upper wing in Infrared.
 #
 # Not bands, so no concept: "DTM" and "ORTHOIMAGE" (HiRISE DTM collection
@@ -69,8 +68,7 @@ pdssp:Band-HiRISE-NIR a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:top
     pdssp:centerWavelength 0.9 ; pdssp:fullWidthHalfMax 0.3 ;
     sosa:isSubSystemOf pdssp:Instrument-HiRISE ;
     # 0.75-1.05 µm: centre in Optical, upper wing in Infrared (>= 1 µm).
-    pdssp:wavelengthType pdssp:WavelengthType-Optical , pdssp:WavelengthType-Infrared ;
-    skos:relatedMatch msg:Infrared .
+    pdssp:wavelengthType pdssp:WavelengthType-Optical , pdssp:WavelengthType-Infrared .
 
 pdssp:Band-CTX-BroadBand a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
     skos:prefLabel "CTX broadband"@en ; skos:notation "BroadBand" ;
