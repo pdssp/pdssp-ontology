@@ -4,7 +4,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix sosa: <http://www.w3.org/ns/sosa/> .
-@prefix ssnext: <http://www.w3.org/ns/ssn/ext/> .
+@prefix sosa-oms: <http://www.w3.org/ns/sosa/oms/> .
 @prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
 @prefix omsa: <https://pdssp.github.io/pdssp-ontology/oms-anchors#> .
 @prefix epn: <https://pdssp.github.io/pdssp-ontology/epn-tap#> .
@@ -48,7 +48,7 @@ epn:granule_gid a rdf:Property ;
     rdfs:label "granule_gid" ;
     rdfs:comment "Group identifier: granules sharing the same kind of content."@en ;
     rdfs:range xsd:string ;
-    pdssp:omsConcept omsa:observationCollection ;
+    pdssp:omsConcept sosa:isMemberOf ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -64,7 +64,7 @@ epn:dataproduct_type a rdf:Property ;
     rdfs:label "dataproduct_type" ;
     rdfs:comment "Organisation of the data product, 2-letter codes."@en ;
     rdfs:range xsd:string ;
-    pdssp:omsConcept omsa:observationType ;
+    pdssp:omsConcept sosa-oms:observationType ;
     pdssp:valueVocabulary <http://voparis-ns.obspm.fr/rdf/epn/2.0/product-type> ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
@@ -73,7 +73,7 @@ epn:target_name a rdf:Property ;
     rdfs:label "target_name" ;
     rdfs:comment "Standard IAU name of the target; several values hash-separated."@en ;
     rdfs:range xsd:string ;
-    pdssp:omsConcept ssnext:hasUltimateFeatureOfInterest ;
+    pdssp:omsConcept sosa:hasUltimateFeatureOfInterest ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -277,7 +277,7 @@ epn:incidence_min a rdf:Property ;
     rdfs:label "incidence_min" ;
     rdfs:range xsd:double ;
     pdssp:unit "deg" ;
-    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:omsConcept sosa-oms:parameter ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -285,7 +285,7 @@ epn:incidence_max a rdf:Property ;
     rdfs:label "incidence_max" ;
     rdfs:range xsd:double ;
     pdssp:unit "deg" ;
-    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:omsConcept sosa-oms:parameter ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -293,7 +293,7 @@ epn:emergence_min a rdf:Property ;
     rdfs:label "emergence_min" ;
     rdfs:range xsd:double ;
     pdssp:unit "deg" ;
-    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:omsConcept sosa-oms:parameter ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -301,7 +301,7 @@ epn:emergence_max a rdf:Property ;
     rdfs:label "emergence_max" ;
     rdfs:range xsd:double ;
     pdssp:unit "deg" ;
-    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:omsConcept sosa-oms:parameter ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -309,7 +309,7 @@ epn:phase_min a rdf:Property ;
     rdfs:label "phase_min" ;
     rdfs:range xsd:double ;
     pdssp:unit "deg" ;
-    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:omsConcept sosa-oms:parameter ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -317,7 +317,7 @@ epn:phase_max a rdf:Property ;
     rdfs:label "phase_max" ;
     rdfs:range xsd:double ;
     pdssp:unit "deg" ;
-    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:omsConcept sosa-oms:parameter ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -325,7 +325,7 @@ epn:instrument_host_name a rdf:Property ;
     rdfs:label "instrument_host_name" ;
     rdfs:comment "Standard name of the observatory or spacecraft."@en ;
     rdfs:range xsd:string ;
-    pdssp:omsConcept sosa:isHostedBy ;
+    pdssp:omsConcept sosa-oms:madeOnPlatform ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -357,7 +357,7 @@ epn:creation_date a rdf:Property ;
     rdfs:label "creation_date" ;
     rdfs:comment "Date of first entry of the granule."@en ;
     rdfs:range xsd:string ;
-    pdssp:omsConcept omsa:recordLifecycle ;
+    pdssp:omsConcept sosa-oms:metadata ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -365,7 +365,7 @@ epn:modification_date a rdf:Property ;
     rdfs:label "modification_date" ;
     rdfs:comment "Date of last modification of the granule."@en ;
     rdfs:range xsd:string ;
-    pdssp:omsConcept omsa:recordLifecycle ;
+    pdssp:omsConcept sosa-oms:metadata ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -373,7 +373,7 @@ epn:release_date a rdf:Property ;
     rdfs:label "release_date" ;
     rdfs:comment "Start of public access."@en ;
     rdfs:range xsd:string ;
-    pdssp:omsConcept omsa:recordLifecycle ;
+    pdssp:omsConcept sosa-oms:metadata ;
     pdssp:epnMandatory true ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -388,7 +388,7 @@ epn:access_url a rdf:Property ;
     rdfs:label "access_url" ;
     rdfs:comment "URL of the data file."@en ;
     rdfs:range xsd:string ;
-    pdssp:omsConcept omsa:resultAccess ;
+    pdssp:omsConcept sosa:hasResult ;
     pdssp:epnMandatory false ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -396,7 +396,7 @@ epn:access_format a rdf:Property ;
     rdfs:label "access_format" ;
     rdfs:comment "Media type of the data file."@en ;
     rdfs:range xsd:string ;
-    pdssp:omsConcept omsa:resultAccess ;
+    pdssp:omsConcept sosa:hasResult ;
     pdssp:epnMandatory false ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -404,7 +404,7 @@ epn:thumbnail_url a rdf:Property ;
     rdfs:label "thumbnail_url" ;
     rdfs:comment "URL of a preview."@en ;
     rdfs:range xsd:string ;
-    pdssp:omsConcept omsa:resultAccess ;
+    pdssp:omsConcept sosa:hasResult ;
     pdssp:epnMandatory false ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -420,7 +420,7 @@ epn:solar_longitude_min a rdf:Property ;
     rdfs:label "solar_longitude_min" ;
     rdfs:range xsd:double ;
     pdssp:unit "deg" ;
-    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:omsConcept sosa-oms:parameter ;
     pdssp:epnMandatory false ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .
 
@@ -428,6 +428,6 @@ epn:solar_longitude_max a rdf:Property ;
     rdfs:label "solar_longitude_max" ;
     rdfs:range xsd:double ;
     pdssp:unit "deg" ;
-    pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:omsConcept sosa-oms:parameter ;
     pdssp:epnMandatory false ;
     rdfs:isDefinedBy <https://www.ivoa.net/documents/EPNTAP/> .

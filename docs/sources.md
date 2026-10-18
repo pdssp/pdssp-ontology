@@ -34,7 +34,7 @@ Accessed on 2026-10-18 unless stated otherwise.
 | Source | Finding |
 |---|---|
 | OGC Topic 20 / ISO 19156:2023 (OMS), <https://docs.ogc.org/as/20-082r4/20-082r4.html> | Attribute list of Observation, ObservationCollection, parameter, metadata, used to review the `oms-anchors` |
-| SOSA/SSN 2023 edition, <https://www.w3.org/TR/vocab-ssn-2023/>, RDF in <https://github.com/w3c/sdw-sosa-ssn> (`sosa-oms.ttl`) | Official RDF terms implementing OMS (`sosa-oms:observationType`, `sosa-oms:parameter`, `sosa:isMemberOf`, …); still a W3C Working Draft |
+| SOSA/SSN 2023 edition, <https://www.w3.org/TR/vocab-ssn-2023/>, RDF in <https://github.com/w3c/sdw-sosa-ssn> (`sosa-oms.ttl`); snapshot of commit 610c0ae in `vocab/external/sosa-2023` | Names of the OMS concepts of every STAC field and EPN-TAP column (`pdssp:omsConcept`: `sosa-oms:observationType`, `sosa-oms:parameter`, `sosa-oms:metadata`, `sosa-oms:madeOnPlatform`, `sosa:isMemberOf`, `sosa:hasResult`…), and the links `sosa:isHostedBy`, `sosa:deployedOnPlatform`, `sosa:isSubSystemOf` of the thesaurus. Still a W3C Working Draft; CI checks every term used exists in the snapshot |
 | PDS3 SCR 3-1162, <https://pds-engineering.jpl.nasa.gov/wp-content/uploads/documents/standards/SCRs/3-1162_au/SCR_3-1162_v2.pdf> | PDS3 `SOLAR_DISTANCE` defaults to km since 1989; AU allowed since 2009 when stated in the label |
 | EPN-TAP 2.0, <https://www.ivoa.net/documents/EPNTAP/20220822/REC-EPNTAP-2.0.html> | `sun_distance_min/max` in AU |
 | ssys STAC extension, <https://github.com/stac-extensions/ssys> | v1.1.1 (latest) defines only `ssys:targets`, `ssys:target_class`, `ssys:local_time`; v1.2.0 does not exist |

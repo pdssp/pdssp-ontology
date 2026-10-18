@@ -83,7 +83,8 @@ def local(iri) -> str:
 
 
 SOURCES = {"https://apps.usgs.gov/thesaurus/": "USGS", "http://voparis-ns.obspm.fr/rdf/epn/": "EPN",
-           "http://www.w3.org/ns/sosa/": "sosa", "http://www.w3.org/ns/ssn/ext/": "ssn-ext",
+           # sosa-oms before sosa: the first matching base wins
+           "http://www.w3.org/ns/sosa/oms/": "sosa-oms", "http://www.w3.org/ns/sosa/": "sosa", "http://www.w3.org/ns/ssn/ext/": "ssn-ext",
            "http://www.wikidata.org/entity/": "wd", "urn:nasa:pds:context:": "pds",
            "http://www.ivoa.net/rdf/messenger": "messenger", "http://www.opengis.net/def/crs/IAU/2015/": "IAU_2015",
            "http://astrothesaurus.org/uat/": "UAT"}

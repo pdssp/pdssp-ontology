@@ -4,6 +4,7 @@ These are what makes the OMS column pay off: every row's two sides must
 carry the same OMS concept, and every term a mapping points at must exist.
 """
 
+import rdflib
 from rdflib import RDF, URIRef
 
 from pdssp_ontology import transforms, vocab
@@ -68,3 +69,17 @@ def test_every_product_type_concept_is_mapped_to_an_existing_epn_term():
 def test_every_processing_level_has_an_epn_level():
     for c in vocab.concepts_in_scheme(THES, vocab.PDSSP.ProcessingLevelScheme):
         assert THES.value(c, vocab.PDSSP.epntapLevel) is not None, c
+
+
+def test_oms_concepts_exist_in_sosa_2023():
+    """Every pdssp:omsConcept named with SOSA must be a real SOSA/SSN 2023 term
+    (snapshot vocab/external/sosa-2023): no typo, no term renamed by the W3C."""
+    sosa = rdflib.Graph()
+    for path in (vocab.EXTERNAL_DIR / "sosa-2023").glob("*.ttl"):
+        sosa.parse(path, format="turtle")
+    defined = set(sosa.subjects())
+    used = {o for g in (STAC, EPN) for o in g.objects(None, vocab.PDSSP.omsConcept)}
+    sosa_terms = {o for o in used if str(o).startswith("http://www.w3.org/ns/sosa/")}
+    assert sosa_terms, "no SOSA term used at all"
+    assert sorted(str(t) for t in sosa_terms - defined) == []
+    assert not [o for o in used if str(o).startswith("http://www.w3.org/ns/ssn/ext/")], "use SOSA 2023"

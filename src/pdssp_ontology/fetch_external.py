@@ -29,6 +29,10 @@ PINNED = {  # name -> (release date, file stem on the PADC server)
 }
 SSYS_URL = "https://stac-extensions.github.io/ssys/v1.1.1/schema.json"
 MESSENGER_URL = "http://www.ivoa.net/rdf/messenger/2020-08-26/messenger.desise"
+# SOSA/SSN 2023 edition (W3C Working Draft), pinned on a commit of its repository.
+SOSA_COMMIT = "610c0ae593a560509d36bb33bbdd2a04fac99603"
+SOSA_FILES = ("core/sosa-common.ttl", "core/sosa-observation.ttl", "core/sosa-sampling.ttl",
+              "extensions/sosa-oms.ttl")
 UAT_RELEASE = "v6.0.0"
 UAT_URL = f"https://raw.githubusercontent.com/astrothesaurus/UAT/{UAT_RELEASE}/UAT.rdf"
 
@@ -66,6 +70,19 @@ def fetch_messenger() -> None:
     print(f"wrote {path} ({len(data['terms'])} terms)")
 
 
+def fetch_sosa() -> None:
+    """The SOSA 2023 modules whose terms name the OMS concepts (pdssp:omsConcept)."""
+    target = EXTERNAL_DIR / "sosa-2023"
+    target.mkdir(exist_ok=True)
+    for name in SOSA_FILES:
+        url = f"https://raw.githubusercontent.com/w3c/sdw-sosa-ssn/{SOSA_COMMIT}/ssn/rdf/ontology/{name}"
+        text = httpx.get(url, timeout=30).raise_for_status().text
+        Graph().parse(data=text, format="turtle")  # refuse a broken snapshot
+        path = target / name.rsplit("/", 1)[-1]
+        path.write_text(f"# Snapshot of {url}\n" + text, encoding="utf-8")
+        print(f"wrote {path}")
+
+
 def main() -> None:
     for name, (date, stem) in PINNED.items():
         url = f"{BASE}/{name}/{date}/{stem}.desise"
@@ -77,6 +94,7 @@ def main() -> None:
     fetch_uat()
     fetch_ssys()
     fetch_messenger()
+    fetch_sosa()
 
 
 if __name__ == "__main__":

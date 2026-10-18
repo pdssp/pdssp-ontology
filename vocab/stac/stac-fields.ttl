@@ -3,7 +3,7 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix sosa: <http://www.w3.org/ns/sosa/> .
-@prefix ssnext: <http://www.w3.org/ns/ssn/ext/> .
+@prefix sosa-oms: <http://www.w3.org/ns/sosa/oms/> .
 @prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
 @prefix omsa: <https://pdssp.github.io/pdssp-ontology/oms-anchors#> .
 @prefix stacf: <https://pdssp.github.io/pdssp-ontology/stac#> .
@@ -36,18 +36,20 @@ pdssp:jsonPath a rdf:Property ;
 
 pdssp:omsConcept a rdf:Property ;
     rdfs:label "OMS concept"@en ;
-    rdfs:comment "The Observations, Measurements and Samples (ISO 19156) concept a field or column carries, named with a SOSA/SSN IRI when one exists, else with an oms-anchors IRI."@en .
+    rdfs:comment "The Observations, Measurements and Samples (ISO 19156) concept a field or column carries, named with a SOSA/SSN 2023 IRI (sosa: or its OMS module sosa-oms:) when one exists, else with an oms-anchors IRI."@en .
 
 # ---- OMS anchors with no SOSA/SSN term -------------------------------------
-omsa:observationType a rdf:Property ; rdfs:label "OMS observationType (soft typing)"@en .
-omsa:observationCollection a rdf:Property ; rdfs:label "OMS AbstractObservationCollection membership"@en .
-omsa:observationIdentifier a rdf:Property ; rdfs:label "OMS observation identifier"@en .
-omsa:featureOfInterestType a rdf:Property ; rdfs:label "Type of the ultimate feature of interest"@en .
-omsa:spatialReference a rdf:Property ; rdfs:label "Spatial reference system of the proximate feature"@en .
-omsa:observingGeometry a rdf:Property ; rdfs:label "Observing geometry parameter (OMS parameter)"@en .
-omsa:resultAccess a rdf:Property ; rdfs:label "Access to the OMS result"@en .
-omsa:recordLifecycle a rdf:Property ; rdfs:label "Metadata record life cycle date"@en .
-omsa:citation a rdf:Property ; rdfs:label "Citation of the result"@en .
+# OMS concepts are named with SOSA/SSN 2023 (W3C/OGC, including its OMS
+# extension module sosa-oms, snapshot in vocab/external/sosa-2023). Only
+# what SOSA does not name keeps a PDSSP anchor.
+omsa:observationIdentifier a rdf:Property ; rdfs:label "OMS observation identifier"@en ;
+    rdfs:comment "OMS inherits identity from the general feature model (ISO 19109); SOSA has no identifier property."@en .
+omsa:featureOfInterestType a rdf:Property ; rdfs:label "Type of the ultimate feature of interest"@en ;
+    rdfs:comment "Class of the ultimate feature of interest (sosa:hasUltimateFeatureOfInterest / rdf:type); no SOSA property."@en .
+omsa:spatialReference a rdf:Property ; rdfs:label "Spatial reference system of the proximate feature"@en ;
+    rdfs:comment "CRS of the shape of the spatial sample (sosa-oms:shape); OMS and SOSA leave it inside the geometry."@en .
+omsa:citation a rdf:Property ; rdfs:label "Citation of the result"@en ;
+    rdfs:comment "Bibliographic citation; not an OMS concept (catalogue metadata)."@en .
 
 # ---- STAC core / common metadata -------------------------------------------
 stacf:id a rdf:Property ; rdfs:label "id" ;
@@ -56,7 +58,7 @@ stacf:id a rdf:Property ; rdfs:label "id" ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
 
 stacf:collection a rdf:Property ; rdfs:label "collection" ;
-    pdssp:jsonPath "collection" ; pdssp:omsConcept omsa:observationCollection ;
+    pdssp:jsonPath "collection" ; pdssp:omsConcept sosa:isMemberOf ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
 
 stacf:geometry a rdf:Property ; rdfs:label "geometry" ;
@@ -77,7 +79,7 @@ stacf:end_datetime a rdf:Property ; rdfs:label "end_datetime" ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/datetime.json> .
 
 stacf:platform a rdf:Property ; rdfs:label "platform" ;
-    pdssp:jsonPath "properties.platform" ; pdssp:omsConcept sosa:isHostedBy ;
+    pdssp:jsonPath "properties.platform" ; pdssp:omsConcept sosa-oms:madeOnPlatform ;
     pdssp:valueScheme pdssp:PlatformScheme ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/instrument.json> .
 
@@ -93,23 +95,23 @@ stacf:mission a rdf:Property ; rdfs:label "mission" ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/instrument.json> .
 
 stacf:created a rdf:Property ; rdfs:label "created" ;
-    pdssp:jsonPath "properties.created" ; pdssp:omsConcept omsa:recordLifecycle ;
+    pdssp:jsonPath "properties.created" ; pdssp:omsConcept sosa-oms:metadata ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/datetime.json> .
 
 stacf:updated a rdf:Property ; rdfs:label "updated" ;
-    pdssp:jsonPath "properties.updated | properties.created" ; pdssp:omsConcept omsa:recordLifecycle ;
+    pdssp:jsonPath "properties.updated | properties.created" ; pdssp:omsConcept sosa-oms:metadata ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/datetime.json> .
 
 stacf:asset_data_href a rdf:Property ; rdfs:label "assets[role=data].href" ;
-    pdssp:jsonPath "assets[role=data].href" ; pdssp:omsConcept omsa:resultAccess ;
+    pdssp:jsonPath "assets[role=data].href" ; pdssp:omsConcept sosa:hasResult ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
 
 stacf:asset_data_type a rdf:Property ; rdfs:label "assets[role=data].type" ;
-    pdssp:jsonPath "assets[role=data].type" ; pdssp:omsConcept omsa:resultAccess ;
+    pdssp:jsonPath "assets[role=data].type" ; pdssp:omsConcept sosa:hasResult ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
 
 stacf:asset_thumbnail_href a rdf:Property ; rdfs:label "assets[role=thumbnail].href" ;
-    pdssp:jsonPath "assets[role=thumbnail].href" ; pdssp:omsConcept omsa:resultAccess ;
+    pdssp:jsonPath "assets[role=thumbnail].href" ; pdssp:omsConcept sosa:hasResult ;
     rdfs:isDefinedBy <https://schemas.stacspec.org/v1.1.0/item-spec/json-schema/item.json> .
 
 stacf:asset_data_bands a rdf:Property ; rdfs:label "assets[role=data].bands" ;
@@ -121,7 +123,7 @@ stacf:asset_data_bands a rdf:Property ; rdfs:label "assets[role=data].bands" ;
 # ---- ssys extension --------------------------------------------------------
 stacf:ssys_targets a rdf:Property ; rdfs:label "ssys:targets" ;
     rdfs:comment "Solar system targets: the ultimate feature of interest."@en ;
-    pdssp:jsonPath "properties.ssys:targets" ; pdssp:omsConcept ssnext:hasUltimateFeatureOfInterest ;
+    pdssp:jsonPath "properties.ssys:targets" ; pdssp:omsConcept sosa:hasUltimateFeatureOfInterest ;
     pdssp:valueScheme pdssp:TargetScheme ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.1.1/schema.json> .
 
@@ -132,19 +134,19 @@ stacf:ssys_target_class a rdf:Property ; rdfs:label "ssys:target_class" ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.1.1/schema.json> .
 
 stacf:ssys_incidence_angle a rdf:Property ; rdfs:label "ssys:incidence_angle" ;
-    pdssp:jsonPath "properties.ssys:incidence_angle" ; pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:jsonPath "properties.ssys:incidence_angle" ; pdssp:omsConcept sosa-oms:parameter ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.2.0/schema.json> .
 
 stacf:ssys_emission_angle a rdf:Property ; rdfs:label "ssys:emission_angle" ;
-    pdssp:jsonPath "properties.ssys:emission_angle" ; pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:jsonPath "properties.ssys:emission_angle" ; pdssp:omsConcept sosa-oms:parameter ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.2.0/schema.json> .
 
 stacf:ssys_phase_angle a rdf:Property ; rdfs:label "ssys:phase_angle" ;
-    pdssp:jsonPath "properties.ssys:phase_angle" ; pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:jsonPath "properties.ssys:phase_angle" ; pdssp:omsConcept sosa-oms:parameter ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.2.0/schema.json> .
 
 stacf:ssys_solar_longitude a rdf:Property ; rdfs:label "ssys:solar_longitude" ;
-    pdssp:jsonPath "properties.ssys:solar_longitude" ; pdssp:omsConcept omsa:observingGeometry ;
+    pdssp:jsonPath "properties.ssys:solar_longitude" ; pdssp:omsConcept sosa-oms:parameter ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/ssys/v1.2.0/schema.json> .
 
 # ---- projection / product / processing / scientific ------------------------
@@ -160,7 +162,7 @@ stacf:proj_wkt2 a rdf:Property ; rdfs:label "proj:wkt2" ;
 
 stacf:product_type a rdf:Property ; rdfs:label "product:type" ;
     rdfs:comment "Values from the PDSSP Product Type scheme (prefLabel)."@en ;
-    pdssp:jsonPath "properties.product:type" ; pdssp:omsConcept omsa:observationType ;
+    pdssp:jsonPath "properties.product:type" ; pdssp:omsConcept sosa-oms:observationType ;
     pdssp:valueScheme pdssp:ProductTypeScheme ;
     rdfs:isDefinedBy <https://stac-extensions.github.io/product/v0.1.0/schema.json> .
 

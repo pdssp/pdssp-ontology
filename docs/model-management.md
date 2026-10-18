@@ -25,8 +25,13 @@ Where every value comes from: [sources.md](sources.md).
 ## 2. Why OMS appears everywhere
 
 Every STAC field and every EPN-TAP column carries `pdssp:omsConcept`, a
-SOSA/SSN IRI (or an `oms-anchors` IRI when SOSA has none). It costs one
-line per term and buys:
+SOSA/SSN 2023 IRI: `sosa:` or its OMS module `sosa-oms:` (e.g.
+`sosa-oms:observationType` for `product:type`, `sosa-oms:parameter` for the
+observing angles, `sosa-oms:madeOnPlatform` for `platform`). Four concepts
+SOSA does not name keep an `oms-anchors` IRI (identifier, type of the
+target, CRS, citation). SOSA 2023 is still a W3C Working Draft: the terms
+used are pinned in `vocab/external/sosa-2023` and CI checks they exist. It
+costs one line per term and buys:
 
 - **a CI check**: both sides of an exact/close mapping row must carry the
   same OMS concept (`tests/test_mapping_integrity.py`) — e.g. a footprint
