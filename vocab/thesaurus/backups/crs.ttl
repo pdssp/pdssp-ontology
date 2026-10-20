@@ -1,0 +1,52 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix iau2015: <http://www.opengis.net/def/crs/IAU/2015/> .
+
+# PDSSP Coordinate Reference System
+# =================================
+# The planetary coordinate reference systems of the footprints: STAC
+# `proj:code`. Not re-modelled: each concept is one IAU 2015 CRS registered
+# at the OGC definitions server (http://www.opengis.net/def/crs/IAU/2015/,
+# source doi:10.1007/s10569-017-9805-5), with skos:exactMatch to its OGC
+# IRI, which serves the full GML definition.
+#
+# - skos:notation: the value written in proj:code ("IAU_2015:49902");
+# - prefLabel: the OGC name of the CRS;
+# - pdssp:referenceBody: the PDSSP Target concept the CRS is attached to.
+#
+# Code pattern (IAU 2015): body NAIF id x 100 + variant. Variant 00 is the
+# sphere, 01 planetographic, 02 planetocentric; 10-17 the equirectangular
+# projections, 20+ other projections (sinusoidal, polar, Mollweide...).
+# Seeded with the three Mars geographic CRS found in or next to the ODE
+# items (2026-10-18); projected CRS are added when a product uses one.
+
+pdssp:referenceBody a rdf:Property ;
+    rdfs:label "reference body"@en ;
+    rdfs:comment "The body a coordinate reference system is defined on."@en .
+
+pdssp:CrsScheme a skos:ConceptScheme ;
+    dct:title "PDSSP Coordinate Reference System"@en ;
+    dct:source <http://www.opengis.net/def/crs/IAU/2015/> , <https://doi.org/10.1007/s10569-017-9805-5> ;
+    skos:definition "IAU 2015 planetary coordinate reference systems. The notation is the value written in proj:code."@en ;
+    skos:hasTopConcept pdssp:Crs-IAU2015-49900 , pdssp:Crs-IAU2015-49901 , pdssp:Crs-IAU2015-49902 .
+
+pdssp:Crs-IAU2015-49900 a skos:Concept ; skos:inScheme pdssp:CrsScheme ; skos:topConceptOf pdssp:CrsScheme ;
+    skos:prefLabel "Mars (2015) - Sphere"@en ; skos:notation "IAU_2015:49900" ;
+    skos:definition "Mars geographic CRS on a sphere of the IAU 2015 semi-major radius (3396.19 km), longitude positive east."@en ;
+    pdssp:referenceBody pdssp:Target-Mars ;
+    skos:exactMatch iau2015:49900 .
+
+pdssp:Crs-IAU2015-49901 a skos:Concept ; skos:inScheme pdssp:CrsScheme ; skos:topConceptOf pdssp:CrsScheme ;
+    skos:prefLabel "Mars (2015) / Ographic"@en ; skos:notation "IAU_2015:49901" ;
+    skos:definition "Mars planetographic CRS on the IAU 2015 ellipsoid: planetographic latitude, longitude positive west."@en ;
+    pdssp:referenceBody pdssp:Target-Mars ;
+    skos:exactMatch iau2015:49901 .
+
+pdssp:Crs-IAU2015-49902 a skos:Concept ; skos:inScheme pdssp:CrsScheme ; skos:topConceptOf pdssp:CrsScheme ;
+    skos:prefLabel "Mars (2015) / Ocentric"@en ; skos:notation "IAU_2015:49902" ;
+    skos:definition "Mars planetocentric CRS on the IAU 2015 ellipsoid: planetocentric latitude, longitude positive east."@en ;
+    pdssp:referenceBody pdssp:Target-Mars ;
+    skos:exactMatch iau2015:49902 .

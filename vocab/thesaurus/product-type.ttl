@@ -1,15 +1,14 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
-@prefix usgs: <https://apps.usgs.gov/thesaurus/USGSThesaurus/> .
+@prefix usgs: <https://apps.usgs.gov/thesaurus/> .
 
 # PDSSP Product Type
 # ====================
 # What kind of resource this is (the concrete thing being downloaded) --
 # e.g. a digital elevation model, an image mosaic, a point cloud. Extends
 # the USGS Thesaurus's own "product types" facet
-# (https://apps.usgs.gov/thesaurus/, download:
-# https://apps.usgs.gov/thesaurus/download/USGSThesaurus.rdf) with terms a
+# (https://apps.usgs.gov/thesaurus/thesaurus-full.php) with terms a
 # planetary remote-sensing archive needs that facet does not have at all
 # (anaglyph, point cloud) -- USGS's facet is a library/dataset-type
 # taxonomy (reports, maps and atlases, datasets, image collections, ...),
@@ -26,7 +25,8 @@
 
 pdssp:ProductTypeScheme a skos:ConceptScheme ;
     dct:title "PDSSP Product Type"@en ;
-    dct:source <https://apps.usgs.gov/thesaurus/USGSThesaurus> ;
+    skos:prefLabel "PDSSP Product Type"@en ;
+    dct:source <https://apps.usgs.gov/thesaurus/> ;
     skos:definition "What kind of resource this is (the concrete thing being downloaded), e.g. a digital elevation model, an image mosaic, a point cloud."@en ;
     skos:hasTopConcept
         pdssp:ProductType-Image ,

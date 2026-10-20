@@ -41,6 +41,7 @@ pdssp:wavelengthType a rdf:Property ;
 
 pdssp:WavelengthTypeScheme a skos:ConceptScheme ;
     dct:title "PDSSP Wavelength Type"@en ;
+    skos:prefLabel "PDSSP Wavelength Type"@en ;
     dct:source <http://www.ivoa.net/rdf/messenger/2020-08-26> ;
     skos:definition "Spectral domain of an observation: the photon terms of the IVOA messenger vocabulary. The notation is the value written in pdssp:wavelength_type."@en ;
     skos:hasTopConcept pdssp:WavelengthType-Photon .

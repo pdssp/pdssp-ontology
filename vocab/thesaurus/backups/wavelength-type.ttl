@@ -1,0 +1,112 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix msg: <http://www.ivoa.net/rdf/messenger#> .
+
+# PDSSP Wavelength Type
+# =====================
+# The spectral domain of an observation: STAC `pdssp:wavelength_type`.
+# Not re-modelled: one PDSSP concept per photon term of the IVOA messenger
+# vocabulary (release 2020-08-26, snapshot in
+# vocab/external/ivoa-messenger.desise.json), with skos:exactMatch to it and
+# the same hierarchy (EUV under UV, everything under Photon). "Neutrino" is
+# left out: not a wavelength. tests/test_skos_quality.py checks the
+# notations against the snapshot.
+#
+# - skos:notation: the IVOA term id, the value written in the data
+#   ("Optical", "Infrared", "X-ray");
+# - pdssp:minWavelength / pdssp:maxWavelength: the domain in micrometres,
+#   [min, max). EUV, X-ray and Gamma-ray are defined by IVOA in energy and
+#   converted with lambda[µm] = 1.23984198 / E[eV].
+#
+# A spectral band points at every type it covers with pdssp:wavelengthType
+# (see band.ttl), so the types can be derived from the band name.
+
+pdssp:minWavelength a rdf:Property ;
+    rdfs:label "minimum wavelength (µm)"@en ;
+    rdfs:range xsd:decimal .
+
+pdssp:maxWavelength a rdf:Property ;
+    rdfs:label "maximum wavelength (µm)"@en ;
+    rdfs:comment "Exclusive upper bound."@en ;
+    rdfs:range xsd:decimal .
+
+pdssp:wavelengthType a rdf:Property ;
+    rdfs:label "wavelength type"@en ;
+    rdfs:comment "Links a spectral band to every PDSSP Wavelength Type its band [centre - FWHM/2, centre + FWHM/2] covers; the domain of the centre wavelength is the main one."@en ;
+    rdfs:range skos:Concept .
+
+pdssp:WavelengthTypeScheme a skos:ConceptScheme ;
+    dct:title "PDSSP Wavelength Type"@en ;
+    dct:source <http://www.ivoa.net/rdf/messenger/2020-08-26> ;
+    skos:definition "Spectral domain of an observation: the photon terms of the IVOA messenger vocabulary. The notation is the value written in pdssp:wavelength_type."@en ;
+    skos:hasTopConcept pdssp:WavelengthType-Photon .
+
+pdssp:WavelengthType-Photon a skos:Concept ; skos:inScheme pdssp:WavelengthTypeScheme ; skos:topConceptOf pdssp:WavelengthTypeScheme ;
+    skos:prefLabel "Photon"@en ; skos:notation "Photon" ;
+    skos:definition "Carrier particles of the electromagnetic interaction: any wavelength."@en ;
+    skos:narrower pdssp:WavelengthType-Radio , pdssp:WavelengthType-Millimeter , pdssp:WavelengthType-Infrared ,
+        pdssp:WavelengthType-Optical , pdssp:WavelengthType-UV , pdssp:WavelengthType-XRay , pdssp:WavelengthType-GammaRay ;
+    skos:exactMatch msg:Photon .
+
+pdssp:WavelengthType-Radio a skos:Concept ; skos:inScheme pdssp:WavelengthTypeScheme ;
+    skos:prefLabel "Radio"@en ; skos:notation "Radio" ;
+    skos:definition "Photon with a wavelength longer than 10 mm (or frequency below 30 GHz)."@en ;
+    pdssp:minWavelength 10000.0 ;
+    skos:broader pdssp:WavelengthType-Photon ;
+    skos:exactMatch msg:Radio .
+
+pdssp:WavelengthType-Millimeter a skos:Concept ; skos:inScheme pdssp:WavelengthTypeScheme ;
+    skos:prefLabel "Millimeter"@en ; skos:notation "Millimeter" ;
+    skos:definition "Photon with a wavelength between 0.1 mm and 10 mm (30 GHz to 300 GHz)."@en ;
+    pdssp:minWavelength 100.0 ; pdssp:maxWavelength 10000.0 ;
+    skos:broader pdssp:WavelengthType-Photon ;
+    skos:exactMatch msg:Millimeter .
+
+pdssp:WavelengthType-Infrared a skos:Concept ; skos:inScheme pdssp:WavelengthTypeScheme ;
+    skos:prefLabel "Infrared"@en ; skos:notation "Infrared" ;
+    skos:altLabel "IR"@en ;
+    skos:definition "Photon with a wavelength between 1 µm and 100 µm."@en ;
+    pdssp:minWavelength 1.0 ; pdssp:maxWavelength 100.0 ;
+    skos:broader pdssp:WavelengthType-Photon ;
+    skos:exactMatch msg:Infrared .
+
+pdssp:WavelengthType-Optical a skos:Concept ; skos:inScheme pdssp:WavelengthTypeScheme ;
+    skos:prefLabel "Optical"@en ; skos:notation "Optical" ;
+    skos:altLabel "Visible"@en ;
+    skos:definition "Photon with a wavelength between 300 nm and 1000 nm."@en ;
+    pdssp:minWavelength 0.3 ; pdssp:maxWavelength 1.0 ;
+    skos:broader pdssp:WavelengthType-Photon ;
+    skos:exactMatch msg:Optical .
+
+pdssp:WavelengthType-UV a skos:Concept ; skos:inScheme pdssp:WavelengthTypeScheme ;
+    skos:prefLabel "Ultraviolet"@en ; skos:notation "UV" ;
+    skos:definition "Photon with a wavelength between 100 nm and 300 nm."@en ;
+    pdssp:minWavelength 0.1 ; pdssp:maxWavelength 0.3 ;
+    skos:broader pdssp:WavelengthType-Photon ;
+    skos:narrower pdssp:WavelengthType-EUV ;
+    skos:exactMatch msg:UV .
+
+pdssp:WavelengthType-EUV a skos:Concept ; skos:inScheme pdssp:WavelengthTypeScheme ;
+    skos:prefLabel "Extreme UV"@en ; skos:notation "EUV" ;
+    skos:definition "Photon with an energy between 12 eV and 120 eV (wavelength about 10 nm to 103 nm)."@en ;
+    pdssp:minWavelength 0.010332 ; pdssp:maxWavelength 0.10332 ;
+    skos:broader pdssp:WavelengthType-UV ;
+    skos:exactMatch msg:EUV .
+
+pdssp:WavelengthType-XRay a skos:Concept ; skos:inScheme pdssp:WavelengthTypeScheme ;
+    skos:prefLabel "X-Ray"@en ; skos:notation "X-ray" ;
+    skos:definition "Photon with an energy between 120 eV and 120 keV (wavelength about 0.01 nm to 10 nm)."@en ;
+    pdssp:minWavelength 0.000010332 ; pdssp:maxWavelength 0.010332 ;
+    skos:broader pdssp:WavelengthType-Photon ;
+    skos:exactMatch msg:X-ray .
+
+pdssp:WavelengthType-GammaRay a skos:Concept ; skos:inScheme pdssp:WavelengthTypeScheme ;
+    skos:prefLabel "Gamma Ray"@en ; skos:notation "Gamma-ray" ;
+    skos:definition "Photon with an energy above 120 keV (wavelength below about 0.01 nm)."@en ;
+    pdssp:maxWavelength 0.000010332 ;
+    skos:broader pdssp:WavelengthType-Photon ;
+    skos:exactMatch msg:Gamma-ray .

@@ -42,6 +42,7 @@ pdssp:fullWidthHalfMax a rdf:Property ;
 
 pdssp:BandScheme a skos:ConceptScheme ;
     dct:title "PDSSP Spectral Band"@en ;
+    skos:prefLabel "PDSSP Spectral Band"@en ;
     dct:source <http://www.ivoa.net/rdf/messenger/2020-08-26> , <https://doi.org/10.1555/mars.2013.0001> , <https://odestac.staging.stacplanet.pdssp.eu/collections> ;
     skos:definition "Spectral channels of the instruments. The notation is the value written in STAC bands[].name; the concept identifies the channel of one instrument."@en ;
     skos:hasTopConcept pdssp:Band-HiRISE-BG , pdssp:Band-HiRISE-RED , pdssp:Band-HiRISE-NIR , pdssp:Band-CTX-BroadBand .

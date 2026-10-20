@@ -33,6 +33,7 @@
 
 pdssp:TargetClassScheme a skos:ConceptScheme ;
     dct:title "PDSSP Target Class"@en ;
+    skos:prefLabel "PDSSP Target Class"@en ;
     dct:source <http://voparis-ns.obspm.fr/rdf/epn/2.0/target-class/2024-11-04> , <https://github.com/astrothesaurus/UAT/releases/tag/v6.0.0> ;
     skos:definition "What kind of body or object an observation is about. Aligned one to one with the PADC EPN target-class vocabulary; the notation is the value written in ssys:target_class and in EPN-TAP target_class."@en ;
     skos:hasTopConcept
