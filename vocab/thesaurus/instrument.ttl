@@ -20,6 +20,7 @@
 
 pdssp:InstrumentScheme a skos:ConceptScheme ;
     dct:title "PDSSP Instrument"@en ;
+    skos:prefLabel "PDSSP Instrument"@en ;
     dct:source <https://naif.jpl.nasa.gov/pub/naif/MRO/kernels/fk/mro_v17.tf> , <https://www.wikidata.org/> , <https://pds.mcp.nasa.gov/api/search/1/products> , <https://github.com/astrothesaurus/UAT/releases/tag/v6.0.0> , <https://odestac.staging.stacplanet.pdssp.eu/collections> ;
     skos:definition "The instrument (OMS observer, SOSA sensor) that made an observation."@en ;
     skos:hasTopConcept pdssp:Instrument-HiRISE , pdssp:Instrument-CTX .
@@ -27,7 +28,7 @@ pdssp:InstrumentScheme a skos:ConceptScheme ;
 pdssp:Instrument-HiRISE a skos:Concept ; skos:inScheme pdssp:InstrumentScheme ; skos:topConceptOf pdssp:InstrumentScheme ;
     skos:prefLabel "HiRISE"@en ;
     skos:altLabel "High Resolution Imaging Science Experiment"@en ,
-        "HIGH RESOLUTION IMAGING SCIENCE EXPERIMENT (HIRISE)" , "MRO_HIRISE" ;
+        "HIGH RESOLUTION IMAGING SCIENCE EXPERIMENT (HIRISE)"@en , "MRO_HIRISE"@en ;
     skos:definition "Push-broom telescopic camera on Mars Reconnaissance Orbiter, about 0.3 m/pixel from orbit, red, blue-green and near-infrared channels."@en ;
     pdssp:naifId -74699 ;
     sosa:isHostedBy pdssp:Platform-MRO ;
@@ -36,7 +37,7 @@ pdssp:Instrument-HiRISE a skos:Concept ; skos:inScheme pdssp:InstrumentScheme ; 
 
 pdssp:Instrument-CTX a skos:Concept ; skos:inScheme pdssp:InstrumentScheme ; skos:topConceptOf pdssp:InstrumentScheme ;
     skos:prefLabel "Context Camera"@en ;
-    skos:altLabel "CTX"@en , "MRO_CTX" ;
+    skos:altLabel "CTX"@en , "MRO_CTX"@en ;
     skos:definition "Panchromatic push-broom camera on Mars Reconnaissance Orbiter, about 6 m/pixel, giving context for HiRISE and CRISM."@en ;
     pdssp:naifId -74021 ;
     sosa:isHostedBy pdssp:Platform-MRO ;

@@ -1,0 +1,44 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix uat: <http://astrothesaurus.org/uat/> .
+@prefix wd: <http://www.wikidata.org/entity/> .
+
+# PDSSP Instrument
+# ================
+# The instrument that made an observation (STAC instruments, EPN-TAP
+# instrument_name; OMS observer). Seeded from the ODE STAC collections
+# (2026-10-18), where HiRISE is written "HIGH RESOLUTION IMAGING SCIENCE
+# EXPERIMENT (HIRISE)" in Items and "HIRISE" in Collection summaries and
+# pds:instrument_id.
+#
+# - prefLabel: the Wikidata English label.
+# - pdssp:naifId: NAIF instrument ID (MRO frames kernel mro_v17.tf).
+# - sosa:isHostedBy: the PDSSP Platform concept carrying the instrument.
+# - skos:exactMatch: Wikidata and the PDS4 instrument context product.
+
+pdssp:InstrumentScheme a skos:ConceptScheme ;
+    dct:title "PDSSP Instrument"@en ;
+    dct:source <https://naif.jpl.nasa.gov/pub/naif/MRO/kernels/fk/mro_v17.tf> , <https://www.wikidata.org/> , <https://pds.mcp.nasa.gov/api/search/1/products> , <https://github.com/astrothesaurus/UAT/releases/tag/v6.0.0> , <https://odestac.staging.stacplanet.pdssp.eu/collections> ;
+    skos:definition "The instrument (OMS observer, SOSA sensor) that made an observation."@en ;
+    skos:hasTopConcept pdssp:Instrument-HiRISE , pdssp:Instrument-CTX .
+
+pdssp:Instrument-HiRISE a skos:Concept ; skos:inScheme pdssp:InstrumentScheme ; skos:topConceptOf pdssp:InstrumentScheme ;
+    skos:prefLabel "HiRISE"@en ;
+    skos:altLabel "High Resolution Imaging Science Experiment"@en ,
+        "HIGH RESOLUTION IMAGING SCIENCE EXPERIMENT (HIRISE)" , "MRO_HIRISE" ;
+    skos:definition "Push-broom telescopic camera on Mars Reconnaissance Orbiter, about 0.3 m/pixel from orbit, red, blue-green and near-infrared channels."@en ;
+    pdssp:naifId -74699 ;
+    sosa:isHostedBy pdssp:Platform-MRO ;
+    skos:exactMatch wd:Q1036092 , <urn:nasa:pds:context:instrument:hirise.mro> ;
+    skos:broadMatch uat:1548 .
+
+pdssp:Instrument-CTX a skos:Concept ; skos:inScheme pdssp:InstrumentScheme ; skos:topConceptOf pdssp:InstrumentScheme ;
+    skos:prefLabel "Context Camera"@en ;
+    skos:altLabel "CTX"@en , "MRO_CTX" ;
+    skos:definition "Panchromatic push-broom camera on Mars Reconnaissance Orbiter, about 6 m/pixel, giving context for HiRISE and CRISM."@en ;
+    pdssp:naifId -74021 ;
+    sosa:isHostedBy pdssp:Platform-MRO ;
+    skos:exactMatch wd:Q118594233 , <urn:nasa:pds:context:instrument:ctx.mro> ;
+    skos:broadMatch uat:1548 .

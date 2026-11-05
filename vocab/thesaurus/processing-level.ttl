@@ -79,6 +79,8 @@ pdssp:obstapLevel a rdf:Property ;
 
 pdssp:ProcessingLevelScheme a skos:ConceptScheme ;
     dct:title "PDSSP Processing Level"@en ;
+    skos:prefLabel "PDSSP Processing Level"@en ;
+    dct:source <https://pds.nasa.gov/> , <https://www.ivoa.net/documents/EPNTAP/> ;
     skos:definition "How far a product has been processed from raw telemetry -- PDSSP's own 4-value scale (Raw/Calibrated/Derived/Ancillary), matching PDS4's/stacplanet's own processing:level enum exactly."@en ;
     skos:hasTopConcept
         pdssp:ProcessingLevel-Raw ,

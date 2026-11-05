@@ -1,0 +1,147 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix usgs: <https://apps.usgs.gov/thesaurus/USGSThesaurus/> .
+
+# PDSSP Acquisition / Processing Method
+# ========================================
+# How a product was acquired or produced (the technique) -- e.g.
+# panchromatic imaging, multispectral imaging, stereo photogrammetry.
+# Reuses the USGS Thesaurus's own "methods" facet, specifically its
+# "remote sensing" branch (the only one relevant to a planetary imaging
+# archive -- the facet's other branches, laboratory/field/management
+# methods, describe terrestrial fieldwork this project has no use for),
+# confirmed by downloading and inspecting the real RDF
+# (https://apps.usgs.gov/thesaurus/download/USGSThesaurus.rdf).
+#
+# One PDSSP addition: USGS only carries "photogrammetry" as a *synonym*
+# (skos:altLabel) of "remote sensing" itself, not as its own narrower,
+# addressable concept -- too coarse for this project, which specifically
+# needs to say a DTM was produced BY photogrammetry, distinct from plain
+# imaging. pdssp:Method-Photogrammetry gives it that.
+#
+# Definitions: the USGS Thesaurus has no skos:definition, only scope notes
+# written for Earth observation (photographic film, the Earth's surface).
+# Each concept therefore has a PDSSP skos:definition for planetary data,
+# and the USGS scope note kept verbatim as skos:scopeNote (USGS Thesaurus,
+# public domain) for traceability.
+
+pdssp:MethodScheme a skos:ConceptScheme ;
+    dct:title "PDSSP Acquisition/Processing Method"@en ;
+    dct:source <https://apps.usgs.gov/thesaurus/USGSThesaurus> ;
+    skos:definition "How a product was acquired or produced, e.g. panchromatic imaging, multispectral imaging, stereo photogrammetry."@en ;
+    skos:hasTopConcept pdssp:Method-RemoteSensing .
+
+pdssp:Method-RemoteSensing a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Acquiring information about a body's surface, atmosphere or environment without being in contact with it, from orbiting, flyby, airborne or landed sensors."@en ;
+    skos:scopeNote "USGS Thesaurus: Acquiring information about a natural feature or phenomenon, such as the Earth's surface, without actually being in contact with it. USGS remote sensing is usually carried out with airborne or spaceborne sensors or cameras."@en ;
+    skos:prefLabel "Remote sensing"@en ;
+    skos:exactMatch usgs:remote%20sensing ;
+    skos:narrower
+        pdssp:Method-PanchromaticImaging ,
+        pdssp:Method-MultispectralImaging ,
+        pdssp:Method-HyperspectralImaging ,
+        pdssp:Method-VisibleLightImaging ,
+        pdssp:Method-InfraredImaging ,
+        pdssp:Method-ThermalImaging ,
+        pdssp:Method-RadarImaging ,
+        pdssp:Method-MicrowaveImaging ,
+        pdssp:Method-Lidar ,
+        pdssp:Method-AerialPhotography ,
+        pdssp:Method-Photogrammetry ,
+        pdssp:Method-StereoscopicImaging .
+
+pdssp:Method-PanchromaticImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Imaging in a single broad spectral band covering most of the visible range (sometimes extending into the near infrared), giving one grey-level image, e.g. MRO CTX or the HiRISE RED channel."@en ;
+    skos:scopeNote "USGS Thesaurus: Photographic technique which uses emulsions, films, or plates sensitive to all colors in light to produce black-and-white photographs. Often used in aerial and satellite photography."@en ;
+    skos:prefLabel "Panchromatic imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:panchromatic%20imaging .
+
+pdssp:Method-MultispectralImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Imaging in a few discrete spectral bands (typically 2 to about 15), giving one co-registered image per band, e.g. HiRISE colour (BLUE-GREEN, RED, NEAR-INFRARED)."@en ;
+    skos:scopeNote "USGS Thesaurus: A method of remote sensing that obtains optical representations in two or more ranges of frequencies or wave lengths."@en ;
+    skos:prefLabel "Multispectral imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:multispectral%20imaging .
+
+pdssp:Method-HyperspectralImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Imaging spectroscopy: tens to hundreds of narrow, contiguous spectral bands, giving a spectrum for every pixel, e.g. MRO CRISM or Mars Express OMEGA."@en ;
+    skos:scopeNote "USGS Thesaurus: Multispectral imaging technique that records many bands of imagery at very narrow bandwidths."@en ;
+    skos:prefLabel "Hyperspectral imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:hyperspectral%20imaging .
+
+pdssp:Method-VisibleLightImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Imaging of reflected sunlight in the visible part of the spectrum (about 0.4 to 0.7 µm)."@en ;
+    skos:scopeNote "USGS Thesaurus: Remote sensing methods using electromagnetic radiation which is visible to the human eye to react with the coating on a photographic plate or film."@en ;
+    skos:prefLabel "Visible light imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:visible%20light%20imaging .
+
+pdssp:Method-InfraredImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Imaging of reflected or emitted infrared radiation (about 0.7 µm to 1 mm), e.g. near-infrared reflectance imaging; see Thermal imaging for emitted heat."@en ;
+    skos:scopeNote "USGS Thesaurus: Method of remote sensing in which optical sensors produce visible representations of infrared rays or radiated heat from the observed objects and the temperature variations are represented by different colors in the image."@en ;
+    skos:prefLabel "Infrared imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:infrared%20imaging .
+
+pdssp:Method-ThermalImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Imaging of the thermal radiation emitted by a surface (thermal infrared, about 3 to 50 µm), used to derive surface temperature and thermal inertia, e.g. Mars Odyssey THEMIS-IR."@en ;
+    skos:scopeNote "USGS Thesaurus: Remote sensing techniques using instruments to measure emitted thermal radiation to form images of the earth's surface."@en ;
+    skos:prefLabel "Thermal imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:thermal%20imaging .
+
+pdssp:Method-RadarImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Active imaging with microwave pulses: the sensor emits pulses and measures the strength and delay of the echoes, e.g. synthetic aperture radar (Magellan at Venus)."@en ;
+    skos:scopeNote "USGS Thesaurus: A remote sensing technique which uses the reflection of pulsed high frequency radio waves to determine the speed, direction, and distance of faraway objects."@en ;
+    skos:prefLabel "Radar imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:radar%20imaging .
+
+pdssp:Method-MicrowaveImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Imaging with microwave radiation (about 1 mm to 1 m), either passive (radiometry of emitted microwaves) or active (see Radar imaging)."@en ;
+    skos:scopeNote "USGS Thesaurus: Remote sensing method using short high frequency electromagnetic waves reflected or radiated from the ground."@en ;
+    skos:prefLabel "Microwave imaging"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:microwave%20imaging .
+
+pdssp:Method-Lidar a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Laser ranging: distance measured from the travel time of laser pulses, giving topography or point clouds, e.g. MGS MOLA or LRO LOLA."@en ;
+    skos:scopeNote "USGS Thesaurus: Light detection and ranging, an airborne, spaceborne or ground-based laser-ranging technique commonly used for acquiring high-resolution topographic data."@en ;
+    skos:prefLabel "Lidar"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:lidar .
+
+pdssp:Method-AerialPhotography a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:definition "Imaging from an aircraft flying within an atmosphere. Kept from the USGS Thesaurus; on planetary bodies, e.g. images taken by the Ingenuity Mars helicopter."@en ;
+    skos:scopeNote "USGS Thesaurus: The process of taking pictures with a camera from an aircraft. Use for both the process of photography from the air and the images produced by the process."@en ;
+    skos:prefLabel "Aerial photography"@en ;
+    skos:altLabel "orthoimagery"@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:exactMatch usgs:aerial%20photography .
+
+pdssp:Method-Photogrammetry a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Photogrammetry"@en ;
+    skos:definition "Deriving 3D geometry (e.g. a digital elevation model) by stereo-matching two or more overlapping images. The USGS Thesaurus only carries \"photogrammetry\" as a synonym of \"remote sensing\" itself; this PDSSP addition gives it its own addressable, narrower concept, which planetary DTM production specifically needs in order to be distinguished from plain imaging (see pdssp:ProductType-DigitalElevationModel)."@en ;
+    skos:broader pdssp:Method-RemoteSensing ;
+    skos:closeMatch usgs:remote%20sensing .
+
+pdssp:Method-StereoscopicImaging a skos:Concept ;
+    skos:inScheme pdssp:MethodScheme ;
+    skos:prefLabel "Stereoscopic imaging"@en ;
+    skos:definition "Acquiring or combining two observations of the same site from different look angles for stereo (3D) viewing or measurement -- e.g. a red-cyan anaglyph. Distinct from pdssp:Method-Photogrammetry: photogrammetry MEASURES 3D geometry (elevation) from a stereo pair, while this concept covers producing a stereo pair/composite for viewing, with no elevation model necessarily derived. Not present in the USGS Thesaurus at all (no \"stereo\"/\"stereoscopic\" label anywhere in its RDF) -- a PDSSP addition."@en ;
+    skos:broader pdssp:Method-RemoteSensing .

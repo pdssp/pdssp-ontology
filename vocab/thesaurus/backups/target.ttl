@@ -1,0 +1,164 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix pdssp: <https://pdssp.github.io/pdssp-ontology/vocab#> .
+@prefix uat: <http://astrothesaurus.org/uat/> .
+@prefix wd: <http://www.wikidata.org/entity/> .
+
+# PDSSP Target
+# ============
+# The body or object an observation is about (ssys:targets in STAC,
+# target_name in EPN-TAP): the OMS ultimate feature of interest. Seeded
+# from the values actually found in the ODE STAC collections
+# (https://odestac.staging.stacplanet.pdssp.eu/collections, MRO HiRISE
+# EDR/RDR/DTM/anaglyph and CTX EDR, 2026-10-18).
+#
+# - prefLabel is the value written in ssys:targets and target_name (IAU
+#   name; for comets the IAU designation followed by the name).
+# - altLabel: accepted variants (acronyms, PDS3 upper-case forms are
+#   handled by case-insensitive normalisation, so they are not repeated).
+# - hiddenLabel: misspellings found in source labels, accepted on input
+#   but never displayed ("Jupitr" in CTX EDR labels).
+# - pdssp:naifId: the NAIF SPICE ID code (planets and satellites from the
+#   NAIF ID table, spacecraft from the mission frames kernel, comets: the
+#   JPL SPK-ID given by the Horizons lookup API).
+# - pdssp:targetClass: the PDSSP Target Class concept; its notation is the
+#   value of ssys:target_class.
+# - pdssp:primaryBody: the body a satellite orbits. Deliberately not
+#   skos:broader: a search for "Mars" must not return Phobos images.
+# - UAT 6.0.0: exactMatch when the UAT has the body itself (Mars,
+#   Jupiter, Earth, the Moon), broadMatch to the UAT class otherwise
+#   (Phobos and Deimos are only altLabels of "Martian satellites").
+# - skos:exactMatch: the Wikidata item and, when PDS has one, the PDS4
+#   target context product (LID, resolvable through the PDS registry API
+#   https://pds.mcp.nasa.gov/api/search/1/products/{lid}).
+#
+# Known source value with no concept: "Comet" (CTX EDR). It stands for
+# three different comets (ISON in 2013, Siding Spring in 2014, 3I/ATLAS in
+# 2025) and cannot be resolved from the label alone; the converter must
+# use the observation date or description. Each comet has its own concept
+# below.
+
+pdssp:targetClass a rdf:Property ;
+    rdfs:label "target class"@en ;
+    rdfs:comment "Links a PDSSP Target concept to its PDSSP Target Class concept."@en ;
+    rdfs:range skos:Concept .
+
+pdssp:primaryBody a rdf:Property ;
+    rdfs:subPropertyOf skos:related ;
+    rdfs:label "primary body"@en ;
+    rdfs:comment "The body a natural satellite orbits."@en .
+
+pdssp:naifId a rdf:Property ;
+    rdfs:label "NAIF ID code"@en ;
+    rdfs:comment "Integer ID code used by the NAIF SPICE toolkit for a body, spacecraft or instrument."@en ;
+    rdfs:range xsd:integer .
+
+pdssp:TargetScheme a skos:ConceptScheme ;
+    dct:title "PDSSP Target"@en ;
+    dct:source <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/naif_ids.html> ,
+        <https://ssd.jpl.nasa.gov/api/horizons_lookup.api> , <https://www.wikidata.org/> , <https://pds.mcp.nasa.gov/api/search/1/products> , <https://github.com/astrothesaurus/UAT/releases/tag/v6.0.0> , <https://odestac.staging.stacplanet.pdssp.eu/collections> ;
+    skos:definition "The body or object an observation is about (the ultimate feature of interest). The prefLabel is the value written in ssys:targets and in EPN-TAP target_name."@en ;
+    skos:hasTopConcept
+        pdssp:Target-Mars , pdssp:Target-Phobos , pdssp:Target-Deimos ,
+        pdssp:Target-Earth , pdssp:Target-Moon , pdssp:Target-Jupiter ,
+        pdssp:Target-MarsGlobalSurveyor ,
+        pdssp:Target-C2012S1 , pdssp:Target-C2013A1 , pdssp:Target-3IAtlas .
+
+# ---- planets and satellites ------------------------------------------------
+
+pdssp:Target-Mars a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:topConceptOf pdssp:TargetScheme ;
+    skos:prefLabel "Mars"@en ;
+    skos:definition "Fourth planet from the Sun."@en ;
+    pdssp:naifId 499 ;
+    pdssp:targetClass pdssp:TargetClass-Planet ;
+    skos:exactMatch wd:Q111 , <urn:nasa:pds:context:target:planet.mars> , uat:1007 .
+
+pdssp:Target-Phobos a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:topConceptOf pdssp:TargetScheme ;
+    skos:prefLabel "Phobos"@en ;
+    skos:definition "Inner natural satellite of Mars."@en ;
+    pdssp:naifId 401 ;
+    pdssp:targetClass pdssp:TargetClass-Satellite ;
+    pdssp:primaryBody pdssp:Target-Mars ;
+    skos:exactMatch wd:Q7547 , <urn:nasa:pds:context:target:satellite.mars.phobos> ;
+    skos:broadMatch uat:1009 .
+
+pdssp:Target-Deimos a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:topConceptOf pdssp:TargetScheme ;
+    skos:prefLabel "Deimos"@en ;
+    skos:definition "Outer natural satellite of Mars."@en ;
+    pdssp:naifId 402 ;
+    pdssp:targetClass pdssp:TargetClass-Satellite ;
+    pdssp:primaryBody pdssp:Target-Mars ;
+    skos:exactMatch wd:Q7548 , <urn:nasa:pds:context:target:satellite.mars.deimos> ;
+    skos:broadMatch uat:1009 .
+
+pdssp:Target-Earth a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:topConceptOf pdssp:TargetScheme ;
+    skos:prefLabel "Earth"@en ;
+    skos:definition "Third planet from the Sun."@en ;
+    pdssp:naifId 399 ;
+    pdssp:targetClass pdssp:TargetClass-Planet ;
+    skos:exactMatch wd:Q2 , <urn:nasa:pds:context:target:planet.earth> , uat:439 .
+
+pdssp:Target-Moon a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:topConceptOf pdssp:TargetScheme ;
+    skos:prefLabel "Moon"@en ;
+    skos:altLabel "Luna"@en ;
+    skos:definition "Natural satellite of the Earth."@en ;
+    pdssp:naifId 301 ;
+    pdssp:targetClass pdssp:TargetClass-Satellite ;
+    pdssp:primaryBody pdssp:Target-Earth ;
+    skos:exactMatch wd:Q405 , <urn:nasa:pds:context:target:satellite.earth.moon> , uat:1692 .
+
+pdssp:Target-Jupiter a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:topConceptOf pdssp:TargetScheme ;
+    skos:prefLabel "Jupiter"@en ;
+    skos:hiddenLabel "Jupitr" ;
+    skos:definition "Fifth planet from the Sun."@en ;
+    pdssp:naifId 599 ;
+    pdssp:targetClass pdssp:TargetClass-Planet ;
+    skos:exactMatch wd:Q319 , <urn:nasa:pds:context:target:planet.jupiter> , uat:873 .
+
+# ---- spacecraft observed as a target ---------------------------------------
+
+pdssp:Target-MarsGlobalSurveyor a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:topConceptOf pdssp:TargetScheme ;
+    skos:prefLabel "Mars Global Surveyor"@en ;
+    skos:altLabel "MGS"@en ;
+    skos:definition "NASA Mars orbiter (1996-2006), imaged by MRO CTX in November 2006."@en ;
+    pdssp:naifId -94 ;
+    pdssp:targetClass pdssp:TargetClass-Spacecraft ;
+    skos:exactMatch wd:Q206300 ;
+    # PDS has MGS as an instrument host, not as a target.
+    skos:closeMatch <urn:nasa:pds:context:instrument_host:spacecraft.mgs> ;
+    skos:broadMatch uat:1545 .
+
+# ---- comets and interstellar objects ---------------------------------------
+
+pdssp:Target-C2012S1 a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:topConceptOf pdssp:TargetScheme ;
+    skos:prefLabel "C/2012 S1 (ISON)"@en ;
+    skos:altLabel "C/2012 S1"@en , "ISON"@en , "Comet ISON"@en ;
+    skos:definition "Sungrazing comet, imaged from Mars orbit in 2013."@en ;
+    pdssp:naifId 1003203 ;
+    pdssp:targetClass pdssp:TargetClass-Comet ;
+    skos:exactMatch wd:Q301109 , <urn:nasa:pds:context:target:comet.c2012_s1_ison> ;
+    skos:broadMatch uat:2197 .
+
+pdssp:Target-C2013A1 a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:topConceptOf pdssp:TargetScheme ;
+    skos:prefLabel "C/2013 A1 (Siding Spring)"@en ;
+    skos:altLabel "C/2013 A1"@en , "Siding Spring"@en , "Comet Siding Spring"@en ;
+    skos:definition "Oort-cloud comet that passed close to Mars on 19 October 2014."@en ;
+    pdssp:naifId 1003228 ;
+    pdssp:targetClass pdssp:TargetClass-Comet ;
+    skos:exactMatch wd:Q4525413 ;
+    skos:broadMatch uat:933 .
+
+pdssp:Target-3IAtlas a skos:Concept ; skos:inScheme pdssp:TargetScheme ; skos:topConceptOf pdssp:TargetScheme ;
+    skos:prefLabel "3I/ATLAS"@en ;
+    skos:altLabel "C/2025 N1 (ATLAS)"@en , "C/2025 N1"@en , "Comet 3I ATLAS"@en ;
+    skos:definition "Third interstellar object discovered (July 2025), an active comet, imaged from Mars orbit in October 2025."@en ;
+    pdssp:naifId 1004083 ;
+    # PADC has a dedicated class (interstellar-object), but the ssys v1.1.1
+    # STAC extension does not accept it in ssys:target_class: comet, as in
+    # the CTX labels (it is an active comet).
+    pdssp:targetClass pdssp:TargetClass-Comet ;
+    skos:exactMatch wd:Q135193382 , <urn:nasa:pds:context:target:comet.3i_atlas> ;
+    skos:broadMatch uat:52 .

@@ -29,6 +29,7 @@ pdssp:referenceBody a rdf:Property ;
 
 pdssp:CrsScheme a skos:ConceptScheme ;
     dct:title "PDSSP Coordinate Reference System"@en ;
+    skos:prefLabel "PDSSP Coordinate Reference System"@en ;
     dct:source <http://www.opengis.net/def/crs/IAU/2015/> , <https://doi.org/10.1007/s10569-017-9805-5> ;
     skos:definition "IAU 2015 planetary coordinate reference systems. The notation is the value written in proj:code."@en ;
     skos:hasTopConcept pdssp:Crs-IAU2015-49900 , pdssp:Crs-IAU2015-49901 , pdssp:Crs-IAU2015-49902 .

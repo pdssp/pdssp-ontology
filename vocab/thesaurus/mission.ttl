@@ -21,13 +21,14 @@
 
 pdssp:MissionScheme a skos:ConceptScheme ;
     dct:title "PDSSP Mission"@en ;
+    skos:prefLabel "PDSSP Mission"@en ;
     dct:source <https://pds.mcp.nasa.gov/api/search/1/products> , <https://www.wikidata.org/> , <https://odestac.staging.stacplanet.pdssp.eu/collections> ;
     skos:definition "The mission (PDS investigation) an observation was made for."@en ;
     skos:hasTopConcept pdssp:Mission-MRO .
 
 pdssp:Mission-MRO a skos:Concept ; skos:inScheme pdssp:MissionScheme ; skos:topConceptOf pdssp:MissionScheme ;
     skos:prefLabel "Mars Reconnaissance Orbiter"@en ;
-    skos:altLabel "MRO"@en , "MARS RECONNAISSANCE ORBITER (MRO)" ;
+    skos:altLabel "MRO"@en , "MARS RECONNAISSANCE ORBITER (MRO)"@en ;
     skos:definition "NASA Mars mission (launch 2005): high-resolution imaging, spectroscopy and sounding of Mars, and telecommunications relay for landers."@en ;
     sosa:deployedOnPlatform pdssp:Platform-MRO ;
     skos:exactMatch <urn:nasa:pds:context:investigation:mission.mars_reconnaissance_orbiter> ;

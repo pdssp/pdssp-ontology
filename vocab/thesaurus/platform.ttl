@@ -29,13 +29,14 @@ pdssp:cosparId a rdf:Property ;
 
 pdssp:PlatformScheme a skos:ConceptScheme ;
     dct:title "PDSSP Platform"@en ;
+    skos:prefLabel "PDSSP Platform"@en ;
     dct:source <https://naif.jpl.nasa.gov/pub/naif/MRO/kernels/fk/mro_v17.tf> , <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/naif_ids.html> , <https://www.wikidata.org/> , <https://pds.mcp.nasa.gov/api/search/1/products> , <https://github.com/astrothesaurus/UAT/releases/tag/v6.0.0> , <https://odestac.staging.stacplanet.pdssp.eu/collections> ;
     skos:definition "The spacecraft (or other platform) hosting the instruments that made an observation."@en ;
     skos:hasTopConcept pdssp:Platform-MRO .
 
 pdssp:Platform-MRO a skos:Concept ; skos:inScheme pdssp:PlatformScheme ; skos:topConceptOf pdssp:PlatformScheme ;
     skos:prefLabel "Mars Reconnaissance Orbiter"@en ;
-    skos:altLabel "MRO"@en , "MARS RECONNAISSANCE ORBITER (MRO)" , "MARS RECON ORBITER" ;
+    skos:altLabel "MRO"@en , "MARS RECONNAISSANCE ORBITER (MRO)"@en , "MARS RECON ORBITER"@en ;
     skos:definition "NASA Mars orbiter launched in 2005, in Mars orbit since March 2006."@en ;
     pdssp:naifId -74 ;
     pdssp:cosparId "2005-029A" ;
