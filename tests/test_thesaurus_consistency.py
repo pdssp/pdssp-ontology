@@ -65,7 +65,7 @@ def test_concept_scheme_counts(thesaurus: Graph):
         "https://pdssp.github.io/pdssp-ontology/vocab#ProductTypeScheme": 6,
         "https://pdssp.github.io/pdssp-ontology/vocab#MethodScheme": 13,
         "https://pdssp.github.io/pdssp-ontology/vocab#ProcessingLevelScheme": 4,
-        "https://pdssp.github.io/pdssp-ontology/vocab#TargetScheme": 10,
+        "https://pdssp.github.io/pdssp-ontology/vocab#TargetScheme": 11,
         "https://pdssp.github.io/pdssp-ontology/vocab#TargetClassScheme": 15,
         "https://pdssp.github.io/pdssp-ontology/vocab#PlatformScheme": 1,
         "https://pdssp.github.io/pdssp-ontology/vocab#InstrumentScheme": 2,

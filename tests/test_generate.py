@@ -36,7 +36,7 @@ def test_normaliser_resolves_source_variants():
     assert norm["instruments"]["high resolution imaging science experiment (hirise)"] == "HiRISE"
     assert norm["ssys:targets"]["jupitr"] == "Jupiter"           # hiddenLabel (CTX misspelling)
     assert norm["ssys:target_class"]["planet"] == "planet"        # notation, not prefLabel
-    assert "comet" not in norm["ssys:targets"]                    # ambiguous in CTX labels
+    assert norm["ssys:targets"]["comet"] == "Comet"             # generic fallback for the ambiguous CTX value
 
 
 def test_one_schema_per_scheme_with_the_field_values():
