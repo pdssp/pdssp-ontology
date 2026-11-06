@@ -30,7 +30,11 @@
 #
 # Not bands, so no concept: "DTM" and "ORTHOIMAGE" (HiRISE DTM collection
 # summary: these are products, see Product Type) and "COLOR" (HiRISE RDR:
-# a colour composite of IRB or RGB channels).
+# a colour composite of IRB or RGB channels). The composite product
+# spellings that archives write as bands[].name when a mapping predates
+# the composite doctrine ("COLOR", "IRB") resolve as HIDDEN spellings of
+# the subsuming NEAR-INFRARED channel instead (see that concept) -- a
+# derivation-only courtesy, never a display spelling.
 
 pdssp:centerWavelength a rdf:Property ;
     rdfs:label "center wavelength (µm)"@en ;
@@ -65,6 +69,14 @@ pdssp:Band-HiRISE-RED a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:top
 pdssp:Band-HiRISE-NIR a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
     skos:prefLabel "HiRISE NEAR-INFRARED"@en ; skos:notation "NEAR-INFRARED" ;
     skos:altLabel "IR"@en , "NIR"@en ;
+    # "COLOR" (RDR) and "IRB" (DTM ORTHOIMAGE): colour composite products,
+    # not band concepts (see the scheme's own header comment) -- but their
+    # spectral coverage (NIR + RED + BG channels, IRB-style per ERRATA.TXT)
+    # is wholly subsumed by this channel, so a HIDDEN spelling here lets the
+    # pdssp:wavelength_type derivation resolve a composite-named band's
+    # types without inventing a collaborative concept and without changing
+    # producer data: hidden, so it never displays as the channel's name.
+    skos:hiddenLabel "COLOR"@en , "IRB"@en ;
     skos:definition "HiRISE near-infrared channel (CCDs IR10, IR11)."@en ;
     pdssp:centerWavelength 0.9 ; pdssp:fullWidthHalfMax 0.3 ;
     sosa:isSubSystemOf pdssp:Instrument-HiRISE ;
@@ -73,6 +85,9 @@ pdssp:Band-HiRISE-NIR a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:top
 
 pdssp:Band-CTX-BroadBand a skos:Concept ; skos:inScheme pdssp:BandScheme ; skos:topConceptOf pdssp:BandScheme ;
     skos:prefLabel "CTX broadband"@en ; skos:notation "BroadBand" ;
+    # Hidden spelling of the instrument id: a mapping band_info entry
+    # without a "name" key falls back to the instrument id as bands[].name.
+    skos:hiddenLabel "CTX"@en ;
     skos:definition "CTX single panchromatic channel, effective band centre 611 ± 189 nm."@en ;
     pdssp:centerWavelength 0.611 ; pdssp:fullWidthHalfMax 0.189 ;
     sosa:isSubSystemOf pdssp:Instrument-CTX ;
